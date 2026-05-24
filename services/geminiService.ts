@@ -4,9 +4,15 @@ import { FoodAnalysis, HealthReport, AppointmentDetails, UserProfile, FoodSugges
 // --- AI Backend Proxy Helper ---
 // Replaces getAI()
 const callGenerativeAI = async (model: string, contents: any, config?: any) => {
+  const token = getGeminiKey();
+  const headers: any = { "Content-Type": "application/json" };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  
   const res = await fetch("/api/gemini/generateContent", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ model, contents, config })
   });
   if (!res.ok) throw new Error(await res.text());

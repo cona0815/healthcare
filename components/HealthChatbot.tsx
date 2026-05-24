@@ -42,9 +42,15 @@ const HealthChatbot: React.FC<Props> = ({ userProfile, healthReports, foodLogs }
           parts: [{ text: m.text }]
       }));
 
+      const token = localStorage.getItem('GEMINI_USER_KEY');
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const res = await fetch('/api/gemini/generateContentStream', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({
               model: 'gemini-3-flash-preview',
               contents,
