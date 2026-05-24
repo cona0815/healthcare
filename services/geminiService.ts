@@ -16,7 +16,17 @@ const callGenerativeAI = async (model: string, contents: any, config?: any) => {
     body: JSON.stringify({ model, contents, config })
   });
   if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  const data = await res.json();
+  
+  // Fake the SDK getter for `text` since it gets lost in JSON serialization
+  return {
+    ...data,
+    get text() {
+      // In the new @google/genai SDK, text is a property on GenerateContentResponse
+      // we can extract it from the raw candidates array
+      return this.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    }
+  };
 };
 
 export const getGeminiKey = (): string | null => {
