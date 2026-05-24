@@ -13,10 +13,10 @@ interface Props {
 }
 
 const COMMON_EXERCISES = [
-  "快走 (Brisk Walking)", "慢跑 (Jogging)", "游泳 (Swimming)", "騎腳踏車 (Cycling)", 
-  "瑜珈 (Yoga)", "皮拉提斯 (Pilates)", "HIIT 高強度間歇", "深蹲 (Squats)", 
-  "棒式 (Plank)", "太極拳 (Tai Chi)", "跳繩 (Jump Rope)", "重量訓練 (Weight Training)",
-  "登山 (Hiking)", "羽球 (Badminton)", "籃球 (Basketball)"
+  "皮克敏",
+  "快走 (Brisk Walking)", "慢跑 (Jogging)", "游泳 (Swimming)", "重訓 (Weight Training)", 
+  "瑜珈 (Yoga)", "皮拉提斯 (Pilates)", "騎腳踏車 (Cycling)", "跳繩 (Jump Rope)", 
+  "HIIT 間歇運動", "登山 (Hiking)"
 ];
 
 const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLogs, onAddWorkout, currentPlan, onSavePlan }) => {

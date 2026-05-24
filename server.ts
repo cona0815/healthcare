@@ -15,16 +15,16 @@ app.use(express.json({ limit: "50mb" }));
 const getGeminiClient = (req: express.Request) => {
   const httpOptions = { headers: { 'User-Agent': 'aistudio-build' } };
   
+  // Prefer client-provided key first (since the app has a Settings input for it)
+  const clientKey = req.headers['authorization']?.replace('Bearer ', '');
+  if (clientKey && clientKey.length > 5) {
+     return new GoogleGenAI({ apiKey: clientKey, httpOptions });
+  }
+
   // Option to use the server's environment variable (Secure)
   const serverKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
   if (serverKey) {
     return new GoogleGenAI({ apiKey: serverKey, httpOptions });
-  }
-  
-  // Fallback: Use client-provided key (for users who haven't set up the server env yet)
-  const clientKey = req.headers['authorization']?.replace('Bearer ', '');
-  if (clientKey) {
-     return new GoogleGenAI({ apiKey: clientKey, httpOptions });
   }
   
   throw new Error("Missing Gemini API Key in server environment");
@@ -43,7 +43,10 @@ app.post("/api/gemini/generateContent", async (req, res) => {
       config,
     });
     
-    res.json(response);
+    res.json({
+      ...response,
+      text: response.text
+    });
   } catch (error: any) {
     console.error("Gemini Error:", error);
     res.status(500).json({ error: error.message });

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, Loader2 } from 'lucide-react';
-import { createChatSession } from '../services/geminiService';
+import { createChatSession, getGeminiKey } from '../services/geminiService';
 import { UserProfile, HealthReport, FoodAnalysis, ChatMessage } from '../types';
 
 interface Props {
@@ -42,7 +42,7 @@ const HealthChatbot: React.FC<Props> = ({ userProfile, healthReports, foodLogs }
           parts: [{ text: m.text }]
       }));
 
-      const token = localStorage.getItem('GEMINI_USER_KEY');
+      const token = getGeminiKey();
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) {
           headers['Authorization'] = `Bearer ${token}`;
@@ -52,7 +52,7 @@ const HealthChatbot: React.FC<Props> = ({ userProfile, healthReports, foodLogs }
           method: 'POST',
           headers,
           body: JSON.stringify({
-              model: 'gemini-3.5-flash',
+              model: 'gemini-2.5-flash',
               contents,
               config: { systemInstruction }
           })

@@ -17,20 +17,12 @@ const callGenerativeAI = async (model: string, contents: any, config?: any) => {
   });
   if (!res.ok) throw new Error(await res.text());
   const data = await res.json();
-  
-  // Fake the SDK getter for `text` since it gets lost in JSON serialization
-  return {
-    ...data,
-    get text() {
-      // In the new @google/genai SDK, text is a property on GenerateContentResponse
-      // we can extract it from the raw candidates array
-      return this.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    }
-  };
+  return data;
 };
 
 export const getGeminiKey = (): string | null => {
-  return localStorage.getItem('GEMINI_USER_KEY');
+  const key = localStorage.getItem('GEMINI_USER_KEY');
+  return (key && key !== "null" && key.trim() !== "") ? key : null;
 };
 
 let aiInstance: any = null;
@@ -197,7 +189,7 @@ export const analyzeFoodImage = async (
   try {
     // 雖然傳入 mimeType，但因為 fileToGenerativePart 已經轉成 JPEG，這裡強制使用 jpeg
     const response = await getAI().models.generateContent({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-2.5-flash',
       contents: { parts: [{ inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }, { text: prompt }] }
     });
     const data = JSON.parse(extractJson(response.text || "{}"));
@@ -222,7 +214,7 @@ export const generateFoodSuggestions = async (healthContext?: HealthReport, user
   
   try {
     const response = await getAI().models.generateContent({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-2.5-flash',
       contents: prompt,
       config: { responseMimeType: "application/json" }
     });
@@ -236,7 +228,7 @@ export const findNearbyRestaurants = async (foodName: string, lat: number, lng: 
 
   try {
     const response = await getAI().models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.5-flash",
       contents: `Find the 5 closest restaurants or convenience stores near lat:${lat}, lng:${lng} that serve "${foodName}". 
       
       STRICT LOCATION RULES:
@@ -300,7 +292,7 @@ export const analyzeHealthReport = async (imageBase64: string, mimeType: string)
     const finalMime = isImage ? 'image/jpeg' : mimeType;
     
     const response = await getAI().models.generateContent({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-2.5-flash',
       contents: { parts: [{ inlineData: { mimeType: finalMime, data: imageBase64 } }, { text: prompt }] }
     });
     return { ...JSON.parse(extractJson(response.text || "{}")), analyzedAt: new Date().toISOString() };
@@ -326,7 +318,7 @@ export const extractAppointmentDetails = async (imageBase64: string, mimeType: s
     const finalMime = isImage ? 'image/jpeg' : mimeType;
 
     const response = await getAI().models.generateContent({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-2.5-flash',
       contents: { parts: [{ inlineData: { mimeType: finalMime, data: imageBase64 } }, { text: prompt }] }
     });
     return JSON.parse(extractJson(response.text || "{}"));
@@ -338,7 +330,7 @@ export const analyzeMedication = async (imageBase64: string, mimeType: string, h
   const prompt = `分析藥袋/保健品 (繁體中文 JSON)。比對健檢警訊：${warnings}。結構: {name, indication, usage, sideEffects, interactionWarning, riskLevel (SAFE/DANGEROUS)}`;
   try {
     const response = await getAI().models.generateContent({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-2.5-flash',
       contents: { parts: [{ inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }, { text: prompt }] }
     });
     return JSON.parse(extractJson(response.text || "{}"));
@@ -363,7 +355,7 @@ export const generateWorkoutPlan = async (userProfile: UserProfile, healthContex
   
   try {
     const response = await getAI().models.generateContent({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-2.5-flash',
       contents: prompt,
       config: { responseMimeType: "application/json" }
     });
@@ -384,7 +376,7 @@ export const calculateExerciseCalories = async (activity: string, duration: stri
     
     try {
         const response = await getAI().models.generateContent({
-            model: 'gemini-3.5-flash',
+            model: 'gemini-2.5-flash',
             contents: prompt,
         });
         const num = parseInt(response.text?.replace(/[^0-9]/g, '') || "0");
@@ -442,7 +434,7 @@ export const generateHealthyRecipes = async (userProfile: UserProfile, healthCon
   
   try {
     const response = await getAI().models.generateContent({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-2.5-flash',
       contents: prompt,
       config: { responseMimeType: "application/json" }
     });
@@ -455,7 +447,7 @@ export const analyzeProductLabel = async (imageBase64: string, mimeType: string,
   const prompt = `分析營養標示 (JSON)。結構: {productName, riskLevel, analysis, nutrientsOfInterest}`;
   try {
     const response = await getAI().models.generateContent({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-2.5-flash',
       contents: { parts: [{ inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }, { text: prompt }] }
     });
     return JSON.parse(extractJson(response.text || "{}"));
@@ -517,7 +509,7 @@ ${upcomingAppointments.length > 0 ? upcomingAppointments.map(a => `- ${a.date} $
   try {
     const ai = getAI();
     const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-2.5-flash',
       contents: prompt,
     });
     return response.text || "目前無法生成建議，請稍後再試。";
@@ -554,7 +546,7 @@ export const generateDailySummary = async (
   try {
     const ai = getAI();
     const result = await ai.models.generateContent({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-2.5-flash',
       contents: prompt,
       config: { temperature: 0.7 }
     });
