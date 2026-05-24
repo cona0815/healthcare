@@ -20,8 +20,7 @@ const callGenerativeAI = async (model: string, contents: any, config?: any) => {
 };
 
 export const getGeminiKey = (): string | null => {
-  // 優先順序：1. 環境變數 (開發時) 2. LocalStorage (部署後使用者輸入)
-  return process.env.API_KEY || localStorage.getItem('GEMINI_USER_KEY');
+  return localStorage.getItem('GEMINI_USER_KEY');
 };
 
 let aiInstance: any = null;
@@ -227,7 +226,7 @@ export const findNearbyRestaurants = async (foodName: string, lat: number, lng: 
 
   try {
     const response = await getAI().models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
       contents: `Find the 5 closest restaurants or convenience stores near lat:${lat}, lng:${lng} that serve "${foodName}". 
       
       STRICT LOCATION RULES:
