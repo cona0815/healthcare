@@ -425,30 +425,30 @@ const Dashboard: React.FC<Props> = ({
        )}
 
        {/* QUICK ACTIONS MENU */}
-       <div className="flex gap-3 overflow-x-auto pb-4 pt-1 scrollbar-hide px-1 snap-x">
+       <div className="grid grid-cols-4 gap-3 pb-4 pt-1 px-1">
            <button 
              onClick={() => onNavigate('VITALS')}
-             className="snap-start flex-shrink-0 flex items-center gap-2 bg-rose-50 text-rose-700 px-5 py-3 rounded-2xl font-bold border border-rose-100 hover:bg-rose-100 hover:border-rose-200 transition-all active:scale-95"
+             className="flex justify-center items-center bg-rose-50 text-rose-700 py-4 w-full rounded-2xl font-bold border border-rose-100 hover:bg-rose-100 hover:border-rose-200 transition-all active:scale-95"
            >
-             <HeartPulse className="w-5 h-5" /> 量血壓 / 血糖
+             <HeartPulse className="w-6 h-6" />
            </button>
            <button 
              onClick={() => onNavigate('FOOD')}
-             className="snap-start flex-shrink-0 flex items-center gap-2 bg-teal-50 text-teal-700 px-5 py-3 rounded-2xl font-bold border border-teal-100 hover:bg-teal-100 hover:border-teal-200 transition-all active:scale-95"
+             className="flex justify-center items-center bg-teal-50 text-teal-700 py-4 w-full rounded-2xl font-bold border border-teal-100 hover:bg-teal-100 hover:border-teal-200 transition-all active:scale-95"
            >
-             <Utensils className="w-5 h-5" /> 記錄飲食
+             <Utensils className="w-6 h-6" />
            </button>
            <button 
              onClick={() => onNavigate('WORKOUT')}
-             className="snap-start flex-shrink-0 flex items-center gap-2 bg-orange-50 text-orange-700 px-5 py-3 rounded-2xl font-bold border border-orange-100 hover:bg-orange-100 hover:border-orange-200 transition-all active:scale-95"
+             className="flex justify-center items-center bg-orange-50 text-orange-700 py-4 w-full rounded-2xl font-bold border border-orange-100 hover:bg-orange-100 hover:border-orange-200 transition-all active:scale-95"
            >
-             <Dumbbell className="w-5 h-5" /> 記錄運動
+             <Dumbbell className="w-6 h-6" />
            </button>
            <button 
              onClick={() => onNavigate('HEALTH_MANAGEMENT', 'APPOINTMENTS')}
-             className="snap-start flex-shrink-0 flex items-center gap-2 bg-indigo-50 text-indigo-700 px-5 py-3 rounded-2xl font-bold border border-indigo-100 hover:bg-indigo-100 hover:border-indigo-200 transition-all active:scale-95"
+             className="flex justify-center items-center bg-indigo-50 text-indigo-700 py-4 w-full rounded-2xl font-bold border border-indigo-100 hover:bg-indigo-100 hover:border-indigo-200 transition-all active:scale-95"
            >
-             <Calendar className="w-5 h-5" /> 預約回診
+             <Calendar className="w-6 h-6" />
            </button>
        </div>
 

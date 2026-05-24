@@ -52,7 +52,7 @@ const HealthChatbot: React.FC<Props> = ({ userProfile, healthReports, foodLogs }
           method: 'POST',
           headers,
           body: JSON.stringify({
-              model: 'gemini-3-flash-preview',
+              model: 'gemini-3.5-flash',
               contents,
               config: { systemInstruction }
           })
