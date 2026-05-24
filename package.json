@@ -1,0 +1,43 @@
+{
+  "name": "health-guardian-ai",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": "18.x"
+  },
+  "scripts": {
+    "dev": "tsx server.ts",
+    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "start": "node dist/server.cjs",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@google/genai": "^1.52.0",
+    "@tailwindcss/vite": "^4.2.4",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "lucide-react": "^0.475.0",
+    "motion": "^12.38.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^3.8.1",
+    "serverless-http": "^4.0.0",
+    "tailwindcss": "^4.2.4"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "18.3.1",
+    "@vitejs/plugin-react": "^4.2.1",
+    "esbuild": "^0.28.0",
+    "tsx": "^4.22.3",
+    "typescript": "^5.2.2",
+    "vite": "^5.1.4"
+  },
+  "overrides": {
+    "@types/react-dom": "18.3.1"
+  }
+}
