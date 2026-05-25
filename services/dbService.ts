@@ -10,7 +10,7 @@ export const setGasUrl = (url: string) => localStorage.setItem(GAS_URL_KEY, url)
 export const clearGasUrl = () => localStorage.removeItem(GAS_URL_KEY);
 
 // 帶有 Timeout 的 Fetch
-const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 30000) => {
+const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 60000) => {
   const controller = new AbortController();
   const id = setTimeout(() => {
     controller.abort();
@@ -79,7 +79,7 @@ export const dbService = {
             method: 'POST',
             body: JSON.stringify({ action: "read_all" }),
             headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-        }, 25000); // 測試連線給予 25 秒
+        }, 60000); // 測試連線給予 60 秒
         
         const text = await response.text();
         try {

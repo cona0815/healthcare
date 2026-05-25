@@ -15,13 +15,6 @@ export const GAS_CODE = `/**
  */
 
 function doPost(e) {
-  var lock = LockService.getScriptLock();
-  try {
-    lock.waitLock(30000); 
-  } catch (e) {
-    return createJSONOutput({status: "error", message: "Server is busy, please try again."});
-  }
-
   try {
     var para;
     try {
@@ -47,55 +40,65 @@ function doPost(e) {
       });
     }
     
-    // Save Action
-    if (action == 'save') {
-      var sheet = getOrCreateSheet(ss, para.type);
-      var data = para.data;
-      
-      // Profile: 追加模式 (Append Mode)
-      if (para.type === 'Profile') {
-         if (sheet.getLastRow() === 0) {
-             var initialHeaders = Object.keys(data);
-             sheet.appendRow(initialHeaders);
-         }
-         updateHeaders(sheet, data);
-         
-         // 直接追加新資料
-         appendData(sheet, data);
-         return createJSONOutput({status: "success", type: "Profile Appended"});
-      }
-      
-      // WorkoutPlan: 覆寫模式
-      if (para.type === 'WorkoutPlan') {
-         var lastRow = sheet.getLastRow();
-         if (lastRow > 1) {
-           sheet.deleteRows(2, lastRow - 1);
-         }
-      }
-      // 其他資料: 依 ID 更新 (刪除舊的)
-      else if (data.id) {
-         deleteById(sheet, data.id);
-      }
-  
-      appendData(sheet, data);
-      return createJSONOutput({status: "success"});
-    }
-  
-    // Delete Action
-    if (action == 'delete') {
-      var sheet = ss.getSheetByName(para.type);
-      if (sheet) {
-        deleteById(sheet, para.id);
-      }
-      return createJSONOutput({status: "deleted"});
+    // 寫入與刪除操作需要鎖定以防衝突
+    var lock = LockService.getScriptLock();
+    try {
+      lock.waitLock(30000); 
+    } catch (err) {
+      return createJSONOutput({status: "error", message: "Server is busy, please try again."});
     }
 
-    return createJSONOutput({status: "error", message: "Unknown action"});
+    try {
+      // Save Action
+      if (action == 'save') {
+        var sheet = getOrCreateSheet(ss, para.type);
+        var data = para.data;
+        
+        // Profile: 追加模式 (Append Mode)
+        if (para.type === 'Profile') {
+           if (sheet.getLastRow() === 0) {
+               var initialHeaders = Object.keys(data);
+               sheet.appendRow(initialHeaders);
+           }
+           updateHeaders(sheet, data);
+           
+           // 直接追加新資料
+           appendData(sheet, data);
+           return createJSONOutput({status: "success", type: "Profile Appended"});
+        }
+        
+        // WorkoutPlan: 覆寫模式
+        if (para.type === 'WorkoutPlan') {
+           var lastRow = sheet.getLastRow();
+           if (lastRow > 1) {
+             sheet.deleteRows(2, lastRow - 1);
+           }
+        }
+        // 其他資料: 依 ID 更新 (刪除舊的)
+        else if (data.id) {
+           deleteById(sheet, data.id);
+        }
+    
+        appendData(sheet, data);
+        return createJSONOutput({status: "success"});
+      }
+    
+      // Delete Action
+      if (action == 'delete') {
+        var sheet = ss.getSheetByName(para.type);
+        if (sheet) {
+          deleteById(sheet, para.id);
+        }
+        return createJSONOutput({status: "deleted"});
+      }
+
+      return createJSONOutput({status: "error", message: "Unknown action"});
+    } finally {
+      lock.releaseLock();
+    }
 
   } catch (error) {
     return createJSONOutput({status: "error", message: error.toString()});
-  } finally {
-    lock.releaseLock();
   }
 }
 
