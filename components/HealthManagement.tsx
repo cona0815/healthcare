@@ -646,74 +646,6 @@ const HealthManagement: React.FC<Props> = ({
                         </h4>
                         
                         <div className="space-y-4">
-                            {tempMedicationReminders.length > 0 && (
-                                <div className="space-y-4">
-                                    {tempMedicationReminders.map(reminder => (
-                                        <div key={reminder.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-white border border-blue-200 p-4 rounded-2xl shadow-sm gap-3">
-                                            <div className="flex items-center gap-4">
-                                                <div className="bg-blue-100 text-blue-700 font-bold text-lg px-4 py-2 rounded-xl flex items-center gap-1 shadow-inner">
-                                                    <Clock className="w-5 h-5" />
-                                                    {reminder.time}
-                                                </div>
-                                                <span className="font-bold text-gray-800 text-lg">{reminder.name}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 justify-end">
-                                                <button 
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        const [hours, minutes] = reminder.time.split(':');
-                                                        const now = new Date();
-                                                        const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(hours), parseInt(minutes));
-                                                        const endDate = new Date(startDate.getTime() + 15 * 60000);
-                                                        const formatDate = (date: Date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-                                                        
-                                                        const icsContent = [
-                                                            'BEGIN:VCALENDAR',
-                                                            'VERSION:2.0',
-                                                            'PRODID:-//AiStudio//HealthApp//EN',
-                                                            'BEGIN:VEVENT',
-                                                            `DTSTART:${formatDate(startDate)}`,
-                                                            `DTEND:${formatDate(endDate)}`,
-                                                            'RRULE:FREQ=DAILY',
-                                                            `SUMMARY:吃藥提醒 - ${reminder.name}`,
-                                                            'DESCRIPTION:提醒您到了吃藥時間囉！',
-                                                            'BEGIN:VALARM',
-                                                            'TRIGGER:-PT0M',
-                                                            'ACTION:DISPLAY',
-                                                            'DESCRIPTION:吃藥提醒',
-                                                            'END:VALARM',
-                                                            'END:VEVENT',
-                                                            'END:VCALENDAR'
-                                                        ].join('\\n');
-                                                        
-                                                        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-                                                        const url = window.URL.createObjectURL(blob);
-                                                        const link = document.createElement('a');
-                                                        link.href = url;
-                                                        link.setAttribute('download', `提醒_${reminder.name}.ics`);
-                                                        document.body.appendChild(link);
-                                                        link.click();
-                                                        document.body.removeChild(link);
-                                                    }}
-                                                    className="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-4 py-2 rounded-xl font-bold flex items-center gap-1 transition-colors text-sm"
-                                                >
-                                                    <CalendarDays className="w-4 h-4" /> 加入手機提醒
-                                                </button>
-                                                <button 
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        setTempMedicationReminders(tempMedicationReminders.filter(r => r.id !== reminder.id));
-                                                    }}
-                                                    className="bg-red-50 hover:bg-red-100 text-red-500 p-2 rounded-xl transition-colors"
-                                                >
-                                                    <X className="w-5 h-5" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
                             <div className="bg-white p-5 rounded-2xl border-2 border-blue-200 border-dashed space-y-4">
                                 <label className="text-base font-bold text-gray-800 block">新增吃藥提醒</label>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
@@ -763,8 +695,8 @@ const HealthManagement: React.FC<Props> = ({
                                                     setTempMedicationReminders([...safeCurrent, {
                                                         id: Date.now().toString(),
                                                         name: newMedName.trim(),
-                                                        time: newMedTime
-                                                    }].sort((a, b) => a.time.localeCompare(b.time)));
+                                                        time: newMedTime || '08:00'
+                                                    }].sort((a, b) => (a.time || '').localeCompare(b.time || '')));
                                                     setNewMedName('');
                                                 }
                                             }
@@ -772,6 +704,7 @@ const HealthManagement: React.FC<Props> = ({
                                         className="flex-1 p-4 text-lg border-2 border-blue-200 bg-white text-gray-900 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none font-bold placeholder:text-gray-400"
                                     />
                                     <button
+                                        type="button"
                                         onClick={(e) => {
                                             e.preventDefault();
                                             if (newMedName.trim() && newMedTime) {
@@ -779,8 +712,8 @@ const HealthManagement: React.FC<Props> = ({
                                                 setTempMedicationReminders([...safeCurrent, {
                                                     id: Date.now().toString(),
                                                     name: newMedName.trim(),
-                                                    time: newMedTime
-                                                }].sort((a, b) => a.time.localeCompare(b.time)));
+                                                    time: newMedTime || '08:00'
+                                                }].sort((a, b) => (a.time || '').localeCompare(b.time || '')));
                                                 setNewMedName('');
                                             }
                                         }}
@@ -790,6 +723,75 @@ const HealthManagement: React.FC<Props> = ({
                                     </button>
                                 </div>
                             </div>
+                            
+                            {tempMedicationReminders.length > 0 && (
+                                <div className="space-y-4 mt-6">
+                                    <h4 className="font-bold text-gray-800 mb-2">已設定的提醒：</h4>
+                                    {tempMedicationReminders.map(reminder => (
+                                        <div key={reminder.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-white border border-blue-200 p-4 rounded-2xl shadow-sm gap-3 animate-fade-in">
+                                            <div className="flex items-center gap-4">
+                                                <div className="bg-blue-100 text-blue-700 font-bold text-lg px-4 py-2 rounded-xl flex items-center gap-1 shadow-inner">
+                                                    <Clock className="w-5 h-5" />
+                                                    {reminder.time}
+                                                </div>
+                                                <span className="font-bold text-gray-800 text-lg">{reminder.name}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 justify-end">
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        const [hours, minutes] = reminder.time.split(':');
+                                                        const now = new Date();
+                                                        const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(hours), parseInt(minutes));
+                                                        const endDate = new Date(startDate.getTime() + 15 * 60000);
+                                                        const formatDate = (date: Date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                                                        
+                                                        const icsContent = [
+                                                            'BEGIN:VCALENDAR',
+                                                            'VERSION:2.0',
+                                                            'PRODID:-//AiStudio//HealthApp//EN',
+                                                            'BEGIN:VEVENT',
+                                                            `DTSTART:${formatDate(startDate)}`,
+                                                            `DTEND:${formatDate(endDate)}`,
+                                                            'RRULE:FREQ=DAILY',
+                                                            `SUMMARY:吃藥提醒 - ${reminder.name}`,
+                                                            'DESCRIPTION:提醒您到了吃藥時間囉！',
+                                                            'BEGIN:VALARM',
+                                                            'TRIGGER:-PT0M',
+                                                            'ACTION:DISPLAY',
+                                                            'DESCRIPTION:吃藥提醒',
+                                                            'END:VALARM',
+                                                            'END:VEVENT',
+                                                            'END:VCALENDAR'
+                                                        ].join('\n');
+                                                        
+                                                        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                                                        const url = window.URL.createObjectURL(blob);
+                                                        const link = document.createElement('a');
+                                                        link.href = url;
+                                                        link.setAttribute('download', `提醒_${reminder.name}.ics`);
+                                                        document.body.appendChild(link);
+                                                        link.click();
+                                                        document.body.removeChild(link);
+                                                    }}
+                                                    className="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-4 py-2 rounded-xl font-bold flex items-center gap-1 transition-colors text-sm"
+                                                >
+                                                    <CalendarDays className="w-4 h-4" /> 加入手機提醒
+                                                </button>
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        setTempMedicationReminders(tempMedicationReminders.filter(r => r.id !== reminder.id));
+                                                    }}
+                                                    className="bg-red-50 hover:bg-red-100 text-red-500 p-2 rounded-xl transition-colors"
+                                                >
+                                                    <X className="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
