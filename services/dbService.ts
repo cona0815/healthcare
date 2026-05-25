@@ -173,6 +173,10 @@ export const dbService = {
     } else {
         profile.weightHistory = [];
     }
+    
+    // Ensure new arrays
+    profile.medicationReminders = ensureArray(profile.medicationReminders);
+    profile.dailyHealthLogs = ensureArray(profile.dailyHealthLogs);
 
     return {
       foodLogs,

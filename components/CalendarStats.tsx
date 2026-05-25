@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { FoodAnalysis, RiskLevel, WorkoutLog, SavedAppointment } from '../types';
+import { FoodAnalysis, RiskLevel, WorkoutLog, SavedAppointment, UserProfile } from '../types';
 import { ChevronLeft, ChevronRight, Flame, Filter, Target, TrendingUp, Utensils, Calendar as CalendarIcon, Dumbbell, MapPin, Syringe, Bell, ExternalLink, ChevronDown, ChevronUp, Pill, Clock } from 'lucide-react';
 import AnalysisResultCard from './AnalysisResultCard';
 
@@ -8,6 +8,7 @@ interface Props {
   workoutLogs: WorkoutLog[];
   appointments: SavedAppointment[];
   onUpdateLog: (timestamp: string, updatedLog: FoodAnalysis) => void;
+  userProfile?: UserProfile;
 }
 
 const DAILY_CALORIE_GOAL = 2000;
@@ -167,6 +168,10 @@ const CalendarStats: React.FC<Props> = ({ logs, workoutLogs, appointments, onUpd
   const selectedWorkouts = workoutsByDate[selectedDate] || [];
   const selectedApptEvents = appointmentsEventsByDate[selectedDate] || [];
   
+  const selectedDailyLog = userProfile?.dailyHealthLogs?.find(l => l.date === selectedDate);
+  const selectedTakenMedsCount = selectedDailyLog?.medicationsTaken?.length || 0;
+  const totalMedsCount = userProfile?.medicationReminders?.length || 0;
+  
   const totalCalories = selectedFoodLogs.reduce((sum, log) => sum + log.calories, 0);
   const caloriePercentage = Math.min(100, Math.round((totalCalories / DAILY_CALORIE_GOAL) * 100));
   
@@ -231,6 +236,11 @@ const CalendarStats: React.FC<Props> = ({ logs, workoutLogs, appointments, onUpd
       const isSelected = selectedDate === dateStr;
       const isToday = new Date().toISOString().split('T')[0] === dateStr;
       
+      const dailyLogContext = userProfile?.dailyHealthLogs?.find(l => l.date === dateStr);
+      const takenMedsCount = dailyLogContext?.medicationsTaken?.length || 0;
+      const totalMedsCount = userProfile?.medicationReminders?.length || 0;
+      const medsStatus = totalMedsCount > 0 ? (takenMedsCount === totalMedsCount ? 'ALL' : takenMedsCount > 0 ? 'SOME' : 'NONE') : 'NONE';
+      
       const calsPercent = Math.min(100, (dayCalories / DAILY_CALORIE_GOAL) * 100);
 
       days.push(
@@ -261,6 +271,9 @@ const CalendarStats: React.FC<Props> = ({ logs, workoutLogs, appointments, onUpd
                  )}
                  {dayWorkouts && dayWorkouts.length > 0 && (
                      <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-orange-500"></div>
+                 )}
+                 {medsStatus !== 'NONE' && (
+                     <Pill className={`w-2.5 h-2.5 md:w-3.5 md:h-3.5 ${medsStatus === 'ALL' ? 'text-emerald-500' : 'text-emerald-300'}`} />
                  )}
              </div>
           </div>
@@ -393,6 +406,27 @@ const CalendarStats: React.FC<Props> = ({ logs, workoutLogs, appointments, onUpd
                         })
                     ) : (
                         <p className="text-sm text-gray-400 text-center py-2">本日無醫療行程</p>
+                    )}
+                    
+                    {/* Medication Status */}
+                    {totalMedsCount > 0 && (
+                        <div className="mt-4 pt-4 border-t border-purple-100">
+                             <h4 className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3"><Pill className="w-4 h-4 text-emerald-500" /> 服藥檢核 ({selectedTakenMedsCount}/{totalMedsCount})</h4>
+                             <div className="space-y-2">
+                                 {userProfile?.medicationReminders?.map(reminder => {
+                                      const isTaken = selectedDailyLog?.medicationsTaken?.includes(reminder.id);
+                                      return (
+                                          <div key={reminder.id} className="flex items-center justify-between text-sm p-2 rounded-lg bg-gray-50 border border-gray-100">
+                                              <div className="flex items-center gap-2">
+                                                  <div className={`w-2 h-2 rounded-full ${isTaken ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
+                                                  <span className={`font-medium ${isTaken ? 'text-gray-800' : 'text-gray-500 line-through opacity-70'}`}>{reminder.name}</span>
+                                              </div>
+                                              <span className="text-gray-500 font-mono text-xs"><Clock className="w-3 h-3 inline mr-1" />{reminder.time}</span>
+                                          </div>
+                                      );
+                                 })}
+                             </div>
+                        </div>
                     )}
                 </div>
             )}

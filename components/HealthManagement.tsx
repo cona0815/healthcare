@@ -705,16 +705,38 @@ const HealthManagement: React.FC<Props> = ({
                                     />
                                     <button
                                         type="button"
-                                        onClick={(e) => {
+                                        onClick={async (e) => {
                                             e.preventDefault();
                                             if (newMedName.trim() && newMedTime) {
                                                 const safeCurrent = Array.isArray(tempMedicationReminders) ? tempMedicationReminders : [];
-                                                setTempMedicationReminders([...safeCurrent, {
+                                                const newReminders = [...safeCurrent, {
                                                     id: Date.now().toString(),
                                                     name: newMedName.trim(),
                                                     time: newMedTime || '08:00'
-                                                }].sort((a, b) => (a.time || '').localeCompare(b.time || '')));
+                                                }].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+                                                setTempMedicationReminders(newReminders);
                                                 setNewMedName('');
+                                                
+                                                // Auto-save
+                                                setIsSaving(true);
+                                                const updatedProfile = { 
+                                                    ...userProfile,
+                                                    name: tempName, 
+                                                    height: tempHeight, 
+                                                    weight: tempWeight,
+                                                    gender: tempGender,
+                                                    birthDate: tempBirthDate,
+                                                    activityLevel: tempActivity,
+                                                    targetDeficit: tempDeficit,
+                                                    dietaryPreferences: tempDietary,
+                                                    allergies: tempAllergies,
+                                                    medicalConditions: tempMedical,
+                                                    medicationReminders: newReminders
+                                                };
+                                                try {
+                                                    await onUpdateProfile(updatedProfile);
+                                                } catch (err) {}
+                                                setIsSaving(false);
                                             }
                                         }}
                                         className="bg-blue-600 text-white px-6 py-4 rounded-xl font-bold flex items-center justify-center hover:bg-blue-700 transition-colors shadow-lg active:scale-95 text-lg whitespace-nowrap"
@@ -779,9 +801,21 @@ const HealthManagement: React.FC<Props> = ({
                                                     <CalendarDays className="w-4 h-4" /> 加入手機提醒
                                                 </button>
                                                 <button 
-                                                    onClick={(e) => {
+                                                    onClick={async (e) => {
                                                         e.preventDefault();
-                                                        setTempMedicationReminders(tempMedicationReminders.filter(r => r.id !== reminder.id));
+                                                        const newReminders = tempMedicationReminders.filter(r => r.id !== reminder.id);
+                                                        setTempMedicationReminders(newReminders);
+                                                        
+                                                        setIsSaving(true);
+                                                        const updatedProfile = { 
+                                                            ...userProfile,
+                                                            name: tempName, height: tempHeight, weight: tempWeight,
+                                                            gender: tempGender, birthDate: tempBirthDate, activityLevel: tempActivity, targetDeficit: tempDeficit,
+                                                            dietaryPreferences: tempDietary, allergies: tempAllergies, medicalConditions: tempMedical,
+                                                            medicationReminders: newReminders
+                                                        };
+                                                        try { await onUpdateProfile(updatedProfile); } catch (err) {}
+                                                        setIsSaving(false);
                                                     }}
                                                     className="bg-red-50 hover:bg-red-100 text-red-500 p-2 rounded-xl transition-colors"
                                                 >

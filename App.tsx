@@ -282,7 +282,7 @@ const App: React.FC = () => {
           </div>
         );
       case 'CALENDAR':
-        return <CalendarStats logs={foodLogs} workoutLogs={workoutLogs} appointments={appointments} onUpdateLog={handleUpdateLog} />;
+        return <CalendarStats logs={foodLogs} workoutLogs={workoutLogs} appointments={appointments} onUpdateLog={handleUpdateLog} userProfile={userProfile} />;
       case 'WORKOUT':
         return (
           <WorkoutPlanner 
