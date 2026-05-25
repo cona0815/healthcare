@@ -112,11 +112,18 @@ export const fileToGenerativePart = async (file: File): Promise<string> => {
 
 const extractJson = (text: string): string => {
   try {
-    const start = text.indexOf('{');
-    const end = text.lastIndexOf('}');
-    if (start !== -1 && end !== -1) {
-      return text.substring(start, end + 1);
+    const objStart = text.indexOf('{');
+    const objEnd = text.lastIndexOf('}');
+    const arrStart = text.indexOf('[');
+    const arrEnd = text.lastIndexOf(']');
+    
+    // Choose whichever encloses the other
+    if (objStart !== -1 && objEnd !== -1 && (arrStart === -1 || (objStart < arrStart && objEnd > arrEnd))) {
+        return text.substring(objStart, objEnd + 1);
+    } else if (arrStart !== -1 && arrEnd !== -1) {
+        return text.substring(arrStart, arrEnd + 1);
     }
+    
     return text.replace(/```json/g, '').replace(/```/g, '').trim();
   } catch (e) {
     return text;
@@ -188,10 +195,7 @@ export const analyzeFoodImage = async (
 
   try {
     // 雖然傳入 mimeType，但因為 fileToGenerativePart 已經轉成 JPEG，這裡強制使用 jpeg
-    const response = await getAI().models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: { parts: [{ inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }, { text: prompt }] }
-    });
+    const response = await callGenerativeAI('gemini-2.5-flash', { parts: [{ inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }, { text: prompt }] });
     const data = JSON.parse(extractJson(response.text || "{}"));
     return { ...data, timestamp: new Date().toISOString() };
   } catch (error) { throw error; }
@@ -213,11 +217,7 @@ export const generateFoodSuggestions = async (healthContext?: HealthReport, user
   結構: [{name, description, calories, riskLevel (SAFE/MODERATE), reason, tags}]`;
   
   try {
-    const response = await getAI().models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: { responseMimeType: "application/json" }
-    });
+    const response = await callGenerativeAI('gemini-2.5-flash', prompt, { responseMimeType: "application/json" });
     return JSON.parse(response.text || "[]");
   } catch (error) { return []; }
 };
@@ -227,20 +227,16 @@ export const findNearbyRestaurants = async (foodName: string, lat: number, lng: 
   const genericResult: Restaurant = { name: `🔍 在地圖搜尋「${foodName}」`, uri: genericSearchUri };
 
   try {
-    const response = await getAI().models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Find the 5 closest restaurants or convenience stores near lat:${lat}, lng:${lng} that serve "${foodName}". 
+    const response = await callGenerativeAI("gemini-2.5-flash", `Find the 5 closest restaurants or convenience stores near lat:${lat}, lng:${lng} that serve "${foodName}". 
       
       STRICT LOCATION RULES:
       1. **MAXIMUM RADIUS IS 3 KM**. The user is walking or riding a scooter nearby.
       2. **CRITICAL**: Check the address carefully. If the user is in City A, DO NOT show results from City B. 
       3. Use Google Maps to find places EXACTLY at lat:${lat}, lng:${lng}.
       
-      Response Format: A list of places with their Google Maps URLs.`,
-      config: { 
-          tools: [{ googleMaps: {} }, { googleSearch: {} }], 
-          toolConfig: { retrievalConfig: { latLng: { latitude: lat, longitude: lng } } } 
-      },
+      Response Format: A list of places with their Google Maps URLs.`, { 
+        tools: [{ googleMaps: {} }, { googleSearch: {} }], 
+        toolConfig: { retrievalConfig: { latLng: { latitude: lat, longitude: lng } } } 
     });
     
     const places: Restaurant[] = [];
@@ -291,10 +287,7 @@ export const analyzeHealthReport = async (imageBase64: string, mimeType: string)
     const isImage = mimeType.startsWith('image/');
     const finalMime = isImage ? 'image/jpeg' : mimeType;
     
-    const response = await getAI().models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: { parts: [{ inlineData: { mimeType: finalMime, data: imageBase64 } }, { text: prompt }] }
-    });
+    const response = await callGenerativeAI('gemini-2.5-flash', { parts: [{ inlineData: { mimeType: finalMime, data: imageBase64 } }, { text: prompt }] });
     return { ...JSON.parse(extractJson(response.text || "{}")), analyzedAt: new Date().toISOString() };
   } catch (error) { throw error; }
 };
@@ -317,10 +310,7 @@ export const extractAppointmentDetails = async (imageBase64: string, mimeType: s
     const isImage = mimeType.startsWith('image/');
     const finalMime = isImage ? 'image/jpeg' : mimeType;
 
-    const response = await getAI().models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: { parts: [{ inlineData: { mimeType: finalMime, data: imageBase64 } }, { text: prompt }] }
-    });
+    const response = await callGenerativeAI('gemini-2.5-flash', { parts: [{ inlineData: { mimeType: finalMime, data: imageBase64 } }, { text: prompt }] });
     return JSON.parse(extractJson(response.text || "{}"));
   } catch (error) { throw error; }
 };
@@ -329,10 +319,7 @@ export const analyzeMedication = async (imageBase64: string, mimeType: string, h
   const warnings = healthContext?.metrics.filter(m => m.status !== 'Normal').map(m => m.name).join('、') || "無";
   const prompt = `分析藥袋/保健品 (繁體中文 JSON)。比對健檢警訊：${warnings}。結構: {name, indication, usage, sideEffects, interactionWarning, riskLevel (SAFE/DANGEROUS)}`;
   try {
-    const response = await getAI().models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: { parts: [{ inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }, { text: prompt }] }
-    });
+    const response = await callGenerativeAI('gemini-2.5-flash', { parts: [{ inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }, { text: prompt }] });
     return JSON.parse(extractJson(response.text || "{}"));
   } catch (error) { throw error; }
 };
@@ -354,11 +341,7 @@ export const generateWorkoutPlan = async (userProfile: UserProfile, healthContex
   `;
   
   try {
-    const response = await getAI().models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: { responseMimeType: "application/json" }
-    });
+    const response = await callGenerativeAI('gemini-2.5-flash', prompt, { responseMimeType: "application/json" });
     return JSON.parse(response.text || "[]");
   } catch (error) { return []; }
 };
@@ -375,10 +358,7 @@ export const calculateExerciseCalories = async (activity: string, duration: stri
     `;
     
     try {
-        const response = await getAI().models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-        });
+        const response = await callGenerativeAI('gemini-2.5-flash', prompt);
         const num = parseInt(response.text?.replace(/[^0-9]/g, '') || "0");
         return isNaN(num) ? 0 : num;
     } catch (error) {
@@ -433,11 +413,7 @@ export const generateHealthyRecipes = async (userProfile: UserProfile, healthCon
   `;
   
   try {
-    const response = await getAI().models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: { responseMimeType: "application/json" }
-    });
+    const response = await callGenerativeAI('gemini-2.5-flash', prompt, { responseMimeType: "application/json" });
     const raw: any[] = JSON.parse(response.text || "[]");
     return raw.map(r => ({ ...r, id: Date.now().toString() + Math.random().toString().slice(2, 6) }));
   } catch (error) { return []; }
@@ -446,10 +422,7 @@ export const generateHealthyRecipes = async (userProfile: UserProfile, healthCon
 export const analyzeProductLabel = async (imageBase64: string, mimeType: string, healthContext?: HealthReport): Promise<ProductLabelAnalysis> => {
   const prompt = `分析營養標示 (JSON)。結構: {productName, riskLevel, analysis, nutrientsOfInterest}`;
   try {
-    const response = await getAI().models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: { parts: [{ inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }, { text: prompt }] }
-    });
+    const response = await callGenerativeAI('gemini-2.5-flash', { parts: [{ inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }, { text: prompt }] });
     return JSON.parse(extractJson(response.text || "{}"));
   } catch (error) { throw error; }
 };
@@ -488,7 +461,7 @@ export const generateHealthAssistantAdvice = async (
 身高: ${userProfile.height} / 體重: ${userProfile.weight}
 
 【最近飲食】
-${recentFood.map(f => `- ${f.name} (${f.nutritionalInfo?.calories || 0}大卡)`).join('\n')}
+${recentFood.map(f => `- ${f.foodName} (${f.calories || 0}大卡)`).join('\n')}
 
 【最近運動】
 ${recentWorkouts.map(w => `- ${w.activity} (${w.duration}分鐘, 消耗 ${w.caloriesBurned || 0}大卡)`).join('\n')}
@@ -499,7 +472,7 @@ ${recentVitals.map(v => v.type === 'blood_pressure'
     : `- ${v.date} 血糖: ${v.bloodSugar} mg/dL (${v.bloodSugarContext})`).join('\n')}
 
 【近期預約/回診 (七天內)】
-${upcomingAppointments.length > 0 ? upcomingAppointments.map(a => `- ${a.date} ${a.time} ${a.clinic} ${a.department} (${a.type === 'FOLLOWUP' ? '回診' : a.type === 'BLOOD_TEST' ? '抽血/檢驗' : '初診'})`).join('\n') : '無近七天預約'}
+${upcomingAppointments.length > 0 ? upcomingAppointments.map(a => `- ${a.date} ${a.time} ${a.title} ${a.doctor} (${a.location})`).join('\n') : '無近七天預約'}
 
 請根據以上資料，產生一段約 30-50 字的簡短貼心提醒（包含一兩個小亮點或建議）。
 若有【近期預約/回診】，請務必提醒回診或抽血等行程（若是今天，請加強提醒語氣）。
@@ -507,11 +480,7 @@ ${upcomingAppointments.length > 0 ? upcomingAppointments.map(a => `- ${a.date} $
 `;
 
   try {
-    const ai = getAI();
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
+    const response = await callGenerativeAI('gemini-2.5-flash', prompt);
     return response.text || "目前無法生成建議，請稍後再試。";
   } catch (error) {
     console.error("Gemini API Error (Assistant):", error);
@@ -544,12 +513,7 @@ export const generateDailySummary = async (
 3. 不需使用 Markdown 或項目符號，直接撰寫 2-3 個段落。`;
 
   try {
-    const ai = getAI();
-    const result = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: { temperature: 0.7 }
-    });
+    const result = await callGenerativeAI('gemini-2.5-flash', prompt, { temperature: 0.7 });
     return result.text() || '太棒了！今天也是健康充實的一天。';
   } catch (err: any) {
     console.error("Daily summary generation error", err);

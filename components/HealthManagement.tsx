@@ -759,7 +759,8 @@ const HealthManagement: React.FC<Props> = ({
                                             if (e.key === 'Enter') {
                                                 e.preventDefault();
                                                 if (newMedName.trim() && newMedTime) {
-                                                    setTempMedicationReminders([...tempMedicationReminders, {
+                                                    const safeCurrent = Array.isArray(tempMedicationReminders) ? tempMedicationReminders : [];
+                                                    setTempMedicationReminders([...safeCurrent, {
                                                         id: Date.now().toString(),
                                                         name: newMedName.trim(),
                                                         time: newMedTime
@@ -774,7 +775,8 @@ const HealthManagement: React.FC<Props> = ({
                                         onClick={(e) => {
                                             e.preventDefault();
                                             if (newMedName.trim() && newMedTime) {
-                                                setTempMedicationReminders([...tempMedicationReminders, {
+                                                const safeCurrent = Array.isArray(tempMedicationReminders) ? tempMedicationReminders : [];
+                                                setTempMedicationReminders([...safeCurrent, {
                                                     id: Date.now().toString(),
                                                     name: newMedName.trim(),
                                                     time: newMedTime

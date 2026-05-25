@@ -51,6 +51,13 @@ const Dashboard: React.FC<Props> = ({
   const [loadingAssistant, setLoadingAssistant] = useState(true);
   const [showAssistant, setShowAssistant] = useState(false);
   
+  const getGreeting = () => {
+      const hour = today.getHours();
+      if (hour >= 5 && hour < 12) return '早安';
+      if (hour >= 12 && hour < 18) return '午安';
+      return '晚安';
+  };
+
   const cameraInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleCameraChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -364,7 +371,7 @@ const Dashboard: React.FC<Props> = ({
        <div className="mb-2 px-1">
           <div>
             <h2 className="text-3xl font-heading font-black text-gray-900 tracking-tight">
-              早安，{userProfile.name || '健康夥伴'}
+              {getGreeting()}，{userProfile.name || '健康夥伴'}
             </h2>
             <p className="text-gray-500 text-sm font-medium mt-1 uppercase tracking-widest">
               {today.toLocaleDateString('zh-TW', { month: 'long', day: 'numeric', weekday: 'long' })}
@@ -542,7 +549,10 @@ const Dashboard: React.FC<Props> = ({
                      <h3 className="font-heading font-black text-gray-900 text-lg">今日服藥檢核</h3>
                   </div>
                   <button onClick={() => {
-                      onNavigate('HEALTH_MANAGEMENT', 'MEDICATION');
+                      onNavigate('HEALTH_MANAGEMENT', 'PROFILE');
+                      setTimeout(() => {
+                          document.getElementById('medication-settings')?.scrollIntoView({ behavior: 'smooth' });
+                      }, 100);
                   }} className="text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition-colors">
                     新增設定
                   </button>
