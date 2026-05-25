@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, FileText, Calendar, Ruler, Weight, Activity, Pill, UserCircle, Settings, Key, Database, Save, Eye, EyeOff, Code, Copy, Check, TrendingUp, Plus, History, Trash2, Zap, CalendarDays, ChevronDown, Target, Flame, Loader2, UtensilsCrossed, AlertCircle, X } from 'lucide-react';
+import { User, FileText, Calendar, Ruler, Weight, Activity, Pill, UserCircle, Settings, Key, Database, Save, Eye, EyeOff, Code, Copy, Check, TrendingUp, Plus, History, Trash2, Zap, CalendarDays, ChevronDown, Target, Flame, Loader2, UtensilsCrossed, AlertCircle, X, Clock } from 'lucide-react';
 import { UserProfile, HealthReport, SavedAppointment, Gender, ActivityLevel } from '../types';
 import HealthReportAnalyzer from './HealthReportAnalyzer';
 import AppointmentScheduler from './AppointmentScheduler';

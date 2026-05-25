@@ -53,8 +53,11 @@ const callGasApi = async (data: any) => {
 
     const json = await response.json();
     return json;
-  } catch (error) {
+  } catch (error: any) {
     console.error("GAS API Error:", error);
+    if (error.message === 'Failed to fetch' || (error.cause && error.cause.message === 'Failed to fetch')) {
+        throw new Error("網路連線失敗 (Failed to fetch)。請檢查您的 GAS 網址是否正確 (需為 /exec 結尾)，或是您的瀏覽器擴充功能(如廣告阻擋)可能阻擋了連線。");
+    }
     throw error;
   }
 };
@@ -99,6 +102,9 @@ export const dbService = {
         }
     } catch (e: any) {
         console.error("Connection test network error", e);
+        if (e.message === 'Failed to fetch' || (e.cause && e.cause.message === 'Failed to fetch')) {
+             throw new Error("網路連線錯誤 (Failed to fetch)。請檢查網址是否完整，並確認瀏覽器無阻擋跨站請求 (CORS)。");
+        }
         throw e; // 讓 UI 顯示錯誤
     }
   },
