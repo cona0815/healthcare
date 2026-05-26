@@ -178,8 +178,8 @@ const GroceryAssistant: React.FC<Props> = ({ userProfile, healthReport, savedRec
     try {
       const data = await generateHealthyRecipes(userProfile, healthReport || undefined);
       setRecipes(data);
-    } catch(e) { 
-        alert("生成食譜失敗，請稍後再試"); 
+    } catch(e: any) { 
+        alert(e.message || "生成食譜失敗，請稍後再試"); 
     } finally { 
         setLoading(false); 
     }

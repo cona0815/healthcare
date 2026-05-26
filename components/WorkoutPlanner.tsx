@@ -42,8 +42,8 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
     try {
       const data = await generateWorkoutPlan(userProfile, healthReport || undefined);
       onSavePlan(data);
-    } catch (e) {
-      alert("生成失敗");
+    } catch (e: any) {
+      alert(e.message || "生成失敗");
     } finally {
       setLoading(false);
     }

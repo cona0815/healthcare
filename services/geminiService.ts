@@ -219,8 +219,13 @@ export const generateFoodSuggestions = async (healthContext?: HealthReport, user
   
   try {
     const response = await callGenerativeAI('gemini-2.5-flash', prompt, { responseMimeType: "application/json" });
-    return JSON.parse(response.text || "[]");
-  } catch (error) { return []; }
+    return JSON.parse(extractJson(response.text || "[]"));
+  } catch (error: any) {
+    if (error.message && error.message.includes("API key not valid")) {
+      throw new Error("無效的 Gemini API Key，請至系統設定檢查。");
+    }
+    throw error;
+  }
 };
 
 export const findNearbyRestaurants = async (foodName: string, lat: number, lng: number): Promise<Restaurant[]> => {
@@ -343,8 +348,13 @@ export const generateWorkoutPlan = async (userProfile: UserProfile, healthContex
   
   try {
     const response = await callGenerativeAI('gemini-2.5-flash', prompt, { responseMimeType: "application/json" });
-    return JSON.parse(response.text || "[]");
-  } catch (error) { return []; }
+    return JSON.parse(extractJson(response.text || "[]"));
+  } catch (error: any) {
+    if (error.message && error.message.includes("API key not valid")) {
+      throw new Error("無效的 Gemini API Key，請至系統設定檢查。");
+    }
+    throw error;
+  }
 };
 
 export const calculateExerciseCalories = async (activity: string, duration: string, userProfile: UserProfile): Promise<number> => {
@@ -415,9 +425,14 @@ export const generateHealthyRecipes = async (userProfile: UserProfile, healthCon
   
   try {
     const response = await callGenerativeAI('gemini-2.5-flash', prompt, { responseMimeType: "application/json" });
-    const raw: any[] = JSON.parse(response.text || "[]");
+    const raw: any[] = JSON.parse(extractJson(response.text || "[]"));
     return raw.map(r => ({ ...r, id: Date.now().toString() + Math.random().toString().slice(2, 6) }));
-  } catch (error) { return []; }
+  } catch (error: any) { 
+    if (error.message && error.message.includes("API key not valid")) {
+      throw new Error("無效的 Gemini API Key，請至系統設定檢查。");
+    }
+    throw error;
+  }
 };
 
 export const analyzeProductLabel = async (imageBase64: string, mimeType: string, healthContext?: HealthReport): Promise<ProductLabelAnalysis> => {
@@ -515,7 +530,7 @@ export const generateDailySummary = async (
 
   try {
     const result = await callGenerativeAI('gemini-2.5-flash', prompt, { temperature: 0.7 });
-    return result.text() || '太棒了！今天也是健康充實的一天。';
+    return result.text || '太棒了！今天也是健康充實的一天。';
   } catch (err: any) {
     console.error("Daily summary generation error", err);
     throw new Error('伺服器目前繁忙中，暫時無法生成總結。');

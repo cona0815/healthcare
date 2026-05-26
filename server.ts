@@ -6,6 +6,9 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+console.log("SERVER START - GEMINI_API_KEY:", process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 10) : 'missing');
+console.log("SERVER START - API_KEY:", process.env.API_KEY ? process.env.API_KEY.substring(0, 10) : 'missing');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -17,18 +20,32 @@ const getGeminiClient = (req: express.Request) => {
   
   // Prefer client-provided key first (since the app has a Settings input for it)
   const clientKey = req.headers['authorization']?.replace('Bearer ', '');
-  if (clientKey && clientKey.length > 5) {
-     return new GoogleGenAI({ apiKey: clientKey, httpOptions });
+  if (clientKey && clientKey.length > 5 && clientKey !== "null") {
+     return new GoogleGenAI({ apiKey: clientKey });
   }
 
   // Option to use the server's environment variable (Secure)
-  const serverKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+  const serverKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  console.log("SERVER KEY USED length:", serverKey ? serverKey.length : 0);
   if (serverKey) {
-    return new GoogleGenAI({ apiKey: serverKey, httpOptions });
+    return new GoogleGenAI({ apiKey: serverKey });
   }
   
   throw new Error("Missing Gemini API Key in server environment");
 };
+
+app.get("/api/debug", (req, res) => {
+  const clientKey = req.headers['authorization']?.replace('Bearer ', '') || '';
+  const serverKey = process.env.GEMINI_API_KEY || process.env.API_KEY || '';
+  res.json({
+    clientKeyLength: clientKey.length,
+    clientKeyPrefix: clientKey.substring(0, 5),
+    serverKeyLength: serverKey.length,
+    serverKeyPrefix: serverKey.substring(0, 5),
+    rawGenKey: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 10) : 'none',
+    rawApiKey: process.env.API_KEY ? process.env.API_KEY.substring(0, 10) : 'none'
+  });
+});
 
 // Generic endpoint for generateContent
 app.post("/api/gemini/generateContent", async (req, res) => {
