@@ -89,63 +89,63 @@ const VitalsTracker: React.FC<Props> = ({ vitalsRecords, onSaveRecord }) => {
         {!showHistory ? (
           <div className="p-6 md:p-8 space-y-8 animate-fade-in">
             {/* Tabs */}
-            <div className="flex gap-4 p-2 bg-gray-100 rounded-2xl w-full">
+            <div className="flex gap-2 p-1.5 bg-gray-100 rounded-2xl w-full mb-4">
               <button
                 onClick={() => setActiveTab('blood_pressure')}
-                className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-xl text-xl font-bold transition-all ${
-                  activeTab === 'blood_pressure' ? 'bg-white text-rose-600 shadow-md transform scale-[1.02]' : 'text-gray-500 hover:text-gray-700'
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-lg font-bold transition-all ${
+                  activeTab === 'blood_pressure' ? 'bg-white text-rose-600 shadow-sm transform scale-[1.02]' : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                <HeartPulse className="w-7 h-7" /> 量血壓
+                <HeartPulse className="w-5 h-5" /> 量血壓
               </button>
               <button
                 onClick={() => setActiveTab('blood_sugar')}
-                className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-xl text-xl font-bold transition-all ${
-                  activeTab === 'blood_sugar' ? 'bg-white text-blue-600 shadow-md transform scale-[1.02]' : 'text-gray-500 hover:text-gray-700'
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-lg font-bold transition-all ${
+                  activeTab === 'blood_sugar' ? 'bg-white text-blue-600 shadow-sm transform scale-[1.02]' : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                <Droplets className="w-7 h-7" /> 量血糖
+                <Droplets className="w-5 h-5" /> 量血糖
               </button>
             </div>
 
             {/* Content Form */}
             {activeTab === 'blood_pressure' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-rose-50/50 p-6 rounded-2xl border-2 border-rose-100">
-                    <label className="block text-xl font-black text-rose-900 mb-4">收縮壓 (高的數值)</label>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3 md:gap-4">
+                  <div className="bg-rose-50/50 p-4 rounded-xl border-2 border-rose-100 flex flex-col justify-between">
+                    <label className="block text-sm sm:text-base font-black text-rose-900 mb-2">收縮壓 (高)</label>
                     <input 
                       type="number" 
                       inputMode="decimal"
                       pattern="[0-9]*"
                       value={systolic}
                       onChange={(e) => setSystolic(e.target.value)}
-                      placeholder="如: 120"
-                      className="w-full text-center text-4xl p-6 bg-white border-2 border-rose-200 rounded-2xl font-bold focus:ring-4 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition-all placeholder:text-gray-300"
+                      placeholder="120"
+                      className="w-full text-center text-3xl sm:text-4xl p-3 bg-white border-2 border-rose-200 rounded-xl font-bold focus:ring-4 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition-all placeholder:text-gray-300"
                     />
                   </div>
-                  <div className="bg-sky-50/50 p-6 rounded-2xl border-2 border-sky-100">
-                    <label className="block text-xl font-black text-sky-900 mb-4">舒張壓 (低的數值)</label>
+                  <div className="bg-sky-50/50 p-4 rounded-xl border-2 border-sky-100 flex flex-col justify-between">
+                    <label className="block text-sm sm:text-base font-black text-sky-900 mb-2">舒張壓 (低)</label>
                     <input 
                       type="number" 
                       inputMode="decimal"
                       pattern="[0-9]*"
                       value={diastolic}
                       onChange={(e) => setDiastolic(e.target.value)}
-                      placeholder="如: 80"
-                      className="w-full text-center text-4xl p-6 bg-white border-2 border-sky-200 rounded-2xl font-bold focus:ring-4 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all placeholder:text-gray-300"
+                      placeholder="80"
+                      className="w-full text-center text-3xl sm:text-4xl p-3 bg-white border-2 border-sky-200 rounded-xl font-bold focus:ring-4 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all placeholder:text-gray-300"
                     />
                   </div>
-                  <div className="md:col-span-2 bg-gray-50 p-6 rounded-2xl border-2 border-gray-200">
-                    <label className="block text-xl font-black text-gray-700 mb-4">心跳 / 脈搏 (選填)</label>
+                  <div className="col-span-2 bg-gray-50 p-4 rounded-xl border-2 border-gray-200 flex items-center gap-4">
+                    <label className="text-sm sm:text-base font-black text-gray-700 whitespace-nowrap">心跳/脈搏 (選填)</label>
                     <input 
                       type="number" 
                       inputMode="decimal"
                       pattern="[0-9]*"
                       value={pulse}
                       onChange={(e) => setPulse(e.target.value)}
-                      placeholder="如: 72"
-                      className="w-full text-center text-3xl p-5 bg-white border-2 border-gray-200 rounded-2xl font-bold focus:ring-4 focus:ring-gray-500/20 focus:border-gray-500 outline-none transition-all placeholder:text-gray-300"
+                      placeholder="72"
+                      className="w-full text-center text-2xl p-2 bg-white border-2 border-gray-200 rounded-xl font-bold focus:ring-4 focus:ring-gray-500/20 focus:border-gray-500 outline-none transition-all placeholder:text-gray-300"
                     />
                   </div>
                 </div>
@@ -153,20 +153,20 @@ const VitalsTracker: React.FC<Props> = ({ vitalsRecords, onSaveRecord }) => {
             )}
 
             {activeTab === 'blood_sugar' && (
-              <div className="space-y-6">
-                <div className="bg-blue-50/50 p-6 rounded-2xl border-2 border-blue-100">
-                   <label className="block text-xl font-black text-blue-900 mb-4">選擇量測時機</label>
-                   <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-4">
+                <div className="bg-blue-50/50 p-4 rounded-xl border-2 border-blue-100">
+                   <label className="block text-base font-black text-blue-900 mb-3">選擇量測時機</label>
+                   <div className="grid grid-cols-3 gap-2">
                       {[
-                        { id: 'fasting', label: '飯前 (空腹)' },
-                        { id: 'postprandial', label: '飯後 (2小時)' },
-                        { id: 'random', label: '隨機量測' }
+                        { id: 'fasting', label: '飯前' },
+                        { id: 'postprandial', label: '飯後' },
+                        { id: 'random', label: '隨機' }
                       ].map(ctx => (
                         <button
                           key={ctx.id}
                           onClick={() => setBsContext(ctx.id as any)}
-                          className={`py-4 rounded-xl text-lg font-bold border-2 transition-all ${
-                            bsContext === ctx.id ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                          className={`py-3 rounded-lg text-sm sm:text-base font-bold border-2 transition-all ${
+                            bsContext === ctx.id ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                           }`}
                         >
                           {ctx.label}
@@ -175,8 +175,8 @@ const VitalsTracker: React.FC<Props> = ({ vitalsRecords, onSaveRecord }) => {
                    </div>
                 </div>
 
-                <div className="bg-blue-50/30 p-6 rounded-2xl border-2 border-blue-100">
-                  <label className="block text-xl font-black text-blue-900 mb-4">血糖數值</label>
+                <div className="bg-blue-50/30 p-4 rounded-xl border-2 border-blue-100">
+                  <label className="block text-base font-black text-blue-900 mb-2">血糖數值</label>
                   <div className="relative">
                     <input 
                       type="number" 
@@ -184,10 +184,10 @@ const VitalsTracker: React.FC<Props> = ({ vitalsRecords, onSaveRecord }) => {
                       pattern="[0-9]*"
                       value={bloodSugar}
                       onChange={(e) => setBloodSugar(e.target.value)}
-                      placeholder="如: 100"
-                      className="w-full text-center text-5xl p-8 bg-white border-2 border-blue-200 rounded-2xl font-bold text-gray-800 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-gray-300 pr-20"
+                      placeholder="100"
+                      className="w-full text-center text-4xl p-4 bg-white border-2 border-blue-200 rounded-xl font-bold text-gray-800 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-gray-300 pr-16"
                     />
-                    <span className="absolute right-8 top-1/2 -translate-y-1/2 text-2xl font-black text-gray-400">mg/dL</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg font-black text-gray-400">mg/dL</span>
                   </div>
                 </div>
               </div>
@@ -195,9 +195,9 @@ const VitalsTracker: React.FC<Props> = ({ vitalsRecords, onSaveRecord }) => {
 
             <button
                onClick={handleSave}
-               className="w-full py-6 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-2xl font-black rounded-2xl shadow-xl hover:shadow-2xl active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+               className="w-full py-4 mt-6 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-xl font-black rounded-xl shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
             >
-               <Plus className="w-8 h-8" /> 儲存今日紀錄
+               <Plus className="w-6 h-6" /> 儲存今日紀錄
             </button>
           </div>
         ) : (

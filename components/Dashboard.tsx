@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { motion } from 'motion/react';
 import { Activity, Calendar, Dumbbell, Flame, CheckCircle2, ChevronDown, ChevronUp, MapPin, User, Clock, FileText, Utensils, Zap, Trophy, AlertTriangle, Sparkles, AlertCircle, Target, Plus, CheckSquare, Save, Loader2, Camera, ArrowRight, Droplets, Moon, Star, Pill, HeartPulse, X } from 'lucide-react';
 import { FoodAnalysis, SavedAppointment, WorkoutPlanDay, WorkoutLog, UserProfile, ViewState, ActivityLevel, DailyHealthLog, VitalsRecord } from '../types';
 import { calculateExerciseCalories, generateHealthAssistantAdvice } from '../services/geminiService';
@@ -368,7 +369,7 @@ const Dashboard: React.FC<Props> = ({
   return (
     <div className="space-y-8 animate-fade-in pb-12">
        {/* Header with Greeting & Quick Action */}
-       <div className="mb-2 px-1">
+       <div className="mb-6 px-1">
           <div>
             <h2 className="text-3xl font-heading font-black text-gray-900 tracking-tight">
               {getGreeting()}，{userProfile.name || '健康夥伴'}
@@ -379,171 +380,116 @@ const Dashboard: React.FC<Props> = ({
           </div>
        </div>
        
+       {/* Quick Actions */}
+       <div className="grid grid-cols-5 gap-2 md:gap-3 mb-6">
+           <div onClick={() => onNavigate('FOOD')} className="bg-white py-4 md:py-5 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all">
+               <div className="bg-emerald-50 text-emerald-500 p-3 rounded-full flex items-center justify-center">
+                  <Utensils className="w-6 h-6" />
+               </div>
+           </div>
+           <div onClick={() => onNavigate('VITALS')} className="bg-white py-4 md:py-5 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all">
+               <div className="bg-rose-50 text-rose-500 p-3 rounded-full flex items-center justify-center">
+                  <HeartPulse className="w-6 h-6" />
+               </div>
+           </div>
+           <div onClick={() => onNavigate('WORKOUT')} className="bg-white py-4 md:py-5 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all">
+               <div className="bg-orange-50 text-orange-500 p-3 rounded-full flex items-center justify-center">
+                  <Dumbbell className="w-6 h-6" />
+               </div>
+           </div>
+           <div onClick={() => onNavigate('CALENDAR')} className="bg-white py-4 md:py-5 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all">
+               <div className="bg-indigo-50 text-indigo-500 p-3 rounded-full flex items-center justify-center">
+                  <Calendar className="w-6 h-6" />
+               </div>
+           </div>
+           <div onClick={() => setShowAssistant(true)} className="bg-white py-4 md:py-5 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-center cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all">
+               <div className="bg-purple-50 text-purple-500 p-3 rounded-full flex items-center justify-center">
+                  <Sparkles className="w-6 h-6" />
+               </div>
+           </div>
+       </div>
+       
        {/* AI Health Assistant Modal */}
-       {showAssistant && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in" onClick={() => setShowAssistant(false)}>
-           <div className="bg-white rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden w-full max-w-md animate-slide-up bg-gradient-to-br from-indigo-500/5 to-purple-500/5" onClick={(e) => e.stopPropagation()}>
-              <button
-                 onClick={() => setShowAssistant(false)}
-                 className="absolute top-4 right-4 z-20 text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 p-2 rounded-full transition-colors"
-                 aria-label="關閉"
-              >
-                 <X className="w-5 h-5" />
-              </button>
-              
-              <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-400 opacity-20 rounded-full blur-3xl mix-blend-overlay pointer-events-none"></div>
-              
-              <div className="flex flex-col items-center text-center mt-2">
-                 <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl flex items-center justify-center relative mb-4 shadow-inner">
-                     <Sparkles className="w-8 h-8 text-indigo-600 animate-pulse" />
-                     {!loadingAssistant && <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-400 border-4 border-white rounded-full"></div>}
-                 </div>
-                 
-                 <h3 className="font-heading font-black text-gray-900 text-2xl mb-4 flex items-center gap-2 justify-center">
-                    今日小提醒
-                 </h3>
-                 
-                 <div className="text-gray-700 font-medium text-base md:text-lg leading-relaxed h-auto min-h-[80px] flex items-center justify-center w-full">
-                     {loadingAssistant ? (
-                         <div className="space-y-3 animate-pulse w-full">
-                            <div className="h-5 bg-indigo-100 rounded-full w-full"></div>
-                            <div className="h-5 bg-indigo-100 rounded-full w-5/6 mx-auto"></div>
-                            <div className="h-5 bg-indigo-100 rounded-full w-4/6 mx-auto"></div>
-                         </div>
-                     ) : (
-                         <div 
-                           className="text-left bg-white p-4 rounded-2xl shadow-sm border border-indigo-100 w-full"
-                           dangerouslySetInnerHTML={{ __html: assistantMessage.replace(/\n/g, '<br/>') }} 
-                         />
-                     )}
-                 </div>
-                 
-                 {!loadingAssistant && (
-                     <button
-                       onClick={() => setShowAssistant(false)}
-                       className="mt-8 w-full py-3.5 bg-gray-900 hover:bg-black text-white font-bold rounded-xl shadow-md transition-transform active:scale-95 text-lg"
-                     >
-                        知道了
-                     </button>
-                 )}
+        {showAssistant && (
+           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowAssistant(false)}>
+              <div className="bg-white rounded-3xl p-8 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+                 <h3 className="font-heading font-black text-gray-900 text-lg mb-3">今日小提醒</h3>
+                 <p className="text-gray-600 text-sm mb-6 leading-relaxed">{assistantMessage}</p>
+                 <button className="w-full bg-[#2B363B] text-white py-3 rounded-2xl hover:bg-[#3d4d54] transition-colors font-bold text-sm shadow-xs" onClick={() => setShowAssistant(false)}>知道了</button>
               </div>
            </div>
-         </div>
-       )}
+        )}
 
-       {/* QUICK ACTIONS MENU */}
-       <div className="grid grid-cols-4 gap-3 pb-4 pt-1 px-1">
-           <button 
-             onClick={() => onNavigate('VITALS')}
-             className="flex justify-center items-center bg-rose-50 text-rose-700 py-4 w-full rounded-2xl font-bold border border-rose-100 hover:bg-rose-100 hover:border-rose-200 transition-all active:scale-95"
-           >
-             <HeartPulse className="w-6 h-6" />
-           </button>
-           <button 
-             onClick={() => onNavigate('FOOD')}
-             className="flex justify-center items-center bg-teal-50 text-teal-700 py-4 w-full rounded-2xl font-bold border border-teal-100 hover:bg-teal-100 hover:border-teal-200 transition-all active:scale-95"
-           >
-             <Utensils className="w-6 h-6" />
-           </button>
-           <button 
-             onClick={() => onNavigate('WORKOUT')}
-             className="flex justify-center items-center bg-orange-50 text-orange-700 py-4 w-full rounded-2xl font-bold border border-orange-100 hover:bg-orange-100 hover:border-orange-200 transition-all active:scale-95"
-           >
-             <Dumbbell className="w-6 h-6" />
-           </button>
-           <button 
-             onClick={() => onNavigate('HEALTH_MANAGEMENT', 'APPOINTMENTS')}
-             className="flex justify-center items-center bg-indigo-50 text-indigo-700 py-4 w-full rounded-2xl font-bold border border-indigo-100 hover:bg-indigo-100 hover:border-indigo-200 transition-all active:scale-95"
-           >
-             <Calendar className="w-6 h-6" />
-           </button>
-       </div>
-
-       {/* MAIN HERO CARD: REMAINING CALORIES CIRCLE */}
-       <div 
-         className={`bg-gradient-to-br ${cardGradient} rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden transition-all duration-500 cursor-pointer group`}
-         onClick={() => onNavigate('FOOD')}
-       >
-          <div className="absolute top-4 right-4 md:top-6 md:right-6 z-20">
-             <button 
-                onClick={(e) => { 
-                  e.stopPropagation(); 
-                  if (onAnalyzeImage) {
-                    cameraInputRef.current?.click();
-                  } else {
-                    onNavigate('FOOD'); 
-                  }
-                }}
-                className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border border-white/30 px-4 py-2 rounded-full text-sm font-bold shadow-sm transition-all flex items-center gap-2"
-             >
-                <Camera className="w-4 h-4" />
-                <span>餐點分析</span>
-             </button>
-             <input type="file" accept="image/*" capture="environment" className="hidden" ref={cameraInputRef} onChange={handleCameraChange} />
-          </div>
-
-          {/* Decorative Mesh Gradients */}
-          <div className="absolute -top-32 -right-32 w-96 h-96 bg-white opacity-10 rounded-full blur-3xl pointer-events-none mix-blend-overlay"></div>
-          <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-black opacity-10 rounded-full blur-3xl pointer-events-none mix-blend-overlay"></div>
-          
-          <div className="relative z-10 flex flex-col items-center justify-center py-4">
-             
-             {/* Circular Progress */}
-             <div className="relative w-56 h-56 sm:w-64 sm:h-64">
-                 <svg className="w-full h-full transform -rotate-90 drop-shadow-xl" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="42" className={ringBgColor} strokeWidth="6" fill="transparent" />
-                    <circle 
-                        cx="50" cy="50" r="42" 
-                        className={`transition-all duration-1000 ease-out ${ringColor}`}
-                        strokeWidth="6" 
-                        fill="transparent" 
-                        strokeDasharray={264} 
-                        strokeDashoffset={264 - (264 * visualPercent) / 100} 
-                        strokeLinecap="round"
+        {/* Main Hero Card (Calorie Gauge) */}
+        <motion.div 
+           whileHover={{ y: -4, scale: 1.005 }}
+           whileTap={{ scale: 0.99 }}
+           className="bg-[#FCFAF7] border border-[#EBE6DC] rounded-3xl p-6 md:p-8 text-[#2B363B] shadow-sm relative overflow-hidden transition-all duration-300 cursor-pointer group hover:shadow-md"
+           onClick={() => onNavigate('FOOD')}
+        >
+           <div className="relative z-10 flex flex-col items-center justify-center pt-4 pb-1">
+              <div className="relative w-64 h-40 sm:w-72 sm:h-44 flex items-center justify-center">
+                 <svg className="w-full h-full drop-shadow-xs" viewBox="0 0 100 58">
+                    <defs>
+                       <linearGradient id="gaugeGradient" x1="0%" y1="100%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#10B981" />
+                          <stop offset="50%" stopColor="#F59E0B" />
+                          <stop offset="100%" stopColor="#EF4444" />
+                       </linearGradient>
+                    </defs>
+                    <path
+                       d="M 10 50 A 40 40 0 0 1 90 50"
+                       fill="none"
+                       stroke="#EBE6DC"
+                       strokeWidth="8"
+                       strokeLinecap="round"
+                    />
+                    <path
+                       d="M 10 50 A 40 40 0 0 1 90 50"
+                       fill="none"
+                       stroke="url(#gaugeGradient)"
+                       strokeWidth="8"
+                       strokeLinecap="round"
+                       strokeDasharray="125.6"
+                       strokeDashoffset={Math.max(0, 125.6 - (Math.min(100, (netIntake / 2000) * 100) / 100) * 125.6)}
                     />
                  </svg>
-                 
-                 {/* Center Content */}
-                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                    <p className="text-sm font-medium opacity-80 mb-0.5 tracking-wide uppercase">剩餘額度</p>
-                    <h3 className="text-6xl sm:text-7xl font-sans font-black tracking-tighter drop-shadow-sm">
-                        {remainingCalories}
-                    </h3>
-                    <p className="text-sm font-bold opacity-80 mt-1">kcal</p>
+                 <div className="absolute inset-0 flex flex-col items-center justify-end pb-2">
+                    <p className="font-heading font-black text-3xl sm:text-4xl text-[#2B363B] leading-none mb-1">
+                       {netIntake} <span className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none">kcal</span>
+                    </p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                       剩餘 <span>{Math.max(0, 2000 - netIntake)} kcal</span>
+                    </p>
                  </div>
-             </div>
+              </div>
+           </div>
+           
+           {/* Bottom stats layout */}
+              <div className="grid grid-cols-3 gap-4 mt-6 w-full max-w-sm border-t border-[#EBE6DC] pt-5 text-center">
+                  <div>
+                     <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">今日已吃</p>
+                     <p className="font-sans font-black text-lg text-emerald-800">{todayFoodCalories} <span className="text-xs text-gray-400 font-medium">kcal</span></p>
+                  </div>
+                  <div>
+                     <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">運動消耗</p>
+                     <p className="font-sans font-black text-lg text-orange-700">-{todayExerciseCalories} <span className="text-xs text-gray-400 font-medium">kcal</span></p>
+                  </div>
+                  <div>
+                     <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">淨值攝取</p>
+                     <p className="font-sans font-black text-lg text-[#2B363B]">{netIntake} <span className="text-xs text-gray-400 font-medium">kcal</span></p>
+                  </div>
+              </div>
+         </motion.div>
 
-             {/* Status Message */}
-             <div className={`mt-8 px-5 py-2.5 rounded-full bg-white/10 backdrop-blur border border-white/20 flex items-center gap-2 ${statusColor} animate-fade-in-up font-medium`}>
-                {remainingCalories < 0 ? <AlertCircle className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-                <span className="text-sm tracking-wide">{statusMessage}</span>
-             </div>
-
-             {/* Bottom Stats Grid */}
-             <div className="grid grid-cols-3 gap-6 sm:gap-12 mt-8 w-full max-w-md border-t border-white/10 pt-6">
-                 <div className="text-center">
-                    <p className="text-xs opacity-70 mb-1 uppercase tracking-widest">已攝取</p>
-                    <p className="font-bold text-xl font-mono">{todayFoodCalories}</p>
-                 </div>
-                 <div className="text-center">
-                    <p className="text-xs opacity-70 mb-1 uppercase tracking-widest">已消耗</p>
-                    <p className="font-bold text-xl font-mono opacity-90">-{todayExerciseCalories}</p>
-                 </div>
-                 <div className="text-center">
-                    <p className="text-xs opacity-70 mb-1 uppercase tracking-widest">總目標</p>
-                    <p className="font-bold text-xl font-mono">{dailyBudget}</p>
-                 </div>
-             </div>
-          </div>
-       </div>
 
        <div className="mb-6">
            {/* Medication Checklist Card */}
-           <div className="bg-white p-6 rounded-3xl shadow-sm border border-emerald-100 relative overflow-hidden mb-6">
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-emerald-100 relative overflow-hidden mb-6 hover:shadow-md hover:scale-[1.005] duration-300 transition-all">
                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-emerald-50 to-transparent rounded-bl-full pointer-events-none"></div>
-               <div className="flex items-center justify-between gap-3 mb-4 relative z-10">
+               <div className="flex items-center justify-between mb-6 relative z-10">
                   <div className="flex items-center gap-3">
-                     <div className="bg-emerald-100 p-2 rounded-xl text-emerald-600">
+                     <div className="bg-emerald-50 text-emerald-500 w-10 h-10 rounded-full flex items-center justify-center">
                         <Pill className="w-5 h-5" />
                      </div>
                      <h3 className="font-heading font-black text-gray-900 text-lg">今日服藥檢核</h3>
@@ -553,7 +499,7 @@ const Dashboard: React.FC<Props> = ({
                       setTimeout(() => {
                           document.getElementById('medication-settings')?.scrollIntoView({ behavior: 'smooth' });
                       }, 100);
-                  }} className="text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition-colors">
+                  }} className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors">
                     新增設定
                   </button>
                </div>
@@ -585,19 +531,18 @@ const Dashboard: React.FC<Props> = ({
                            );
                        })
                    )}
-               </div>
-           </div>
+            </div>
 
            {/* Achievements Card */}
-           <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden">
-               <div className="flex items-center justify-between mb-4">
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden hover:shadow-md hover:scale-[1.005] duration-300 transition-all">
+               <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                     <div className="bg-yellow-100 p-2 rounded-xl text-yellow-600">
+                     <div className="bg-yellow-50 text-yellow-500 w-10 h-10 rounded-full flex items-center justify-center">
                         <Trophy className="w-5 h-5" />
                      </div>
                      <h3 className="font-heading font-black text-gray-900 text-lg">成就徽章</h3>
                   </div>
-                  <span className="text-sm font-bold text-gray-400">{achievements.length} 個解鎖</span>
+                  <span className="text-xs font-bold text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full">{achievements.length} 個解鎖</span>
                </div>
                
                {achievements.length > 0 ? (
@@ -619,187 +564,142 @@ const Dashboard: React.FC<Props> = ({
                   </div>
                )}
            </div>
-       </div>
-
-       {/* Quick Add Workout Section */}
-       <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden">
-           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-orange-50 to-transparent rounded-bl-full pointer-events-none"></div>
-           <div className="flex items-center gap-3 mb-5 relative z-10">
-               <div className="bg-orange-100 p-2 rounded-xl text-orange-600">
-                  <Zap className="w-5 h-5" />
-               </div>
-               <h3 className="font-heading font-black text-gray-900 text-lg">快速記錄運動</h3>
-           </div>
-           
-           <div className="flex flex-col sm:flex-row gap-4 items-center relative z-10">
-               <div className="relative w-full flex-1">
-                   <select 
-                       value={quickActivity}
-                       onChange={(e) => setQuickActivity(e.target.value)}
-                       className="w-full text-base bg-gray-50 border-0 ring-1 ring-gray-200 rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-orange-500 appearance-none font-medium text-gray-800 transition-shadow"
-                   >
-                       <option value="" disabled>選擇運動項目...</option>
-                       {COMMON_QUICK_EXERCISES.map(ex => <option key={ex} value={ex}>{ex}</option>)}
-                   </select>
-                   <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-               </div>
-
-               <div className="flex w-full sm:w-1/3 gap-3">
-                   <input 
-                       type="number"
-                       value={quickDuration}
-                       onChange={(e) => setQuickDuration(e.target.value)}
-                       placeholder={quickActivity === '皮克敏' ? "步數" : "分鐘"}
-                       className="flex-1 w-full text-base bg-gray-50 border-0 ring-1 ring-gray-200 rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-orange-500 text-center font-medium transition-shadow"
-                   />
-                   <button 
-                       onClick={handleQuickAdd}
-                       disabled={isCalculating}
-                       className="bg-orange-500 hover:bg-orange-600 text-white px-6 rounded-2xl transition-colors flex-shrink-0 flex items-center justify-center font-bold shadow-sm hover:shadow-md active:scale-95 disabled:opacity-70"
-                   >
-                       {isCalculating ? <Loader2 className="w-5 h-5 animate-spin" /> : "新增"}
-                   </button>
-               </div>
-           </div>
-       </div>
+            </div>
 
        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-           {/* Workout Card */}
-           <div 
-             className={`p-6 rounded-3xl shadow-sm border hover:shadow-md transition-shadow cursor-pointer relative overflow-hidden group ${
-                 isWorkoutDone ? 'bg-orange-500 border-orange-600' : 'bg-white border-orange-100'
-             }`}
-             onClick={() => onNavigate('WORKOUT')}
-           >
-              <div className={`absolute top-0 right-0 w-24 h-24 rounded-bl-full -mr-4 -mt-4 transition-transform duration-500 group-hover:scale-110 ${
-                  isWorkoutDone ? 'bg-white/10' : 'bg-orange-50'
-              }`}></div>
+            {/* Workout Card */}
+            <div 
+              className={`p-6 rounded-3xl shadow-sm border hover:shadow-md transition-all duration-300 cursor-pointer relative overflow-hidden group hover:scale-[1.008] ${isWorkoutDone ? 'bg-orange-500 border-orange-600 shadow-md shadow-orange-500/10' : 'bg-white border-orange-100'}`}
+              onClick={() => onNavigate('WORKOUT')}
+            >
+               <div className={`absolute top-0 right-0 w-24 h-24 rounded-bl-full -mr-4 -mt-4 transition-transform duration-500 group-hover:scale-110 ${
+                   isWorkoutDone ? 'bg-white/10' : 'bg-orange-50'
+               }`}></div>
 
-              <div className="flex items-center justify-between mb-4 relative z-10">
-                 <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${
-                        isWorkoutDone ? 'bg-white text-orange-500' : 'bg-orange-100 text-orange-600'
-                    }`}>
-                        <Dumbbell className="w-6 h-6" />
-                    </div>
-                    <h4 className={`font-heading font-black text-lg ${isWorkoutDone ? 'text-white' : 'text-gray-900'}`}>今日運動計畫</h4>
-                 </div>
-                 
-                 {todayWorkout && !isWorkoutDone && (
-                     <button 
-                        onClick={handleCheckPlan}
-                        disabled={checkingPlan}
-                        className="bg-gray-100 hover:bg-green-100 text-gray-400 hover:text-green-600 p-2.5 rounded-full transition-all shadow-sm z-20 disabled:opacity-70 disabled:cursor-not-allowed"
-                        title="標記為已完成"
-                     >
-                         {checkingPlan ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckSquare className="w-5 h-5" />}
-                     </button>
-                 )}
-                 {isWorkoutDone && (
-                     <span className="bg-white/20 text-white px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1">
-                         <CheckCircle2 className="w-4 h-4" /> 已完成
-                     </span>
-                 )}
-              </div>
-
-              {todayWorkout ? (
-                  <div className="relative z-10 pt-2">
-                      <p className={`text-3xl font-heading font-black mb-2 tracking-tight ${isWorkoutDone ? 'text-white' : 'text-gray-900'}`}>
-                          {todayWorkout.activity}
-                      </p>
-                      <div className="flex items-center gap-2">
-                          <span className={`text-sm px-3 py-1 rounded-full font-bold ${
-                              isWorkoutDone ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-700'
-                          }`}>
-                              {todayWorkout.duration}
-                          </span>
-                      </div>
-                  </div>
-              ) : (
-                  <div className="relative z-10 py-6 text-center">
-                      <p className="text-gray-400 font-medium text-base mb-1">今日無特定行程</p>
-                      <p className="text-sm text-orange-500 font-bold hover:underline decoration-orange-300">點擊建立運動計畫</p>
-                  </div>
-              )}
-           </div>
-
-           {/* Appointment Card */}
-           <div 
-             className={`bg-white rounded-3xl shadow-sm border border-indigo-50 transition-all duration-300 cursor-pointer relative overflow-hidden group ${
-                 isAptExpanded ? 'p-6 ring-2 ring-indigo-200 shadow-md' : 'p-6 hover:shadow-md'
-             }`}
-             onClick={() => setIsAptExpanded(!isAptExpanded)}
-           >
-              <div className="absolute top-0 right-0 w-24 h-24 rounded-bl-full bg-indigo-50 -mr-4 -mt-4 transition-transform duration-500 group-hover:scale-110"></div>
-              
-              <div className="flex items-center justify-between mb-4 relative z-10">
-                 <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center shadow-sm">
-                        <Calendar className="w-6 h-6" />
-                    </div>
-                    <h4 className="font-heading font-black text-gray-900 text-lg">下一次回診</h4>
-                 </div>
-                 {upcomingAppointment && (
-                     <div className="text-gray-400 bg-gray-50 p-2 rounded-full">
-                         {isAptExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+               <div className="flex items-center justify-between mb-6 relative z-10">
+                  <div className="flex items-center gap-3">
+                     <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm ${
+                         isWorkoutDone ? 'bg-white/20 text-white' : 'bg-orange-50 text-orange-500'
+                     }`}>
+                         <Dumbbell className="w-5 h-5" />
                      </div>
-                 )}
-              </div>
-              
-              {upcomingAppointment ? (
-                  <div className="relative z-10 pt-2">
-                      <div className="flex items-baseline gap-2 mb-2">
-                          <p className="text-4xl font-heading font-black text-indigo-900 tracking-tighter">
-                              {new Date(upcomingAppointment.date).getDate()} 
-                          </p>
-                          <span className="text-base font-bold text-gray-500 uppercase tracking-widest">
-                             {new Date(upcomingAppointment.date).toLocaleDateString('zh-TW', { month: 'short' })}
-                          </span>
-                      </div>
-                      <p className="font-bold text-gray-800 text-xl truncate">{upcomingAppointment.title}</p>
-                      
-                      {isAptExpanded && (
-                          <div className="mt-6 pt-6 border-t border-indigo-50 space-y-4 animate-fade-in">
-                              <div className="flex items-center gap-3 text-sm text-gray-700 font-medium">
-                                  <Clock className="w-5 h-5 text-indigo-500 flex-shrink-0" />
-                                  <span>{upcomingAppointment.time}</span>
-                              </div>
-                              <div className="flex items-center gap-3 text-sm text-gray-700 font-medium">
-                                  <User className="w-5 h-5 text-indigo-500 flex-shrink-0" />
-                                  <span>{upcomingAppointment.doctor}</span>
-                              </div>
-                              <div className="flex items-center gap-3 text-sm text-gray-700 font-medium">
-                                  <MapPin className="w-5 h-5 text-indigo-500 flex-shrink-0" />
-                                  <span>{upcomingAppointment.location}</span>
-                              </div>
-                              {upcomingAppointment.notes && (
-                                  <div className="flex items-start gap-3 text-sm text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100 mt-2">
-                                      <FileText className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                                      <span className="leading-relaxed">{upcomingAppointment.notes}</span>
-                                  </div>
-                              )}
-                              
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); onNavigate('HEALTH_MANAGEMENT', 'APPOINTMENTS'); }}
-                                className="w-full mt-4 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 py-3 rounded-xl transition-colors"
-                              >
-                                  前往預約管理
-                              </button>
-                          </div>
-                      )}
+                     <h4 className={`font-heading font-black text-gray-900 text-lg ${isWorkoutDone ? 'text-white' : 'text-gray-900'}`}>今日運動計畫</h4>
+                  </div>
+                  
+                  {todayWorkout && !isWorkoutDone && (
+                      <button 
+                         onClick={handleCheckPlan}
+                         disabled={checkingPlan}
+                         className="bg-gray-100 hover:bg-green-100 text-gray-400 hover:text-green-600 p-2.5 rounded-full transition-all shadow-sm z-20 disabled:opacity-70 disabled:cursor-not-allowed"
+                         title="標記為已完成"
+                      >
+                          {checkingPlan ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckSquare className="w-5 h-5" />}
+                      </button>
+                  )}
+                  {isWorkoutDone && (
+                      <span className="bg-white/20 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1">
+                          <CheckCircle2 className="w-4 h-4" /> 已完成
+                      </span>
+                  )}
+               </div>
 
-                      {!isAptExpanded && (
-                          <p className="text-xs text-indigo-500 mt-3 font-bold uppercase tracking-widest">點擊展開資訊</p>
-                      )}
+               {todayWorkout ? (
+                   <div className="relative z-10 pt-2">
+                       <p className={`text-3xl font-heading font-black mb-2 tracking-tight ${isWorkoutDone ? 'text-white' : 'text-gray-900'}`}>
+                           {todayWorkout.activity}
+                       </p>
+                       <div className="flex items-center gap-2">
+                           <span className={`text-sm px-3 py-1 rounded-full font-bold ${
+                               isWorkoutDone ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-700'
+                           }`}>
+                               {todayWorkout.duration}
+                           </span>
+                       </div>
+                   </div>
+               ) : (
+                   <div className="relative z-10 py-6 text-center">
+                       <p className="text-gray-400 font-medium text-base mb-1">今日無特定行程</p>
+                       <p className="text-sm text-orange-500 font-bold hover:underline decoration-orange-300">點擊建立運動計畫</p>
+                   </div>
+               )}
+            </div>
+
+            {/* Appointment Card */}
+            <div 
+              className={`bg-white rounded-3xl shadow-sm border border-indigo-50 transition-all duration-300 cursor-pointer relative overflow-hidden group hover:scale-[1.008] ${isAptExpanded ? 'p-6 ring-2 ring-indigo-200 shadow-md' : 'p-6 hover:shadow-md'}`}
+              onClick={() => setIsAptExpanded(!isAptExpanded)}
+            >
+               <div className="absolute top-0 right-0 w-24 h-24 rounded-bl-full bg-indigo-50 -mr-4 -mt-4 transition-transform duration-500 group-hover:scale-110"></div>
+               
+               <div className="flex items-center justify-between mb-6 relative z-10">
+                  <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center shadow-sm">
+                         <Calendar className="w-5 h-5" />
+                     </div>
+                     <h4 className="font-heading font-black text-gray-900 text-lg">下一次回診</h4>
                   </div>
-              ) : (
-                  <div className="relative z-10 py-6 text-center" onClick={(e) => { e.stopPropagation(); onNavigate('HEALTH_MANAGEMENT', 'APPOINTMENTS'); }}>
-                      <p className="text-gray-400 font-medium text-base mb-1">目前無預約行程</p>
-                      <p className="text-sm text-indigo-500 font-bold hover:underline decoration-indigo-300">點擊新增預約</p>
-                  </div>
-              )}
-           </div>
-       </div>
+                  {upcomingAppointment && (
+                      <div className="text-gray-400 bg-gray-50 p-2 rounded-full flex items-center justify-center">
+                          {isAptExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </div>
+                  )}
+               </div>
+               
+               {upcomingAppointment ? (
+                   <div className="relative z-10 pt-2">
+                       <div className="flex items-baseline gap-2 mb-2">
+                           <p className="text-4xl font-heading font-black text-indigo-900 tracking-tighter">
+                               {new Date(upcomingAppointment.date).getDate()} 
+                           </p>
+                           <span className="text-base font-bold text-gray-500 uppercase tracking-widest">
+                              {new Date(upcomingAppointment.date).toLocaleDateString('zh-TW', { month: 'short' })}
+                           </span>
+                       </div>
+                       <p className="font-bold text-gray-800 text-xl truncate">{upcomingAppointment.title}</p>
+                       
+                       {isAptExpanded && (
+                           <div className="mt-6 pt-6 border-t border-indigo-50 space-y-4 animate-fade-in">
+                               <div className="flex items-center gap-3 text-sm text-gray-700 font-medium">
+                                   <Clock className="w-5 h-5 text-indigo-500 flex-shrink-0" />
+                                   <span>{upcomingAppointment.time}</span>
+                               </div>
+                               <div className="flex items-center gap-3 text-sm text-gray-700 font-medium">
+                                   <User className="w-5 h-5 text-indigo-500 flex-shrink-0" />
+                                   <span>{upcomingAppointment.doctor}</span>
+                               </div>
+                               <div className="flex items-center gap-3 text-sm text-gray-700 font-medium">
+                                   <MapPin className="w-5 h-5 text-indigo-500 flex-shrink-0" />
+                                   <span>{upcomingAppointment.location}</span>
+                               </div>
+                               {upcomingAppointment.notes && (
+                                   <div className="flex items-start gap-3 text-sm text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100 mt-2">
+                                       <FileText className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                                       <span className="leading-relaxed">{upcomingAppointment.notes}</span>
+                                   </div>
+                               )}
+                               
+                               <button 
+                                 onClick={(e) => { e.stopPropagation(); onNavigate('HEALTH_MANAGEMENT', 'APPOINTMENTS'); }}
+                                 className="w-full mt-4 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 py-3 rounded-xl transition-colors"
+                               >
+                                   前往預約管理
+                               </button>
+                           </div>
+                       )}
+
+                       {!isAptExpanded && (
+                           <p className="text-xs text-indigo-500 mt-3 font-bold uppercase tracking-widest">點擊展開資訊</p>
+                       )}
+                   </div>
+               ) : (
+                   <div className="relative z-10 py-6 text-center" onClick={(e) => { e.stopPropagation(); onNavigate('HEALTH_MANAGEMENT', 'APPOINTMENTS'); }}>
+                       <p className="text-gray-400 font-medium text-base mb-1">目前無預約行程</p>
+                       <p className="text-sm text-indigo-500 font-bold hover:underline decoration-indigo-300">點擊新增預約</p>
+                   </div>
+               )}
+            </div>
+        </div>
+      </div>
     </div>
   );
 };

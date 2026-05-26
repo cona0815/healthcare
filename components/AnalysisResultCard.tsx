@@ -168,11 +168,11 @@ const AnalysisResultCard: React.FC<Props> = ({ data, onUpdateLog }) => {
              <div className={`rounded-xl p-4 border ${data.riskLevel === RiskLevel.DANGEROUS ? 'bg-red-50 border-red-100' : 'bg-indigo-50 border-indigo-100'}`}>
                 <div className="flex items-center gap-2 mb-2">
                     {data.riskLevel === RiskLevel.DANGEROUS ? <ShieldAlert className="w-5 h-5 text-red-500" /> : <Scale className="w-5 h-5 text-indigo-500" />}
-                    <span className={`font-bold text-sm ${data.riskLevel === RiskLevel.DANGEROUS ? 'text-red-700' : 'text-indigo-700'}`}>
+                    <span className={`font-bold text-base ${data.riskLevel === RiskLevel.DANGEROUS ? 'text-red-700' : 'text-indigo-700'}`}>
                         AI 健康建議
                     </span>
                 </div>
-                <p className={`text-sm leading-relaxed text-justify ${data.riskLevel === RiskLevel.DANGEROUS ? 'text-red-800' : 'text-indigo-800'}`}>
+                <p className={`text-base font-medium leading-relaxed text-justify whitespace-pre-line ${data.riskLevel === RiskLevel.DANGEROUS ? 'text-red-800' : 'text-indigo-800'}`}>
                     {data.healthAdvice}
                 </p>
              </div>

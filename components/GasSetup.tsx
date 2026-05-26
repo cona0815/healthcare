@@ -82,6 +82,58 @@ function doPost(e) {
         appendData(sheet, data);
         return createJSONOutput({status: "success"});
       }
+
+      // Backup All Action (Bulk Save v2.3)
+      if (action == 'backup_all') {
+        var bData = para.data;
+        if (!bData) {
+          return createJSONOutput({status: "error", message: "No data provided for backup"});
+        }
+        
+        // 1. Profile (Append mode)
+        if (bData.profile && bData.profile.name) {
+          var profileSheet = getOrCreateSheet(ss, 'Profile');
+          updateHeaders(profileSheet, bData.profile);
+          appendData(profileSheet, bData.profile);
+        }
+        
+        // 2. Clear & Rewrite for arrays
+        var typesMapping = {
+          'FoodLogs': bData.foodLogs,
+          'Reports': bData.reports,
+          'Workouts': bData.workouts,
+          'Appointments': bData.appointments,
+          'Recipes': bData.recipes,
+          'WorkoutPlan': bData.workoutPlan,
+          'Vitals': bData.vitals
+        };
+        
+        Object.keys(typesMapping).forEach(function(sheetName) {
+          var list = typesMapping[sheetName];
+          if (list && Array.isArray(list)) {
+            var targetSheet = getOrCreateSheet(ss, sheetName);
+            var lastRow = targetSheet.getLastRow();
+            if (lastRow > 1) {
+              targetSheet.deleteRows(2, lastRow - 1);
+            }
+            
+            if (sheetName === 'WorkoutPlan') {
+              if (list.length > 0) {
+                appendData(targetSheet, {
+                  timestamp: new Date().toISOString(),
+                  planJson: JSON.stringify(list)
+                });
+              }
+            } else {
+              list.forEach(function(item) {
+                appendData(targetSheet, item);
+              });
+            }
+          }
+        });
+        
+        return createJSONOutput({status: "success", message: "Backup completed successfully"});
+      }
     
       // Delete Action
       if (action == 'delete') {

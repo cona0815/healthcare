@@ -68,13 +68,33 @@ const App: React.FC = () => {
   useEffect(() => {
     if (hasApiKey && hasConnection) {
       loadUserData();
+      triggerWeeklyBackupCheck();
     }
   }, [hasApiKey, hasConnection]);
 
-  const loadUserData = async () => {
+  const triggerWeeklyBackupCheck = async () => {
+    const isAutoBackupEnabled = localStorage.getItem('hg_auto_backup') !== 'false';
+    if (!isAutoBackupEnabled) return;
+
+    const lastBackupTime = localStorage.getItem('hg_last_backup_time');
+    const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+    const shouldBackup = !lastBackupTime || (new Date().getTime() - new Date(lastBackupTime).getTime() > sevenDaysInMs);
+
+    if (shouldBackup) {
+      console.log("HealthGuardian: Starting background automatic weekly backup...");
+      try {
+        await dbService.backupAllToCloud();
+        console.log("HealthGuardian: Weekly background auto-backup completed successfully!");
+      } catch (e) {
+        console.warn("HealthGuardian: Background weekly backup skipped or pending configuration:", e);
+      }
+    }
+  };
+
+  const loadUserData = async (forceFromCloud = false) => {
     setDataLoading(true);
     try {
-      const data = await dbService.loadAllData();
+      const data = await dbService.loadAllData(forceFromCloud);
       setFoodLogs(data.foodLogs.reverse()); 
       setHealthReports(data.reports.reverse());
       setWorkoutLogs(data.workouts.reverse());
@@ -320,6 +340,7 @@ const App: React.FC = () => {
           <SystemSettings 
              userProfile={userProfile} 
              onUpdateProfile={handleUpdateProfile} 
+             onRefreshAllData={() => loadUserData(true)}
           />
         );
       default:

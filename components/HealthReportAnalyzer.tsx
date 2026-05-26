@@ -165,7 +165,7 @@ const HealthReportAnalyzer: React.FC<Props> = ({ reports, onReportAnalyzed }) =>
                   <div key={idx} className="flex flex-col p-3 bg-gray-50 rounded-lg border border-gray-100">
                     <div className="flex justify-between items-center mb-1">
                       <span className="font-medium text-gray-900">{metric.name}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${metric.status === 'Critical' ? 'bg-red-100 text-red-700' : metric.status === 'Warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{metric.value}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${metric.status === 'Normal' || metric.status === '正常' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{metric.value}</span>
                     </div>
                     <p className="text-xs text-gray-500">{metric.advice}</p>
                   </div>
@@ -203,7 +203,7 @@ const HealthReportAnalyzer: React.FC<Props> = ({ reports, onReportAnalyzed }) =>
                         {isExpanded && (
                             <div className="p-4 border-t border-gray-100 bg-gray-50 text-sm animate-fade-in">
                               <p className="mb-2 text-gray-600">{report.summary}</p>
-                              <div className="grid grid-cols-2 gap-2 mb-3">{report.metrics.map((m, i) => (<div key={i} className="flex justify-between border-b border-gray-200 py-1 last:border-0"><span>{m.name}</span><span className={m.status === 'Critical' ? 'text-red-600 font-bold' : m.status === 'Warning' ? 'text-yellow-600 font-bold' : 'text-green-600'}>{m.value}</span></div>))}</div>
+                              <div className="grid grid-cols-2 gap-2 mb-3">{report.metrics.map((m, i) => (<div key={i} className="flex justify-between border-b border-gray-200 py-1 last:border-0"><span>{m.name}</span><span className={m.status === 'Normal' || m.status === '正常' ? 'text-green-600' : 'text-red-600 font-bold'}>{m.value}</span></div>))}</div>
                             </div>
                         )}
                       </div>

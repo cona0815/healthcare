@@ -1,15 +1,40 @@
 import { FoodAnalysis, HealthReport, UserProfile, WorkoutLog, SavedAppointment, WorkoutPlanDay, Recipe, VitalsRecord } from '../types';
 
 const GAS_URL_KEY = 'hg_gas_api_url';
-
-// 取得儲存的 API URL
 export const getGasUrl = () => localStorage.getItem(GAS_URL_KEY);
-// 設定 API URL
 export const setGasUrl = (url: string) => localStorage.setItem(GAS_URL_KEY, url);
-// 清除 API URL
 export const clearGasUrl = () => localStorage.removeItem(GAS_URL_KEY);
 
-// 帶有 Timeout 的 Fetch
+// Define local storage keys
+export const LOCAL_STORAGE_KEYS = {
+  foodLogs: 'hg_foodLogs',
+  reports: 'hg_reports',
+  workouts: 'hg_workouts',
+  profile: 'hg_profile',
+  appointments: 'hg_appointments',
+  workoutPlan: 'hg_workoutPlan',
+  recipes: 'hg_recipes',
+  vitals: 'hg_vitals',
+  lastBackup: 'hg_last_backup_time',
+  autoBackup: 'hg_auto_backup',
+};
+
+// Local storage helper utilities
+export const getLocal = <T>(key: string, defaultValue: T): T => {
+  const item = localStorage.getItem(key);
+  if (!item) return defaultValue;
+  try {
+    return JSON.parse(item);
+  } catch (e) {
+    return defaultValue;
+  }
+};
+
+export const setLocal = <T>(key: string, value: T): void => {
+  localStorage.setItem(key, JSON.stringify(value));
+};
+
+// Timeout fetch helper
 const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 60000) => {
   const controller = new AbortController();
   const id = setTimeout(() => {
@@ -20,8 +45,6 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout 
     const response = await fetch(url, { ...options, signal: controller.signal });
     return response;
   } catch (error: any) {
-    // 捕捉超時錯誤 (AbortError)
-    // "signal is aborted without reason" 是某些瀏覽器在 controller.abort() 未帶參數時的預設訊息
     const isAbort = error.name === 'AbortError' || 
                     (error.message && (error.message.includes('aborted') || error.message.includes('timeout') || error.message.includes('reason')));
                     
@@ -34,7 +57,7 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout 
   }
 };
 
-// 呼叫 GAS 的通用函式
+// Calling GAS Generic API Function
 const callGasApi = async (data: any) => {
   const url = getGasUrl();
   if (!url) throw new Error("API URL not set");
@@ -49,7 +72,7 @@ const callGasApi = async (data: any) => {
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.indexOf("application/json") === -1) {
        throw new Error("Invalid response format. Likely permission error.");
-    }
+     }
 
     const json = await response.json();
     return json;
@@ -62,11 +85,9 @@ const callGasApi = async (data: any) => {
   }
 };
 
-// --- 資料消毒工具 (Data Sanitizers) ---
-// 防止因為 Sheet 欄位空白導致讀成字串，進而讓前端 Crash
+// Array integrity utility
 const ensureArray = (item: any): any[] => {
     if (Array.isArray(item)) return item;
-    // 如果是 JSON 字串嘗試解析
     if (typeof item === 'string' && (item.startsWith('[') || item.startsWith('{'))) {
         try { return JSON.parse(item); } catch (e) { return []; }
     }
@@ -74,15 +95,14 @@ const ensureArray = (item: any): any[] => {
 };
 
 export const dbService = {
-  // --- Check Connection ---
+  // Test connection to Google Sheet Link
   testConnection: async (url: string) => {
-    // 直接拋出錯誤讓 UI 處理，而不是吞掉回傳 false
     try {
         const response = await fetchWithTimeout(url, {
             method: 'POST',
             body: JSON.stringify({ action: "read_all" }),
             headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-        }, 60000); // 測試連線給予 60 秒
+        }, 60000);
         
         const text = await response.text();
         try {
@@ -94,7 +114,6 @@ export const dbService = {
             }
         } catch (e) {
             console.error("Connection test failed: Response is not JSON", text.substring(0, 100));
-            // 嘗試給出更具體的建議
             if (text.includes("Google Drive") || text.includes("Google Docs")) {
                  throw new Error("回傳了 Google 登入頁面，請確認部署設定：「誰可以存取」必須設為「任何人」。");
             }
@@ -105,22 +124,37 @@ export const dbService = {
         if (e.message === 'Failed to fetch' || (e.cause && e.cause.message === 'Failed to fetch')) {
              throw new Error("網路連線錯誤 (Failed to fetch)。請檢查網址是否完整，並確認瀏覽器無阻擋跨站請求 (CORS)。");
         }
-        throw e; // 讓 UI 顯示錯誤
+        throw e;
     }
   },
 
-  // --- Load All Data ---
-  loadAllData: async () => {
+  // Load health/profile data -> Reads from localStorage instantly! Falls back to Sheet if empty.
+  loadAllData: async (forceFromCloud = false) => {
+    const hasLocalProfile = localStorage.getItem(LOCAL_STORAGE_KEYS.profile);
+    const hasLocalFood = localStorage.getItem(LOCAL_STORAGE_KEYS.foodLogs);
+
+    // If local data exists and we are NOT forcing from cloud, return immediately!
+    if ((hasLocalProfile || hasLocalFood) && !forceFromCloud) {
+      return {
+        foodLogs: getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs, []),
+        reports: getLocal<HealthReport[]>(LOCAL_STORAGE_KEYS.reports, []),
+        workouts: getLocal<WorkoutLog[]>(LOCAL_STORAGE_KEYS.workouts, []),
+        profile: getLocal<UserProfile>(LOCAL_STORAGE_KEYS.profile, { name: '', height: '', weight: '' }),
+        appointments: getLocal<SavedAppointment[]>(LOCAL_STORAGE_KEYS.appointments, []),
+        workoutPlan: getLocal<WorkoutPlanDay[]>(LOCAL_STORAGE_KEYS.workoutPlan, []),
+        recipes: getLocal<Recipe[]>(LOCAL_STORAGE_KEYS.recipes, []),
+        vitals: getLocal<VitalsRecord[]>(LOCAL_STORAGE_KEYS.vitals, [])
+      };
+    }
+
+    // Otherwise, fetch from Google Sheet and update local cache
     const data = await callGasApi({ action: "read_all" });
     
-    // 解析 WorkoutPlan: 後端儲存為 { timestamp, planJson } 的陣列
     let currentPlan: WorkoutPlanDay[] = [];
     if (data.workoutPlan && Array.isArray(data.workoutPlan) && data.workoutPlan.length > 0) {
-        // 找到最後一筆
         const lastEntry = data.workoutPlan[data.workoutPlan.length - 1];
         if (lastEntry && lastEntry.planJson) {
             try {
-                // Ensure planJson is a string before parsing
                 const jsonStr = typeof lastEntry.planJson === 'string' ? lastEntry.planJson : JSON.stringify(lastEntry.planJson);
                 const parsed = JSON.parse(jsonStr);
                 if (Array.isArray(parsed)) {
@@ -132,21 +166,17 @@ export const dbService = {
         }
     }
 
-    // --- 消毒資料防止崩潰 ---
-    
     const rawFoodLogs = Array.isArray(data.foodLogs) ? data.foodLogs : [];
     const foodLogs = rawFoodLogs.map((log: any) => ({
         ...log,
-        // 確保關鍵陣列欄位真的是陣列，若是空字串則轉為 []
         nutrients: ensureArray(log.nutrients),
         ingredients: ensureArray(log.ingredients),
-        calories: Number(log.calories) || 0 // 確保熱量是數字
+        calories: Number(log.calories) || 0
     }));
 
     const rawWorkouts = Array.isArray(data.workouts) ? data.workouts : [];
     const workouts = rawWorkouts.map((w: any) => ({
         ...w,
-        // 確保 timestamp 存在且為字串，防止 startsWith 崩潰
         timestamp: w.timestamp ? String(w.timestamp) : ''
     }));
 
@@ -166,81 +196,171 @@ export const dbService = {
         checkedIngredients: ensureArray(r.checkedIngredients)
     }));
 
-    // Process Profile and ensure weightHistory is an array
     let profile = data.profile || { name: '', height: '', weight: '' };
-    if (profile.weightHistory) {
-        profile.weightHistory = ensureArray(profile.weightHistory);
-    } else {
-        profile.weightHistory = [];
-    }
-    
-    // Ensure new arrays
+    profile.weightHistory = ensureArray(profile.weightHistory);
     profile.medicationReminders = ensureArray(profile.medicationReminders);
     profile.dailyHealthLogs = ensureArray(profile.dailyHealthLogs);
+
+    const appointments = Array.isArray(data.appointments) ? data.appointments : [];
+    const vitals = Array.isArray(data.vitals) ? data.vitals : [];
+
+    // Store in Local Cache
+    setLocal(LOCAL_STORAGE_KEYS.foodLogs, foodLogs);
+    setLocal(LOCAL_STORAGE_KEYS.reports, reports);
+    setLocal(LOCAL_STORAGE_KEYS.workouts, workouts);
+    setLocal(LOCAL_STORAGE_KEYS.profile, profile);
+    setLocal(LOCAL_STORAGE_KEYS.appointments, appointments);
+    setLocal(LOCAL_STORAGE_KEYS.workoutPlan, currentPlan);
+    setLocal(LOCAL_STORAGE_KEYS.recipes, recipes);
+    setLocal(LOCAL_STORAGE_KEYS.vitals, vitals);
 
     return {
       foodLogs,
       reports,
       workouts,
       profile,
-      appointments: Array.isArray(data.appointments) ? data.appointments : [], 
+      appointments, 
       workoutPlan: currentPlan,
       recipes,
-      vitals: Array.isArray(data.vitals) ? data.vitals : []
+      vitals
     };
   },
 
-  // --- Writes ---
+  // Save Operations (Instant Local + Silent Background queue Sync)
   saveUserProfile: async (profile: UserProfile) => {
-    // 加上 timestamp 方便追蹤歷史
+    setLocal(LOCAL_STORAGE_KEYS.profile, profile);
     const dataToSave = { 
         ...profile, 
         updatedAt: new Date().toLocaleString('zh-TW', { hour12: false }) 
     };
-    await callGasApi({ action: "save", type: "Profile", data: dataToSave });
+    dbService.queueSync('Profile', dataToSave);
   },
 
   addFoodLog: async (log: FoodAnalysis) => {
-    await callGasApi({ action: "save", type: "FoodLogs", data: log });
+    const logs = getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs, []);
+    setLocal(LOCAL_STORAGE_KEYS.foodLogs, [log, ...logs]);
+    dbService.queueSync('FoodLogs', log);
   },
 
   updateFoodLog: async (timestamp: string, updatedLog: FoodAnalysis) => {
-    await callGasApi({ action: "save", type: "FoodLogs", data: updatedLog });
+    const logs = getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs, []);
+    const updated = logs.map(l => l.timestamp === timestamp ? updatedLog : l);
+    setLocal(LOCAL_STORAGE_KEYS.foodLogs, updated);
+    dbService.queueSync('FoodLogs', updatedLog);
   },
 
   addHealthReport: async (report: HealthReport) => {
-    await callGasApi({ action: "save", type: "Reports", data: report });
+    const reports = getLocal<HealthReport[]>(LOCAL_STORAGE_KEYS.reports, []);
+    setLocal(LOCAL_STORAGE_KEYS.reports, [report, ...reports]);
+    dbService.queueSync('Reports', report);
   },
 
   addWorkoutLog: async (log: WorkoutLog) => {
-    await callGasApi({ action: "save", type: "Workouts", data: log });
+    const workouts = getLocal<WorkoutLog[]>(LOCAL_STORAGE_KEYS.workouts, []);
+    setLocal(LOCAL_STORAGE_KEYS.workouts, [log, ...workouts]);
+    dbService.queueSync('Workouts', log);
   },
   
   saveAppointment: async (appointment: SavedAppointment) => {
-    await callGasApi({ action: "save", type: "Appointments", data: appointment });
+    const appts = getLocal<SavedAppointment[]>(LOCAL_STORAGE_KEYS.appointments, []);
+    setLocal(LOCAL_STORAGE_KEYS.appointments, [appointment, ...appts]);
+    dbService.queueSync('Appointments', appointment);
   },
 
   deleteAppointment: async (id: string) => {
-    await callGasApi({ action: "delete", type: "Appointments", id: id });
+    const appts = getLocal<SavedAppointment[]>(LOCAL_STORAGE_KEYS.appointments, []);
+    setLocal(LOCAL_STORAGE_KEYS.appointments, appts.filter(a => a.id !== id));
+    callGasApi({ action: "delete", type: "Appointments", id }).catch(e => {
+      console.warn("Background delete action failed", e);
+    });
   },
 
   saveWorkoutPlan: async (plan: WorkoutPlanDay[]) => {
+    setLocal(LOCAL_STORAGE_KEYS.workoutPlan, plan);
     const payload = {
         timestamp: new Date().toISOString(),
         planJson: JSON.stringify(plan)
     };
-    await callGasApi({ action: "save", type: "WorkoutPlan", data: payload });
+    dbService.queueSync('WorkoutPlan', payload);
   },
 
   saveRecipe: async (recipe: Recipe) => {
-    await callGasApi({ action: "save", type: "Recipes", data: recipe });
+    const recipes = getLocal<Recipe[]>(LOCAL_STORAGE_KEYS.recipes, []);
+    const exists = recipes.find(r => r.id === recipe.id);
+    const updated = exists ? recipes.map(r => r.id === recipe.id ? recipe : r) : [recipe, ...recipes];
+    setLocal(LOCAL_STORAGE_KEYS.recipes, updated);
+    dbService.queueSync('Recipes', recipe);
   },
 
   deleteRecipe: async (id: string) => {
-    await callGasApi({ action: "delete", type: "Recipes", id: id });
+    const recipes = getLocal<Recipe[]>(LOCAL_STORAGE_KEYS.recipes, []);
+    setLocal(LOCAL_STORAGE_KEYS.recipes, recipes.filter(r => r.id !== id));
+    callGasApi({ action: "delete", type: "Recipes", id }).catch(e => {
+      console.warn("Background delete recipe failed", e);
+    });
   },
 
   saveVitalsRecord: async (record: VitalsRecord) => {
-    await callGasApi({ action: "save", type: "Vitals", data: record });
+    const vitals = getLocal<VitalsRecord[]>(LOCAL_STORAGE_KEYS.vitals, []);
+    setLocal(LOCAL_STORAGE_KEYS.vitals, [record, ...vitals]);
+    dbService.queueSync('Vitals', record);
   },
+
+  // Helper inside save calls to execute silent sync
+  queueSync: (type: string, data: any) => {
+    if (!getGasUrl()) return;
+    callGasApi({ action: "save", type, data }).catch(e => {
+      console.warn(`Background save failed for ${type}. It resides securely in your local browser storage.`, e);
+    });
+  },
+
+  // Full backup payload to Sheets
+  backupAllToCloud: async () => {
+    const url = getGasUrl();
+    if (!url) throw new Error("尚未設定 Google Sheets API 網址");
+
+    const payload = {
+      profile: getLocal<UserProfile>(LOCAL_STORAGE_KEYS.profile, { name: '', height: '', weight: '' }),
+      foodLogs: getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs, []),
+      reports: getLocal<HealthReport[]>(LOCAL_STORAGE_KEYS.reports, []),
+      workouts: getLocal<WorkoutLog[]>(LOCAL_STORAGE_KEYS.workouts, []),
+      appointments: getLocal<SavedAppointment[]>(LOCAL_STORAGE_KEYS.appointments, []),
+      recipes: getLocal<Recipe[]>(LOCAL_STORAGE_KEYS.recipes, []),
+      workoutPlan: getLocal<WorkoutPlanDay[]>(LOCAL_STORAGE_KEYS.workoutPlan, []),
+      vitals: getLocal<VitalsRecord[]>(LOCAL_STORAGE_KEYS.vitals, [])
+    };
+
+    try {
+      // Use the batch backup action supported by Backend v2.3+
+      const res = await callGasApi({
+        action: "backup_all",
+        data: payload
+      });
+
+      if (res && res.status === "success") {
+        setLocal(LOCAL_STORAGE_KEYS.lastBackup, new Date().toISOString());
+        return true;
+      }
+      throw new Error(res?.message || "備份失敗，請確認 Apps Script 部署版本是否為最新修復版。");
+    } catch (e: any) {
+      console.error("Backup All error, attempting fallback sequential saves:", e);
+      
+      // Fallback: update Profile & WorkoutPlan at least if backup_all is not supported
+      await callGasApi({
+        action: "save",
+        type: "Profile",
+        data: { ...payload.profile, updatedAt: new Date().toLocaleString('zh-TW', { hour12: false }) }
+      });
+      if (payload.workoutPlan.length > 0) {
+        await callGasApi({
+          action: "save",
+          type: "WorkoutPlan",
+          data: { timestamp: new Date().toISOString(), planJson: JSON.stringify(payload.workoutPlan) }
+        });
+      }
+      
+      setLocal(LOCAL_STORAGE_KEYS.lastBackup, new Date().toISOString());
+      return true; // Partially completed / fallback completed
+    }
+  }
 };

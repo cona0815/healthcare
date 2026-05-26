@@ -96,7 +96,7 @@ const getGoogleCalendarUrl = (type: string, dateObj: Date, apt: SavedAppointment
     return url.toString();
 };
 
-const CalendarStats: React.FC<Props> = ({ logs, workoutLogs, appointments, onUpdateLog }) => {
+const CalendarStats: React.FC<Props> = ({ logs, workoutLogs, appointments, onUpdateLog, userProfile }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   

@@ -179,7 +179,8 @@ export const analyzeFoodImage = async (
     - 高血壓 -> 注意鈉含量。
     - 糖尿病/高血糖 -> 注意糖與精緻澱粉。
     - 若違反禁忌，healthAdvice 開頭加「⚠️【嚴重警告】」。
-    
+    - **極度精簡。healthAdvice 必須以「非常簡短、口語化、不超過 3 句話的短評」為主。直指核心重點，不要條列式、不要長篇大論。字數控制在 50 字以內，方便快速閱讀。**
+
     回傳 JSON 結構: { 
       foodName, 
       calories (number), 
