@@ -6,6 +6,8 @@ import AnalysisResultCard from './AnalysisResultCard';
 import GroceryAssistant from './GroceryAssistant';
 
 interface Props {
+  selectedMeal?: string | null;
+  selectedDate?: string;
   healthReport: HealthReport | null;
   userProfile: UserProfile;
   pendingImageFile?: File | null;
@@ -15,22 +17,22 @@ interface Props {
   savedRecipes: Recipe[];
   onSaveRecipe: (recipe: Recipe) => void;
   onDeleteRecipe: (id: string) => void;
-  // Dashboard data props are no longer used here but kept for interface compatibility if needed, 
+  // Dashboard data props are no longer used here but kept for interface compatibility if needed,
   // or we can remove them. For minimal changes, I'll ignore them in render.
   foodLogs: FoodAnalysis[];
   appointments: SavedAppointment[];
   workoutPlan: WorkoutPlanDay[];
 }
 
-const FoodAnalyzer: React.FC<Props> = ({ 
-    healthReport, userProfile, pendingImageFile, onClearPendingImage, onAnalysisComplete, onUpdateLog, 
+const FoodAnalyzer: React.FC<Props> = ({
+    healthReport, userProfile, selectedMeal, selectedDate, pendingImageFile, onClearPendingImage, onAnalysisComplete, onUpdateLog,
     savedRecipes, onSaveRecipe, onDeleteRecipe
 }) => {
   const [viewMode, setViewMode] = useState<'MEAL' | 'GROCERY'>('MEAL');
   const [loading, setLoading] = useState(false);
   const [suggestionLoading, setSuggestionLoading] = useState(false);
   const [mapLoadingId, setMapLoadingId] = useState<number | null>(null);
-  
+
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -39,18 +41,19 @@ const FoodAnalyzer: React.FC<Props> = ({
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
 
   // --- Handlers ---
-  
+
   const processFile = async (file: File) => {
     setError(null);
     setCurrentResult(null);
-    setSuggestions([]); 
+    setSuggestions([]);
     const objectUrl = URL.createObjectURL(file);
     setPreview(objectUrl);
     setLoading(true);
 
     try {
       const base64 = await fileToGenerativePart(file);
-      const result = await analyzeFoodImage(base64, file.type, healthReport || undefined, userProfile);
+      const analyzed = await analyzeFoodImage(base64, file.type, healthReport || undefined, userProfile);
+      const result: FoodAnalysis = {...analyzed, mealType: (selectedMeal || analyzed.mealType) as FoodAnalysis['mealType'], timestamp: selectedDate ? new Date(selectedDate + 'T' + new Date(analyzed.timestamp).toTimeString().slice(0,8)).toISOString() : analyzed.timestamp};
       setCurrentResult(result);
       onAnalysisComplete(result);
     } catch (err) {
@@ -119,16 +122,16 @@ const FoodAnalyzer: React.FC<Props> = ({
 
   const handleFindNearby = async (index: number, foodName: string) => {
     let loc = userLocation;
-    
+
     if (!loc) {
-        try { 
-            loc = await getUserLocation(); 
-        } catch(e) { 
-            return; 
+        try {
+            loc = await getUserLocation();
+        } catch(e) {
+            return;
         }
     }
-    
-    if (!loc) return; 
+
+    if (!loc) return;
 
     setMapLoadingId(index);
     try {
@@ -137,11 +140,11 @@ const FoodAnalyzer: React.FC<Props> = ({
             alert("找不到附近的相關店家");
         }
         setSuggestions(prev => prev.map((s, i) => i === index ? { ...s, restaurants: places } : s));
-    } catch (e) { 
+    } catch (e) {
         console.error(e);
-        alert("搜尋附近店家失敗"); 
-    } finally { 
-        setMapLoadingId(null); 
+        alert("搜尋附近店家失敗");
+    } finally {
+        setMapLoadingId(null);
     }
   };
 
@@ -149,13 +152,13 @@ const FoodAnalyzer: React.FC<Props> = ({
     <div className="space-y-4 md:space-y-6 animate-fade-in pb-20">
       {/* View Toggle */}
       <div className="flex p-1.5 bg-gray-100 rounded-2xl mb-6 shadow-inner">
-        <button 
+        <button
            onClick={() => setViewMode('MEAL')}
            className={`flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-300 ${viewMode === 'MEAL' ? 'bg-white shadow-sm text-teal-700 ring-1 ring-gray-200/50' : 'text-gray-500 hover:text-gray-700'}`}
         >
           <Utensils className="w-4 h-4"/> 餐點分析
         </button>
-        <button 
+        <button
            onClick={() => setViewMode('GROCERY')}
            className={`flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-300 ${viewMode === 'GROCERY' ? 'bg-white shadow-sm text-teal-700 ring-1 ring-gray-200/50' : 'text-gray-500 hover:text-gray-700'}`}
         >
@@ -164,9 +167,9 @@ const FoodAnalyzer: React.FC<Props> = ({
       </div>
 
       {viewMode === 'GROCERY' ? (
-        <GroceryAssistant 
-          userProfile={userProfile} 
-          healthReport={healthReport} 
+        <GroceryAssistant
+          userProfile={userProfile}
+          healthReport={healthReport}
           savedRecipes={savedRecipes}
           onSaveRecipe={onSaveRecipe}
           onDeleteRecipe={onDeleteRecipe}
@@ -202,7 +205,7 @@ const FoodAnalyzer: React.FC<Props> = ({
                    <p className="text-gray-900 font-bold text-lg mb-1">外食族不知道吃什麼？</p>
                    <p className="text-sm text-gray-500">AI 根據您的位置與健康狀況推薦「綠燈/黃燈」美食</p>
                  </div>
-                 <button 
+                 <button
                     onClick={handleGetSuggestions}
                     disabled={suggestionLoading}
                     className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-bold py-4 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg disabled:opacity-70 active:scale-95"
@@ -263,7 +266,7 @@ const FoodAnalyzer: React.FC<Props> = ({
                </div>
             </div>
           )}
-          
+
            {currentResult && (
              <div className="animate-fade-in">
                 <h3 className="text-lg font-bold text-gray-800 mb-3 px-1">分析結果</h3>

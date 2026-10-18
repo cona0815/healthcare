@@ -90,3 +90,9 @@ dist/
 
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
+# Local previews, uploads and private configuration
+.env.*
+!.env.example
+.netlify/
+tmp/
+/*.png

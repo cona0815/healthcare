@@ -1,4 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import SlowJogging from './components/SlowJogging';
+import TodayTasks from './components/TodayTasks';
+import CareTools from './components/CareTools';
+import { syncQueue, isDemoMode } from './services/dbService';
+import { localDate } from './services/healthSummary';
+import HealthOverview from './components/HealthOverview';
+import { Plus, X, Camera, Droplets, CalendarDays } from 'lucide-react';
+import { MealType } from './types';
+import React, { useState, useEffect, useRef } from 'react';
 import { Utensils, BarChart3, UserCog, Activity, Dumbbell, Loader2, LogOut, Database, User, Key, LayoutDashboard, Settings, HeartPulse } from 'lucide-react';
 import FoodAnalyzer from './components/FoodAnalyzer';
 import CalendarStats from './components/CalendarStats';
@@ -11,27 +19,38 @@ import Dashboard from './components/Dashboard';
 import GasSetup from './components/GasSetup';
 import ApiKeySetup from './components/ApiKeySetup'; // New component
 import DailySummaryPopup from './components/DailySummaryPopup'; // New component
-import { HealthReport, FoodAnalysis, ViewState, UserProfile, WorkoutLog, SavedAppointment, WorkoutPlanDay, Recipe, DailyHealthLog } from './types';
-import { dbService, getGasUrl, clearGasUrl } from './services/dbService';
+import { HealthReport, FoodAnalysis, ViewState, UserProfile, WorkoutLog, SavedAppointment, WorkoutPlanDay, Recipe, DailyHealthLog, VitalsRecord } from './types';
+import { dbService, getGasUrl, clearGasUrl, getLocal } from './services/dbService';
 import { getGeminiKey, clearGeminiKey } from './services/geminiService';
 
 const App: React.FC = () => {
+  const demo=isDemoMode();
+  const localOnly=demo || localStorage.getItem('hg_local_mode')==='true';
   const [hasApiKey, setHasApiKey] = useState<boolean>(!!getGeminiKey());
   const [hasConnection, setHasConnection] = useState<boolean>(!!getGasUrl());
+  const [toolsOpen,setToolsOpen]=useState(false);
+  const [careSection,setCareSection]=useState('symptoms');
+  useEffect(()=>{if(!toolsOpen)return;const close=(e:KeyboardEvent)=>{if(e.key==='Escape')setToolsOpen(false);};window.addEventListener('keydown',close);return()=>window.removeEventListener('keydown',close);},[toolsOpen]);
+  const [recordOpen, setRecordOpen] = useState(false);
+  const [mealContext, setMealContext] = useState<{meal: MealType | null; date: string} | null>(null);
   const [activeTab, setActiveTab] = useState<ViewState>('DASHBOARD');
+  const [workoutCategory,setWorkoutCategory]=useState('aerobic');
+  const returnToWorkouts=()=>{setWorkoutCategory(activeTab==='SLOW_JOG'?'aerobic':activeTab==='WALL_SIT'||activeTab==='SEATED_ANKLE'?'legs':'back');setActiveTab('WORKOUT');};
+  const mainScroll=useRef<HTMLElement>(null);
+  useEffect(()=>{mainScroll.current?.scrollTo({top:0,behavior:'auto'});},[activeTab,careSection]);
   const [activeHealthSubTab, setActiveHealthSubTab] = useState<'PROFILE' | 'REPORTS' | 'APPOINTMENTS' | 'MEDICATION' | 'SYSTEM'>('PROFILE');
   const [dataLoading, setDataLoading] = useState(false);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
-  
+
   const [healthReports, setHealthReports] = useState<HealthReport[]>([]);
   const [foodLogs, setFoodLogs] = useState<FoodAnalysis[]>([]);
   const [workoutLogs, setWorkoutLogs] = useState<WorkoutLog[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile>({ name: '', height: '', weight: '' });
   const [dailyHealthLogs, setDailyHealthLogs] = useState<DailyHealthLog[]>([]);
-  
+
   const [appointments, setAppointments] = useState<SavedAppointment[]>([]);
   const [currentWorkoutPlan, setCurrentWorkoutPlan] = useState<WorkoutPlanDay[]>([]);
-  
+
   // 新增食譜狀態
   const [savedRecipes, setSavedRecipes] = useState<Recipe[]>([]);
   const [vitalsRecords, setVitalsRecords] = useState<VitalsRecord[]>([]);
@@ -47,15 +66,15 @@ const App: React.FC = () => {
       const now = new Date();
       const currentHour = now.getHours();
       const currentMinute = now.getMinutes();
-      const todayString = now.toISOString().split('T')[0];
-      const lastSummaryDate = localStorage.getItem('lastDailySummaryDate');
+      const todayString = localDate(now);
+      const lastSummaryDate = localStorage.getItem(demo?'demo_lastDailySummaryDate':'lastDailySummaryDate');
 
       if (
         lastSummaryDate !== todayString &&
         (currentHour > targetHour || (currentHour === targetHour && currentMinute >= targetMinute))
       ) {
         setShowDailySummary(true);
-        localStorage.setItem('lastDailySummaryDate', todayString);
+        localStorage.setItem(demo?'demo_lastDailySummaryDate':'lastDailySummaryDate', todayString);
       }
     };
 
@@ -66,39 +85,24 @@ const App: React.FC = () => {
   }, [userProfile.dailySummaryTime, showDailySummary]);
 
   useEffect(() => {
-    if (hasApiKey && hasConnection) {
-      loadUserData();
-      triggerWeeklyBackupCheck();
+    if (localOnly || (hasApiKey && hasConnection)) {
+      void loadUserData().catch(()=>{});
     }
   }, [hasApiKey, hasConnection]);
-
-  const triggerWeeklyBackupCheck = async () => {
-    const isAutoBackupEnabled = localStorage.getItem('hg_auto_backup') !== 'false';
-    if (!isAutoBackupEnabled) return;
-
-    const lastBackupTime = localStorage.getItem('hg_last_backup_time');
-    const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
-    const shouldBackup = !lastBackupTime || (new Date().getTime() - new Date(lastBackupTime).getTime() > sevenDaysInMs);
-
-    if (shouldBackup) {
-      console.log("HealthGuardian: Starting background automatic weekly backup...");
-      try {
-        await dbService.backupAllToCloud();
-        console.log("HealthGuardian: Weekly background auto-backup completed successfully!");
-      } catch (e) {
-        console.warn("HealthGuardian: Background weekly backup skipped or pending configuration:", e);
-      }
-    }
-  };
+  useEffect(()=>{
+    const retry=()=>{if(!demo&&navigator.onLine&&localStorage.getItem('hg_auto_sync')!=='false')void syncQueue.flush(getGasUrl()||'');};
+    retry();window.addEventListener('online',retry);const timer=setInterval(retry,30000);
+    return()=>{window.removeEventListener('online',retry);clearInterval(timer);};
+  },[]);
 
   const loadUserData = async (forceFromCloud = false) => {
     setDataLoading(true);
     try {
       const data = await dbService.loadAllData(forceFromCloud);
-      setFoodLogs(data.foodLogs.reverse()); 
-      setHealthReports(data.reports.reverse());
-      setWorkoutLogs(data.workouts.reverse());
-      
+      setFoodLogs([...data.foodLogs].sort((a,b)=>Date.parse(b.timestamp)-Date.parse(a.timestamp)));
+      setHealthReports([...data.reports].sort((a,b)=>Date.parse(b.analyzedAt)-Date.parse(a.analyzedAt)));
+      setWorkoutLogs([...data.workouts].sort((a,b)=>Date.parse(b.timestamp)-Date.parse(a.timestamp)));
+
       let loadedProfile = data.profile || { name: '', height: '', weight: '' };
       // 根據歷史紀錄自動更新當前體重
       if (loadedProfile.weightHistory && loadedProfile.weightHistory.length > 0) {
@@ -116,22 +120,24 @@ const App: React.FC = () => {
       if (data.appointments) setAppointments(data.appointments.reverse());
       if (data.workoutPlan) setCurrentWorkoutPlan(data.workoutPlan);
       if (data.recipes) setSavedRecipes(data.recipes.reverse());
-      if (data.vitals) setVitalsRecords(data.vitals.reverse()); // Load vitals
+      if (data.vitals) setVitalsRecords([...data.vitals].sort((a,b)=>`${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`))); // Load vitals
     } catch (e) {
       console.error("Failed to load data", e);
-      alert("讀取資料失敗，請確認您的 Google Sheet 權限設定");
+      if (!forceFromCloud) alert("讀取資料失敗，請確認您的 Google Sheet 權限設定");
+      throw e;
     } finally {
       setDataLoading(false);
     }
   };
 
   const handleFoodAnalysisComplete = async (result: FoodAnalysis) => {
-    setFoodLogs(prev => [result, ...prev]);
+
     try {
         await dbService.addFoodLog(result);
+        setFoodLogs(prev => [result, ...prev]);
     } catch (e) {
         console.error("Save food log failed", e);
-        alert("資料儲存失敗，請檢查連線");
+        throw e;
     }
   };
 
@@ -145,11 +151,12 @@ const App: React.FC = () => {
   };
 
   const handleAddWorkout = async (log: WorkoutLog) => {
-    setWorkoutLogs(prev => [log, ...prev]);
+
     try {
         await dbService.addWorkoutLog(log);
+        setWorkoutLogs(prev => [log, ...prev]);
     } catch (e) {
-        alert("運動紀錄儲存失敗");
+        throw e;
     }
   };
 
@@ -164,17 +171,18 @@ const App: React.FC = () => {
   };
 
   const handleUpdateProfile = async (profile: UserProfile) => {
-    // Optimistic update
-    setUserProfile(profile);
+
     try {
         await dbService.saveUserProfile(profile);
+        setUserProfile(profile);
+        setDailyHealthLogs(profile.dailyHealthLogs || []);
     } catch (e) {
         console.error(e);
         alert("個人資料儲存失敗！請檢查您的 Google Sheets 連線與部署設定。");
         throw e; // Re-throw to let child components know
     }
   };
-  
+
   const handleSaveAppointment = async (appointment: SavedAppointment) => {
     setAppointments(prev => [appointment, ...prev]);
     try {
@@ -201,7 +209,7 @@ const App: React.FC = () => {
         alert("運動計畫儲存失敗");
     }
   };
-  
+
   // Handle Save/Update Recipe
   const handleSaveRecipe = async (recipe: Recipe) => {
     setSavedRecipes(prev => {
@@ -235,6 +243,7 @@ const App: React.FC = () => {
   };
 
   const handleDisconnect = () => {
+    if(demo){location.href='/';return;}
     if (confirm("確定要登出並清除所有連線資訊嗎？")) {
         clearGasUrl();
         clearGeminiKey();
@@ -250,7 +259,7 @@ const App: React.FC = () => {
     switch (activeTab) {
       case 'DASHBOARD':
         return (
-          <Dashboard 
+          <Dashboard
             dataLoading={dataLoading}
             userProfile={userProfile}
             foodLogs={foodLogs}
@@ -264,6 +273,7 @@ const App: React.FC = () => {
                  setActiveHealthSubTab(subTab as any);
                }
             }}
+            onRecordMeal={(meal, date, file) => {setMealContext({meal,date});setPendingImageFile(file || null);setActiveTab('FOOD');}}
             onAnalyzeImage={(file) => {
                setPendingImageFile(file);
                setActiveTab('FOOD');
@@ -275,10 +285,13 @@ const App: React.FC = () => {
       case 'FOOD':
         return (
           <div className="space-y-6 md:space-y-8 animate-fade-in">
-            <FoodAnalyzer 
+            {mealContext && <p className="meal-context">記錄日期：{mealContext.date} · {mealContext.meal || '依照片判斷餐次'}</p>}
+            <FoodAnalyzer
               healthReport={latestHealthReport}
               userProfile={userProfile}
               pendingImageFile={pendingImageFile}
+              selectedMeal={mealContext?.meal}
+              selectedDate={mealContext?.date}
               onClearPendingImage={() => setPendingImageFile(null)}
               onAnalysisComplete={handleFoodAnalysisComplete}
               onUpdateLog={handleUpdateLog}
@@ -301,14 +314,28 @@ const App: React.FC = () => {
             )}
           </div>
         );
+      case 'TASKS':
+        return <TodayTasks profile={userProfile} vitals={vitalsRecords} workouts={workoutLogs} appointments={appointments} foods={foodLogs} onUpdate={handleUpdateProfile} onNavigate={(view,subTab)=>{if(view==='CARE')setCareSection('stock');if(view==='HEALTH_MANAGEMENT')setActiveHealthSubTab((subTab||'PROFILE') as any);setActiveTab(view);}}/>;
+      case 'CARE':
+        return <div><div className="flex items-center justify-between mb-4"><h2 className="text-xl font-bold">工具</h2><button className="px-3 py-2 rounded-lg border bg-white" onClick={()=>{setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}}>我的資料與健康管理 →</button></div><CareTools key={careSection} initialSection={careSection} profile={userProfile} foods={foodLogs} workouts={workoutLogs} vitals={vitalsRecords} onUpdate={handleUpdateProfile} onFood={handleFoodAnalysisComplete} onWorkout={handleAddWorkout}/></div>;
+      case 'TRENDS':
+        return <HealthOverview trendOnly profile={userProfile} vitals={vitalsRecords} workouts={workoutLogs} appointments={appointments} onUpdate={handleUpdateProfile} onNavigate={setActiveTab}/>;
       case 'CALENDAR':
         return <CalendarStats logs={foodLogs} workoutLogs={workoutLogs} appointments={appointments} onUpdateLog={handleUpdateLog} userProfile={userProfile} />;
+      case 'SEATED_ANKLE': return <SlowJogging onBack={returnToWorkouts} key="ankle" exercise="seated_ankle" logs={workoutLogs} onSave={handleAddWorkout}/>;
+      case 'WALL_ANGEL': return <SlowJogging onBack={returnToWorkouts} key="angel-front" exercise="wall_angel" logs={workoutLogs} onSave={handleAddWorkout}/>;
+      case 'BAND_WALL_SLIDE': return <SlowJogging onBack={returnToWorkouts} key="band-wall" exercise="band_wall_slide" logs={workoutLogs} onSave={handleAddWorkout}/>;
+      case 'SNOW_ANGEL': return <SlowJogging onBack={returnToWorkouts} key="angel-back" exercise="snow_angel" logs={workoutLogs} onSave={handleAddWorkout}/>;
+      case 'WALL_SIT':
+        return <SlowJogging onBack={returnToWorkouts} key="wall" exercise="wall_sit" logs={workoutLogs} onSave={handleAddWorkout}/>;
+      case 'SLOW_JOG':
+        return <SlowJogging onBack={returnToWorkouts} key="jog" logs={workoutLogs} onSave={handleAddWorkout}/>;
       case 'WORKOUT':
         return (
-          <WorkoutPlanner 
-             userProfile={userProfile} 
-             healthReport={latestHealthReport} 
-             workoutLogs={workoutLogs} 
+          <WorkoutPlanner workoutCategory={workoutCategory} onCategoryChange={setWorkoutCategory} onAssistedExercise={kind=>setActiveTab(kind)} onWallSit={()=>setActiveTab('WALL_SIT')} onSlowJog={()=>setActiveTab('SLOW_JOG')} onUpdateProfile={handleUpdateProfile}
+             userProfile={userProfile}
+             healthReport={latestHealthReport}
+             workoutLogs={workoutLogs}
              onAddWorkout={handleAddWorkout}
              currentPlan={currentWorkoutPlan}
              onSavePlan={handleSaveWorkoutPlan}
@@ -316,17 +343,18 @@ const App: React.FC = () => {
         );
       case 'VITALS':
         return (
-          <VitalsTracker 
+          <VitalsTracker
             vitalsRecords={vitalsRecords}
             onSaveRecord={handleSaveVitals}
           />
         );
       case 'HEALTH_MANAGEMENT':
+        if(demo && activeHealthSubTab==='SYSTEM')return <p>示範模式不會變更正式設定。<button onClick={()=>setActiveHealthSubTab('PROFILE')}>回到個人資料</button></p>;
         return (
-          <HealthManagement 
-             userProfile={userProfile} 
-             onUpdateProfile={handleUpdateProfile} 
-             healthReports={healthReports} 
+          <HealthManagement
+             userProfile={userProfile}
+             onUpdateProfile={handleUpdateProfile}
+             healthReports={healthReports}
              onReportAnalyzed={handleReportAnalyzed}
              appointments={appointments}
              onSaveAppointment={handleSaveAppointment}
@@ -336,10 +364,11 @@ const App: React.FC = () => {
           />
         );
       case 'SYSTEM_SETTINGS':
+        if(demo)return <p>示範模式不會更動正式系統的金鑰或雲端設定。<a href="/">離開示範</a></p>;
         return (
-          <SystemSettings 
-             userProfile={userProfile} 
-             onUpdateProfile={handleUpdateProfile} 
+          <SystemSettings
+             userProfile={userProfile}
+             onUpdateProfile={handleUpdateProfile}
              onRefreshAllData={() => loadUserData(true)}
           />
         );
@@ -349,9 +378,9 @@ const App: React.FC = () => {
   };
 
   const NavButton = ({ id, label, icon: Icon }: { id: ViewState, label: string, icon: any }) => (
-    <button 
-      onClick={() => setActiveTab(id)}
-      className={`relative flex-1 min-w-[64px] flex flex-col items-center justify-center space-y-1 transition-all h-full py-2 ${activeTab === id ? 'text-teal-600' : 'text-gray-400 hover:text-gray-500'}`}
+    <button
+      onClick={() => {setMealContext(null);setActiveTab(id);}}
+      className={`relative flex-1 min-w-0 flex flex-col items-center justify-center space-y-1 transition-all h-full py-2 ${activeTab === id ? 'text-teal-600' : 'text-gray-400 hover:text-gray-500'}`}
     >
       <Icon className={`w-6 h-6 ${activeTab === id ? 'scale-110' : 'scale-100'} transition-transform`} />
       <span className="text-[10px] font-medium scale-90 sm:scale-100">{label}</span>
@@ -362,7 +391,7 @@ const App: React.FC = () => {
   );
 
   const DesktopNavButton = ({ id, label, icon: Icon, colorClass }: { id: ViewState, label: string, icon: any, colorClass: string }) => (
-     <button 
+     <button
         onClick={() => setActiveTab(id)}
         className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 font-bold transition-all ${activeTab === id ? `${colorClass} shadow-md translate-x-1` : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}`}
       >
@@ -371,12 +400,12 @@ const App: React.FC = () => {
   );
 
   // 1. First time Setup: Gemini API Key
-  if (!hasApiKey) {
+  if (!localOnly && !hasApiKey) {
     return <ApiKeySetup onComplete={() => setHasApiKey(true)} />;
   }
 
   // 2. Second time Setup: Google Sheet DB
-  if (!hasConnection) {
+  if (!localOnly && !hasConnection) {
     return <GasSetup onConnect={() => setHasConnection(true)} />;
   }
 
@@ -391,8 +420,8 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex h-[100dvh] overflow-hidden bg-gray-50 selection:bg-teal-100 selection:text-teal-900">
-      
+    <div className="health-shell flex h-[100dvh] overflow-hidden bg-gray-50 selection:bg-teal-100 selection:text-teal-900">
+
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 flex-col bg-white border-r border-gray-200 flex-shrink-0 z-20">
         <div className="h-16 flex items-center gap-3 px-6 border-b border-gray-100 cursor-pointer" onClick={() => setActiveTab('DASHBOARD')}>
@@ -403,10 +432,13 @@ const App: React.FC = () => {
             HealthGuardian
           </h1>
         </div>
-        
+
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
           <p className="px-3 text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">選單</p>
           <DesktopNavButton id="DASHBOARD" label="總覽儀表板" icon={LayoutDashboard} colorClass="bg-gray-100 text-gray-900" />
+          <DesktopNavButton id="TASKS" label="今日待辦" icon={CalendarDays} colorClass="bg-teal-50 text-teal-700" />
+          <DesktopNavButton id="CARE" label="健康工具與同步" icon={HeartPulse} colorClass="bg-teal-50 text-teal-700" />
+          <DesktopNavButton id="TRENDS" label="健康趨勢週報" icon={BarChart3} colorClass="bg-teal-50 text-teal-700" />
           <DesktopNavButton id="VITALS" label="每日生理量測" icon={HeartPulse} colorClass="bg-rose-50 text-rose-700" />
           <DesktopNavButton id="FOOD" label="飲食分析與購物" icon={Utensils} colorClass="bg-teal-50 text-teal-700" />
           <DesktopNavButton id="CALENDAR" label="日曆統計" icon={BarChart3} colorClass="bg-indigo-50 text-indigo-700" />
@@ -425,11 +457,11 @@ const App: React.FC = () => {
                <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-gray-900 truncate">{userProfile.name || '使用者'}</p>
                   <p className="text-xs text-green-600 font-medium truncate flex items-center gap-1">
-                     <Database className="w-3 h-3"/> 已連線
+                     <Database className="w-3 h-3"/> 本機儲存
                   </p>
                </div>
-               <button 
-                 onClick={handleDisconnect} 
+               <button
+                 onClick={handleDisconnect}
                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
                  title="登出"
                >
@@ -441,7 +473,7 @@ const App: React.FC = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 bg-gray-50 relative overflow-hidden">
-        
+
         {/* Mobile App Header */}
         <header className="md:hidden bg-white/80 backdrop-blur-md border-b border-gray-200 z-20 flex-shrink-0">
           <div className="px-4 h-14 flex items-center justify-between">
@@ -454,15 +486,15 @@ const App: React.FC = () => {
               </h1>
             </div>
             <div className="flex items-center gap-1">
-               <button 
+               <button
                  onClick={() => setActiveTab('SYSTEM_SETTINGS')}
                  className={`p-2 rounded-full transition-colors ${activeTab === 'SYSTEM_SETTINGS' ? 'text-gray-900 bg-gray-100' : 'text-gray-400 hover:text-gray-600'}`}
                  title="設定"
                >
                  <Settings className="w-5 h-5" />
                </button>
-               <button 
-                 onClick={handleDisconnect} 
+               <button
+                 onClick={handleDisconnect}
                  className="p-2 text-gray-400 focus:text-red-500 active:bg-red-50 rounded-full transition-colors"
                  title="登出"
                >
@@ -471,13 +503,15 @@ const App: React.FC = () => {
             </div>
           </div>
           <div className="bg-green-600/90 py-1 flex items-center justify-center gap-1 text-white text-[10px] font-medium shadow-inner">
-            <Database className="w-3 h-3"/> 資料已自動同步至 Google Sheets
+            <Database className="w-3 h-3"/> {demo?'示範資料 · 本機儲存':getGasUrl()?'本機儲存 · 同步詳見健康工具':'本機儲存 · 未設定雲端'}
           </div>
         </header>
 
         {/* Scrollable Main Area */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden relative pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-8">
+        <main ref={mainScroll} className="flex-1 overflow-y-auto overflow-x-hidden relative pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-8">
            <div className="max-w-4xl mx-auto w-full p-4 md:p-8">
+              {(demo||localOnly)&&<div className="mode-banner">{demo?'示範模式 · 虛構資料，僅存在本機':'本機模式 · 手動紀錄免金鑰'} <a href={demo?'/':'/?demo=1'}>{demo?'離開示範':'體驗示範'}</a></div>}
+
               {renderContent()}
            </div>
         </main>
@@ -485,18 +519,22 @@ const App: React.FC = () => {
 
       {/* Mobile Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-gray-200 md:hidden z-30 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-        <div className="flex overflow-x-auto overflow-y-hidden scrollbar-hide h-16 w-full items-center px-1">
-          <NavButton id="DASHBOARD" label="首頁" icon={LayoutDashboard} />
-          <NavButton id="VITALS" label="量測" icon={HeartPulse} />
+        <div className="mobile-shortcuts">
+          <NavButton id="DASHBOARD" label="總覽" icon={LayoutDashboard} />
+
           <NavButton id="FOOD" label="飲食" icon={Utensils} />
-          <NavButton id="CALENDAR" label="統計" icon={BarChart3} />
+          <button className="record-nav" aria-label="新增紀錄" onClick={()=>setRecordOpen(true)}><span><Plus size={26}/></span><small>記錄</small></button>
+
           <NavButton id="WORKOUT" label="運動" icon={Dumbbell} />
-          <NavButton id="HEALTH_MANAGEMENT" label="健康" icon={UserCog} />
+          <NavButton id="TASKS" label="今日待辦" icon={CalendarDays} />
+          <button aria-label="工具" aria-haspopup="dialog" aria-expanded={toolsOpen} onClick={()=>setToolsOpen(true)} className="flex-1 min-w-0 flex flex-col items-center justify-center gap-1 text-gray-500 py-2"><Settings className="w-6 h-6"/><span className="text-[10px]">工具</span></button>
         </div>
       </nav>
-      
+
+      {toolsOpen && <div className="record-overlay" onClick={()=>setToolsOpen(false)}><section className="record-sheet" style={{maxHeight:'80dvh',overflowY:'auto'}} role="dialog" aria-modal="true" aria-label="工具選單" onClick={e=>e.stopPropagation()}><div><h2>工具</h2><button autoFocus aria-label="關閉工具選單" onClick={()=>setToolsOpen(false)}><X/></button></div>{[['band-wall','彈力帶沿牆上舉・AI 姿勢'],['seated-ankle','坐姿踮腳＋勾腳・AI 姿勢'],['wall-angel','牆壁天使（面向牆）'],['snow-angel','雪天使（背靠牆）'],['wall-sit','靠牆深蹲・AI 姿勢'],['slow-jog','超慢跑計時與姿勢'],['trends','健康趨勢週報'],['symptoms','症狀日記'],['stock','藥品庫存與補藥'],['templates','常用範本'],['export','看診摘要 PDF'],['sync','同步中心'],['profile','我的資料與健康管理']].map(([id,label])=><button key={id} onClick={()=>{setToolsOpen(false);if(id==='band-wall'){setActiveTab('BAND_WALL_SLIDE');}else if(id==='seated-ankle'){setActiveTab('SEATED_ANKLE');}else if(id==='wall-angel'){setActiveTab('WALL_ANGEL');}else if(id==='snow-angel'){setActiveTab('SNOW_ANGEL');}else if(id==='wall-sit'){setActiveTab('WALL_SIT');}else if(id==='slow-jog'){setActiveTab('SLOW_JOG');}else if(id==='trends'){setActiveTab('TRENDS');}else if(id==='profile'){setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}else{setCareSection(id);setActiveTab('CARE');}}}>{label}</button>)}</section></div>}
+      {recordOpen && <div className="record-overlay" onClick={()=>setRecordOpen(false)}><section className="record-sheet" role="dialog" aria-modal="true" aria-label="新增紀錄" onClick={e=>e.stopPropagation()}><div><h2>想記錄什麼？</h2><button aria-label="關閉新增紀錄" onClick={()=>setRecordOpen(false)}><X/></button></div>{([{view:'FOOD',label:'拍照記飲食',Icon:Camera},{view:'VITALS',label:'血壓與血糖',Icon:HeartPulse},{view:'WORKOUT',label:'運動紀錄',Icon:Dumbbell},{view:'DASHBOARD',label:'飲水紀錄',Icon:Droplets},{view:'CARE',label:'症狀與常用範本',Icon:HeartPulse}] as const).map(({view,label,Icon})=><button key={view} onClick={()=>{setMealContext(null);setActiveTab(view);setRecordOpen(false);}}><Icon size={22}/>{label}</button>)}</section></div>}
       {showDailySummary && (
-        <DailySummaryPopup 
+        <DailySummaryPopup
           userProfile={userProfile}
           foodLogs={foodLogs}
           workoutLogs={workoutLogs}

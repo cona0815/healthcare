@@ -20,7 +20,7 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
 
   // Backup & Restore states
   const [autoBackup, setAutoBackup] = useState<boolean>(() => {
-    return localStorage.getItem('hg_auto_backup') !== 'false';
+    return localStorage.getItem('hg_auto_sync') !== 'false';
   });
   const [lastBackup, setLastBackup] = useState('');
   const [syncing, setSyncing] = useState(false);
@@ -44,7 +44,8 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
       recipes: getLocal<any[]>('hg_recipes', []).length,
     });
     
-    const lastBackupTime = localStorage.getItem('hg_last_backup_time');
+    // Also read timestamps written as JSON strings by older versions.
+    const lastBackupTime = getLocal<string>('hg_last_backup_time', localStorage.getItem('hg_last_backup_time') || '');
     if (lastBackupTime) {
       setLastBackup(new Date(lastBackupTime).toLocaleString('zh-TW', { hour12: false }));
     } else {
@@ -61,7 +62,7 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
   const handleToggleAutoBackup = () => {
     const newVal = !autoBackup;
     setAutoBackup(newVal);
-    localStorage.setItem('hg_auto_backup', String(newVal));
+    localStorage.setItem('hg_auto_sync', String(newVal));
   };
 
   const handleDoBackup = async () => {
@@ -196,8 +197,8 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
               <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 space-y-4">
                   <div className="flex items-center justify-between">
                       <div>
-                          <span className="font-bold text-blue-900 block">每週背景自動備份至網路</span>
-                          <span className="text-xs text-blue-700">由系統自動在背景上傳最新健康紀錄，零延遲、不卡頓。</span>
+                          <span className="font-bold text-blue-900 block">連線時自動同步待處理紀錄</span>
+                          <span className="text-xs text-blue-700">失敗的紀錄會保留在同步中心；連線恢復後重新嘗試。</span>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                           <input 

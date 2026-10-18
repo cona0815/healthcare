@@ -1,7 +1,10 @@
+import { SyncQueue } from './syncQueue';
 import { FoodAnalysis, HealthReport, UserProfile, WorkoutLog, SavedAppointment, WorkoutPlanDay, Recipe, VitalsRecord } from '../types';
 
 const GAS_URL_KEY = 'hg_gas_api_url';
-export const getGasUrl = () => localStorage.getItem(GAS_URL_KEY);
+export const isDemoMode = () => typeof location !== 'undefined' && new URLSearchParams(location.search).get('demo') === '1';
+export const getGasUrl = () => isDemoMode() ? null : localStorage.getItem(GAS_URL_KEY);
+const storageKey = (key: string) => isDemoMode() ? 'demo_v2_' + key : key;
 export const setGasUrl = (url: string) => localStorage.setItem(GAS_URL_KEY, url);
 export const clearGasUrl = () => localStorage.removeItem(GAS_URL_KEY);
 
@@ -21,7 +24,7 @@ export const LOCAL_STORAGE_KEYS = {
 
 // Local storage helper utilities
 export const getLocal = <T>(key: string, defaultValue: T): T => {
-  const item = localStorage.getItem(key);
+  const item = localStorage.getItem(storageKey(key));
   if (!item) return defaultValue;
   try {
     return JSON.parse(item);
@@ -31,7 +34,7 @@ export const getLocal = <T>(key: string, defaultValue: T): T => {
 };
 
 export const setLocal = <T>(key: string, value: T): void => {
-  localStorage.setItem(key, JSON.stringify(value));
+  localStorage.setItem(storageKey(key), JSON.stringify(value));
 };
 
 // Timeout fetch helper
@@ -58,8 +61,8 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout 
 };
 
 // Calling GAS Generic API Function
-const callGasApi = async (data: any) => {
-  const url = getGasUrl();
+const callGasApi = async (data: any, destination?: string) => {
+  const url = destination || getGasUrl();
   if (!url) throw new Error("API URL not set");
 
   try {
@@ -68,6 +71,9 @@ const callGasApi = async (data: any) => {
       body: JSON.stringify(data),
       headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
     });
+    if (!response.ok) {
+      throw new Error(`雲端服務回應失敗 (HTTP ${response.status})，請稍後重試。`);
+    }
     
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.indexOf("application/json") === -1) {
@@ -75,6 +81,9 @@ const callGasApi = async (data: any) => {
      }
 
     const json = await response.json();
+    if (!json || typeof json !== 'object' || json.status === 'error') {
+      throw new Error(json?.message || '雲端服務未能完成操作。');
+    }
     return json;
   } catch (error: any) {
     console.error("GAS API Error:", error);
@@ -130,11 +139,11 @@ export const dbService = {
 
   // Load health/profile data -> Reads from localStorage instantly! Falls back to Sheet if empty.
   loadAllData: async (forceFromCloud = false) => {
-    const hasLocalProfile = localStorage.getItem(LOCAL_STORAGE_KEYS.profile);
-    const hasLocalFood = localStorage.getItem(LOCAL_STORAGE_KEYS.foodLogs);
+    const hasLocalProfile = localStorage.getItem(storageKey(LOCAL_STORAGE_KEYS.profile));
+    const hasLocalFood = Object.values(LOCAL_STORAGE_KEYS).filter(key=>!['hg_auto_backup','hg_last_backup_time'].includes(key)).some(key=>localStorage.getItem(storageKey(key))!==null);
 
     // If local data exists and we are NOT forcing from cloud, return immediately!
-    if ((hasLocalProfile || hasLocalFood) && !forceFromCloud) {
+    if ((!getGasUrl() || hasLocalProfile || hasLocalFood) && !forceFromCloud) {
       return {
         foodLogs: getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs, []),
         reports: getLocal<HealthReport[]>(LOCAL_STORAGE_KEYS.reports, []),
@@ -147,6 +156,7 @@ export const dbService = {
       };
     }
 
+    if (syncQueue.list().length) throw new Error('還有待同步資料，請先至同步中心完成同步，再從雲端載入。');
     // Otherwise, fetch from Google Sheet and update local cache
     const data = await callGasApi({ action: "read_all" });
     
@@ -197,6 +207,8 @@ export const dbService = {
     }));
 
     let profile = data.profile || { name: '', height: '', weight: '' };
+    if (profile.exerciseOptions !== undefined && profile.exerciseOptions !== null && profile.exerciseOptions !== '') profile.exerciseOptions = ensureArray(profile.exerciseOptions);
+    for (const key of ['symptoms','medicineStock','quickTemplates','customTasks','taskCardOrder']) profile[key] = ensureArray(profile[key]);
     profile.weightHistory = ensureArray(profile.weightHistory);
     profile.medicationReminders = ensureArray(profile.medicationReminders);
     profile.dailyHealthLogs = ensureArray(profile.dailyHealthLogs);
@@ -270,9 +282,7 @@ export const dbService = {
   deleteAppointment: async (id: string) => {
     const appts = getLocal<SavedAppointment[]>(LOCAL_STORAGE_KEYS.appointments, []);
     setLocal(LOCAL_STORAGE_KEYS.appointments, appts.filter(a => a.id !== id));
-    callGasApi({ action: "delete", type: "Appointments", id }).catch(e => {
-      console.warn("Background delete action failed", e);
-    });
+    dbService.queueDelete('Appointments', id);
   },
 
   saveWorkoutPlan: async (plan: WorkoutPlanDay[]) => {
@@ -295,9 +305,7 @@ export const dbService = {
   deleteRecipe: async (id: string) => {
     const recipes = getLocal<Recipe[]>(LOCAL_STORAGE_KEYS.recipes, []);
     setLocal(LOCAL_STORAGE_KEYS.recipes, recipes.filter(r => r.id !== id));
-    callGasApi({ action: "delete", type: "Recipes", id }).catch(e => {
-      console.warn("Background delete recipe failed", e);
-    });
+    dbService.queueDelete('Recipes', id);
   },
 
   saveVitalsRecord: async (record: VitalsRecord) => {
@@ -308,14 +316,22 @@ export const dbService = {
 
   // Helper inside save calls to execute silent sync
   queueSync: (type: string, data: any) => {
-    if (!getGasUrl()) return;
-    callGasApi({ action: "save", type, data }).catch(e => {
-      console.warn(`Background save failed for ${type}. It resides securely in your local browser storage.`, e);
-    });
+    if(isDemoMode()) return;
+    const id = data.id || data.timestamp || data.analyzedAt;
+    const singleton = type === 'Profile' || type === 'WorkoutPlan';
+    const stableData = singleton ? data : {...data, id: id || crypto.randomUUID()};
+    syncQueue.enqueue(getGasUrl() || '', singleton ? type : type + ':' + stableData.id, {action:'save',type,data:stableData});
+    if (typeof navigator !== 'undefined' && navigator.onLine && localStorage.getItem('hg_auto_sync')!=='false') void syncQueue.flush(getGasUrl() || '');
+  },
+  queueDelete: (type: string, id: string) => {
+    if(isDemoMode()) return;
+    syncQueue.enqueue(getGasUrl() || '', type + ':' + id, {action:'delete',type,id});
+    if(typeof navigator !== 'undefined' && navigator.onLine && localStorage.getItem('hg_auto_sync')!=='false') void syncQueue.flush(getGasUrl() || '');
   },
 
   // Full backup payload to Sheets
   backupAllToCloud: async () => {
+    if (syncQueue.busy || syncQueue.list().length) throw new Error("請先完成同步中心的待同步資料，再進行完整備份。");
     const url = getGasUrl();
     if (!url) throw new Error("尚未設定 Google Sheets API 網址");
 
@@ -338,29 +354,16 @@ export const dbService = {
       });
 
       if (res && res.status === "success") {
-        setLocal(LOCAL_STORAGE_KEYS.lastBackup, new Date().toISOString());
+        localStorage.setItem(LOCAL_STORAGE_KEYS.lastBackup, new Date().toISOString());
         return true;
       }
       throw new Error(res?.message || "備份失敗，請確認 Apps Script 部署版本是否為最新修復版。");
     } catch (e: any) {
-      console.error("Backup All error, attempting fallback sequential saves:", e);
+      console.error("Backup All error:", e);
       
-      // Fallback: update Profile & WorkoutPlan at least if backup_all is not supported
-      await callGasApi({
-        action: "save",
-        type: "Profile",
-        data: { ...payload.profile, updatedAt: new Date().toLocaleString('zh-TW', { hour12: false }) }
-      });
-      if (payload.workoutPlan.length > 0) {
-        await callGasApi({
-          action: "save",
-          type: "WorkoutPlan",
-          data: { timestamp: new Date().toISOString(), planJson: JSON.stringify(payload.workoutPlan) }
-        });
-      }
-      
-      setLocal(LOCAL_STORAGE_KEYS.lastBackup, new Date().toISOString());
-      return true; // Partially completed / fallback completed
+      throw e;
     }
   }
 };
+
+export const syncQueue = new SyncQueue({getItem:k=>localStorage.getItem(k),setItem:(k,v)=>localStorage.setItem(k,v)} as Storage, callGasApi, ()=>{if(typeof window!=='undefined') window.dispatchEvent(new Event('health-sync'));});

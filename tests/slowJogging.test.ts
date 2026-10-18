@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {elapsedMs,videoError,JogSession} from '../services/slowJogging';
+const base:JogSession={id:'test',elapsed:10000,startedAt:1000,target:60000,saved:false};
+test('timer recovers wall-clock elapsed time without interval drift',()=>assert.equal(elapsedMs(base,31000),40000));
+test('paused timer does not count paused time',()=>assert.equal(elapsedMs({...base,startedAt:null},999999),10000));
+test('target caps hidden-tab elapsed time and backwards clocks do not subtract progress',()=>{assert.equal(elapsedMs(base,999999),60000);assert.equal(elapsedMs(base,0),10000);});
+test('video rejects oversized and unsupported files before transmission',()=>{assert.equal(videoError(100,'video/mp4'),'');assert.match(videoError(4*1024*1024,'video/mp4'),/3 MB/);assert.match(videoError(100,'image/jpeg'),/MP4/);});
+import {videoAnalysisError} from '../services/slowJogging';
+test('upstream model, quota and key errors stay actionable without exposing raw service details',()=>{assert.match(videoAnalysisError(500,'models/old is no longer available'),/模型/);assert.match(videoAnalysisError(500,'RESOURCE_EXHAUSTED'),/額度/);assert.match(videoAnalysisError(500,'API key not valid. key=secret'),/金鑰/);assert.doesNotMatch(videoAnalysisError(500,'API key not valid. key=secret'),/secret/);});

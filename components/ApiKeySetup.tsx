@@ -33,6 +33,8 @@ const ApiKeySetup: React.FC<Props> = ({ onComplete }) => {
         </p>
 
         <div className="space-y-4">
+           <button type="button" className="w-full p-3 border rounded-xl" onClick={()=>{localStorage.setItem('hg_local_mode','true');location.reload();}}>先使用本機手動紀錄（免設定）</button>
+           <a href="/?demo=1" className="block text-center bg-teal-50 text-teal-800 font-bold rounded-xl p-4">免設定體驗示範模式 →</a>
            <div>
               <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 block">Gemini API Key</label>
               <input 

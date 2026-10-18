@@ -1,0 +1,9 @@
+import React from 'react';
+import {ArrowUpRight,Activity,Armchair,Dumbbell} from 'lucide-react';
+import './exerciseHub.css';
+type Assisted='SEATED_ANKLE'|'WALL_ANGEL'|'SNOW_ANGEL'|'BAND_WALL_SLIDE';
+export default function ExerciseHub({category,onCategoryChange,onSlowJog,onWallSit,onAssistedExercise}:{category:string;onCategoryChange:(category:string)=>void;onSlowJog?:()=>void;onWallSit?:()=>void;onAssistedExercise?:(kind:Assisted)=>void}){
+
+ const groups=[{id:'aerobic',label:'有氧',icon:Activity,items:[{title:'超慢跑',detail:'節拍、音樂與跑姿',open:onSlowJog}]},{id:'legs',label:'下肢',icon:Armchair,items:[{title:'靠牆深蹲／靜蹲',detail:'靠牆姿勢與深度控制',open:onWallSit},{title:'坐姿踮腳＋勾腳',detail:'腳跟、腳尖抬放',open:onAssistedExercise?()=>onAssistedExercise('SEATED_ANKLE'):undefined}]},{id:'back',label:'肩背',icon:Dumbbell,items:[{title:'彈力帶沿牆上舉',detail:'面向牆 · 雙手腕套帶',open:onAssistedExercise?()=>onAssistedExercise('BAND_WALL_SLIDE'):undefined},{title:'牆壁天使',detail:'面向牆 · 徒手',open:onAssistedExercise?()=>onAssistedExercise('WALL_ANGEL'):undefined},{title:'雪天使',detail:'背靠牆 · 徒手',open:onAssistedExercise?()=>onAssistedExercise('SNOW_ANGEL'):undefined}]}];
+ return <section className="exercise-hub" aria-label="運動分類"><header><h2>運動練習</h2><span>計時 · AI 姿勢檢視</span></header><div className="exercise-categories" role="tablist" aria-label="運動部位">{groups.map(g=><button key={g.id} id={`exercise-tab-${g.id}`} role="tab" aria-selected={category===g.id} aria-controls="exercise-category-panel" onClick={()=>onCategoryChange(g.id)}><g.icon size={17}/>{g.label}<small>{g.items.length}</small></button>)}</div><div id="exercise-category-panel" role="tabpanel" aria-labelledby={`exercise-tab-${category}`}>{groups.find(g=>g.id===category)!.items.filter(i=>i.open).map(item=><button className="exercise-hub-row" key={item.title} onClick={item.open}><span><strong>{item.title}</strong><small>{item.detail}</small></span><ArrowUpRight size={20}/></button>)}</div></section>;
+}

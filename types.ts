@@ -24,12 +24,27 @@ export interface MedicationReminder {
 
 export interface DailyHealthLog {
   date: string; // YYYY-MM-DD
+  appointmentsCompleted?: string[];
+  customTasksCompleted?: string[];
   waterIntake?: number; // ml
   sleepHours?: number; // hours
   medicationsTaken?: string[]; // 已服藥的 Reminder ID
 }
 
+export interface SymptomEntry { id: string; occurredAt: string; symptom: string; severity: number; notes: string; }
+export interface MedicineStock { id: string; name: string; remaining: number; dailyUse: number; reminderDays: number; updatedAt: string; }
+export interface QuickTemplate { id: string; kind: 'food' | 'workout'; name: string; calories?: number; mealType?: MealType; duration?: number; }
+export interface CustomTask {id:string;title:string;notes:string;time:string;repeat:'once'|'daily';date:string;}
 export interface UserProfile {
+  customTasks?: CustomTask[];
+  taskCardOrder?: string[];
+  symptoms?: SymptomEntry[];
+  medicineStock?: MedicineStock[];
+  quickTemplates?: QuickTemplate[];
+
+  exerciseOptions?: string[];
+  calorieGoal?: number;
+  waterGoal?: number;
   name?: string; 
   height: string; // cm
   weight: string; // kg (目前體重)
@@ -180,4 +195,4 @@ export interface VitalsRecord {
   notes?: string;
 }
 
-export type ViewState = 'DASHBOARD' | 'FOOD' | 'CALENDAR' | 'HEALTH_MANAGEMENT' | 'WORKOUT' | 'SYSTEM_SETTINGS' | 'VITALS';
+export type ViewState = 'DASHBOARD' | 'FOOD' | 'CALENDAR' | 'HEALTH_MANAGEMENT' | 'WORKOUT' | 'SYSTEM_SETTINGS' | 'VITALS' | 'TRENDS' | 'CARE' | 'TASKS' | 'SLOW_JOG' | 'WALL_SIT' | 'SEATED_ANKLE' | 'WALL_ANGEL' | 'SNOW_ANGEL' | 'BAND_WALL_SLIDE';

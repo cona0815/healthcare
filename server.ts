@@ -6,8 +6,6 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-console.log("SERVER START - GEMINI_API_KEY:", process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 10) : 'missing');
-console.log("SERVER START - API_KEY:", process.env.API_KEY ? process.env.API_KEY.substring(0, 10) : 'missing');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,14 +35,7 @@ const getGeminiClient = (req: express.Request) => {
 app.get("/api/debug", (req, res) => {
   const clientKey = req.headers['authorization']?.replace('Bearer ', '') || '';
   const serverKey = process.env.GEMINI_API_KEY || process.env.API_KEY || '';
-  res.json({
-    clientKeyLength: clientKey.length,
-    clientKeyPrefix: clientKey.substring(0, 5),
-    serverKeyLength: serverKey.length,
-    serverKeyPrefix: serverKey.substring(0, 5),
-    rawGenKey: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 10) : 'none',
-    rawApiKey: process.env.API_KEY ? process.env.API_KEY.substring(0, 10) : 'none'
-  });
+  res.json({ hasClientKey: Boolean(clientKey), hasServerKey: Boolean(serverKey) });
 });
 
 // Generic endpoint for generateContent
@@ -116,7 +107,7 @@ if (process.env.NETLIFY !== 'true' && process.env.LAMBDA_TASK_ROOT === undefined
     } else {
       const distPath = path.join(process.cwd(), 'dist');
       app.use(express.static(distPath));
-      app.get('*', (req, res) => {
+      app.get('/{*path}', (req, res) => {
         res.sendFile(path.join(distPath, 'index.html'));
       });
     }

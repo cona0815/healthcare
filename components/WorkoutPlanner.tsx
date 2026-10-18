@@ -1,10 +1,18 @@
+import ExerciseHub from './ExerciseHub';
+import ExerciseOptions from './ExerciseOptions';
 import React, { useState } from 'react';
 import { Dumbbell, PlayCircle, Activity, Loader2, CheckSquare, Plus, Clock, CheckCircle2, Edit2, Save, Video, Flame, Zap } from 'lucide-react';
 import { generateWorkoutPlan, calculateExerciseCalories } from '../services/geminiService';
 import { HealthReport, UserProfile, WorkoutPlanDay, WorkoutLog } from '../types';
 
 interface Props {
+  workoutCategory:string;
+  onCategoryChange:(category:string)=>void;
+  onSlowJog?:()=>void;
+  onWallSit?:()=>void;
+  onAssistedExercise?:(kind:'SEATED_ANKLE'|'WALL_ANGEL'|'SNOW_ANGEL'|'BAND_WALL_SLIDE')=>void;
   userProfile: UserProfile;
+  onUpdateProfile: (profile: UserProfile) => Promise<void>;
   healthReport: HealthReport | null;
   workoutLogs: WorkoutLog[];
   onAddWorkout: (log: WorkoutLog) => void;
@@ -14,12 +22,13 @@ interface Props {
 
 const COMMON_EXERCISES = [
   "皮克敏",
-  "快走 (Brisk Walking)", "慢跑 (Jogging)", "游泳 (Swimming)", "重訓 (Weight Training)", 
-  "瑜珈 (Yoga)", "皮拉提斯 (Pilates)", "騎腳踏車 (Cycling)", "跳繩 (Jump Rope)", 
+  "快走 (Brisk Walking)", "超慢跑", "靠牆深蹲／靜蹲", "坐姿踮腳＋勾腳", "牆壁天使（面向牆）", "雪天使（背靠牆）", "彈力帶沿牆上舉", "慢跑 (Jogging)", "游泳 (Swimming)", "重訓 (Weight Training)",
+  "瑜珈 (Yoga)", "皮拉提斯 (Pilates)", "騎腳踏車 (Cycling)", "跳繩 (Jump Rope)",
   "HIIT 間歇運動", "登山 (Hiking)"
 ];
 
-const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLogs, onAddWorkout, currentPlan, onSavePlan }) => {
+const WorkoutPlanner: React.FC<Props> = ({ workoutCategory,onCategoryChange,onAssistedExercise,onWallSit,onSlowJog, userProfile, onUpdateProfile, healthReport, workoutLogs, onAddWorkout, currentPlan, onSavePlan }) => {
+  const exercises = Array.isArray(userProfile.exerciseOptions) ? userProfile.exerciseOptions : COMMON_EXERCISES;
   const [loading, setLoading] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<WorkoutPlanDay | null>(null);
@@ -29,10 +38,10 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
   const [manualCustomActivity, setManualCustomActivity] = useState("");
   const [manualDuration, setManualDuration] = useState("");
   const [calcLoading, setCalcLoading] = useState(false);
-  
+
   // Tracking which item is being logged to show specific loader
   const [loggingIndex, setLoggingIndex] = useState<number | null>(null);
-  
+
   // Filter logs for today
   const todayStr = new Date().toISOString().split('T')[0];
   const todayLogs = workoutLogs.filter(log => log.timestamp && log.timestamp.startsWith(todayStr));
@@ -54,7 +63,7 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
     try {
         // Calculate calories before saving
         const calories = await calculateExerciseCalories(dayPlan.activity, dayPlan.duration, userProfile);
-        
+
         const newLog: WorkoutLog = {
           id: Date.now().toString(),
           activity: dayPlan.activity,
@@ -82,7 +91,7 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
 
   const handleManualAdd = async () => {
       const activity = manualActivity === "custom" ? manualCustomActivity : manualActivity;
-      
+
       if (!activity || !manualDuration) {
           alert("請選擇運動項目並輸入時間");
           return;
@@ -91,7 +100,7 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
       setCalcLoading(true);
       try {
           const calories = await calculateExerciseCalories(activity, manualDuration, userProfile);
-          
+
           const newLog: WorkoutLog = {
               id: Date.now().toString(),
               activity: activity,
@@ -99,9 +108,9 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
               timestamp: new Date().toISOString(),
               caloriesBurned: calories
           };
-          
+
           onAddWorkout(newLog);
-          
+
           // Reset
           setManualActivity("");
           setManualCustomActivity("");
@@ -136,6 +145,7 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in pb-20">
+      <ExerciseHub category={workoutCategory} onCategoryChange={onCategoryChange} onSlowJog={onSlowJog} onWallSit={onWallSit} onAssistedExercise={onAssistedExercise}/>
       <div className="bg-gradient-to-r from-orange-400 to-red-500 p-5 md:p-6 rounded-2xl text-white shadow-lg">
         <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
           <Dumbbell className="w-5 h-5 md:w-6 md:h-6" />
@@ -151,21 +161,21 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
          </h3>
          <div className="flex flex-col md:flex-row gap-3">
              <div className="flex-1">
-                 <select 
-                    value={manualActivity} 
+                 <select
+                    value={manualActivity}
                     onChange={(e) => setManualActivity(e.target.value)}
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-200 text-sm"
                  >
                      <option value="">選擇運動項目...</option>
-                     {COMMON_EXERCISES.map(ex => <option key={ex} value={ex}>{ex}</option>)}
+                     {exercises.map(ex => <option key={ex} value={ex}>{ex}</option>)}
                      <option value="custom">自訂項目...</option>
                  </select>
              </div>
              {manualActivity === "custom" && (
                  <div className="flex-1">
-                     <input 
-                        type="text" 
-                        value={manualCustomActivity} 
+                     <input
+                        type="text"
+                        value={manualCustomActivity}
                         onChange={(e) => setManualCustomActivity(e.target.value)}
                         placeholder="輸入運動名稱"
                         className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-200 text-sm"
@@ -173,15 +183,15 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
                  </div>
              )}
              <div className="w-full md:w-32">
-                 <input 
-                    type="number" 
-                    value={manualDuration} 
+                 <input
+                    type="number"
+                    value={manualDuration}
                     onChange={(e) => setManualDuration(e.target.value)}
                     placeholder="分鐘"
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-200 text-sm"
                  />
              </div>
-             <button 
+             <button
                 onClick={handleManualAdd}
                 disabled={calcLoading}
                 className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-70"
@@ -192,6 +202,7 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
          </div>
       </div>
 
+      <ExerciseOptions items={exercises} onSave={async items=>{await onUpdateProfile({...userProfile,exerciseOptions:items});if(manualActivity!=="custom"&&!items.includes(manualActivity))setManualActivity("");}}/>
       {/* Today's Progress */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-orange-100">
          <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
@@ -224,7 +235,7 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
         <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm text-center border border-gray-100">
            <Activity className="w-12 h-12 md:w-16 md:h-16 text-orange-200 mx-auto mb-4" />
            <p className="text-gray-600 mb-6">還沒有運動計畫嗎？讓 AI 為您規劃。</p>
-           <button 
+           <button
              onClick={handleGenerate}
              disabled={loading}
              className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all flex items-center justify-center gap-2 mx-auto disabled:opacity-70 active:scale-95"
@@ -253,7 +264,7 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
                             <div>
                                 <label className="text-xs font-bold text-gray-500 block mb-1">運動項目</label>
                                 <div className="flex gap-2">
-                                    <select 
+                                    <select
                                         className="w-1/2 p-2 border border-gray-200 rounded text-sm bg-white text-gray-900 focus:ring-2 focus:ring-orange-200 outline-none"
                                         onChange={(e) => {
                                             if (e.target.value) setEditForm({...editForm, activity: e.target.value})
@@ -263,9 +274,9 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
                                         <option value="">自訂項目...</option>
                                         {COMMON_EXERCISES.map(ex => <option key={ex} value={ex}>{ex}</option>)}
                                     </select>
-                                    <input 
-                                        type="text" 
-                                        value={editForm.activity} 
+                                    <input
+                                        type="text"
+                                        value={editForm.activity}
                                         onChange={(e) => setEditForm({...editForm, activity: e.target.value})}
                                         className="w-1/2 p-2 border border-gray-200 rounded text-sm bg-white text-gray-900 focus:ring-2 focus:ring-orange-200 outline-none"
                                         placeholder="輸入項目名稱"
@@ -275,18 +286,18 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="text-xs font-bold text-gray-500 block mb-1">時間</label>
-                                    <input 
-                                        type="text" 
-                                        value={editForm.duration} 
+                                    <input
+                                        type="text"
+                                        value={editForm.duration}
                                         onChange={(e) => setEditForm({...editForm, duration: e.target.value})}
                                         className="w-full p-2 border border-gray-200 rounded text-sm bg-white text-gray-900 focus:ring-2 focus:ring-orange-200 outline-none"
                                     />
                                 </div>
                                 <div>
                                     <label className="text-xs font-bold text-gray-500 block mb-1">強度</label>
-                                    <input 
-                                        type="text" 
-                                        value={editForm.intensity} 
+                                    <input
+                                        type="text"
+                                        value={editForm.intensity}
                                         onChange={(e) => setEditForm({...editForm, intensity: e.target.value})}
                                         className="w-full p-2 border border-gray-200 rounded text-sm bg-white text-gray-900 focus:ring-2 focus:ring-orange-200 outline-none"
                                     />
@@ -294,8 +305,8 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-gray-500 block mb-1">備註/建議</label>
-                                <textarea 
-                                    value={editForm.notes} 
+                                <textarea
+                                    value={editForm.notes}
                                     onChange={(e) => setEditForm({...editForm, notes: e.target.value})}
                                     className="w-full p-2 border border-gray-200 rounded text-sm bg-white text-gray-900 focus:ring-2 focus:ring-orange-200 outline-none"
                                     rows={2}
@@ -314,7 +325,7 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
 
             return (
               <div key={idx} className={`bg-white p-4 rounded-xl border-l-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 md:gap-4 group transition-all ${isDone ? 'border-green-500 bg-green-50/30' : 'border-orange-500 hover:shadow-md'}`}>
-                
+
                 <div className="flex justify-between items-start sm:block">
                     <div className="min-w-[50px] md:min-w-[60px]">
                       <span className={`text-xl md:text-2xl font-bold transition-colors ${isDone ? 'text-green-600' : 'text-gray-300 group-hover:text-orange-300'}`}>{day.day}</span>
@@ -331,11 +342,11 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
                      {isDone && <CheckCircle2 className="w-4 h-4 text-green-600" />}
                    </h3>
                    <p className={`text-sm leading-relaxed ${isDone ? 'text-green-700/60' : 'text-gray-500'}`}>{day.notes}</p>
-                   
+
                    <div className="flex gap-2 mt-2">
-                        <a 
-                            href={`https://www.youtube.com/results?search_query=${encodeURIComponent(day.activity + " 教學")}`} 
-                            target="_blank" 
+                        <a
+                            href={`https://www.youtube.com/results?search_query=${encodeURIComponent(day.activity + " 教學")}`}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-[10px] bg-red-50 text-red-600 px-2 py-1 rounded border border-red-100 hover:bg-red-100 transition-colors"
                         >
@@ -344,7 +355,7 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
                    </div>
 
                    {/* Edit Button */}
-                   <button 
+                   <button
                         onClick={() => startEditing(idx, day)}
                         className="absolute top-0 right-0 p-1.5 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-full transition-colors"
                    >
@@ -363,7 +374,7 @@ const WorkoutPlanner: React.FC<Props> = ({ userProfile, healthReport, workoutLog
                              <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6" />
                         </div>
                     ) : (
-                        <button 
+                        <button
                           onClick={() => handleLogWorkout(day, idx)}
                           disabled={loggingIndex === idx}
                           className="flex-shrink-0 p-2 md:p-3 rounded-full bg-gray-100 hover:bg-green-100 text-gray-400 hover:text-green-600 transition-colors active:scale-90 disabled:opacity-70 disabled:cursor-not-allowed"

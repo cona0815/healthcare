@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const handlers={};let cachedFiles=[];const cachedPage={body:'offline app'};
+const context={URL,Promise,caches:{open:async()=>({addAll:async files=>{cachedFiles=files;},match:async()=>cachedPage}),keys:async()=>[],match:async()=>cachedPage},self:{location:{origin:'http://localhost'},addEventListener:(name,fn)=>handlers[name]=fn,clients:{claim:async()=>{}}},fetch:async()=>{throw Error('offline');}};
+vm.runInNewContext(fs.readFileSync('dist/sw.js','utf8'),context);
+let install;handlers.install({waitUntil:p=>install=p});await install;
+assert.ok(cachedFiles.includes('./index.html'));assert.ok(cachedFiles.some(f=>f.endsWith('.js')));assert.ok(cachedFiles.some(f=>f.endsWith('.css')));
+for(const file of cachedFiles.filter(f=>f!=='./'))assert.ok(fs.existsSync('dist/'+file));
+let response;handlers.fetch({request:{url:'http://localhost/?demo=1',method:'GET',mode:'navigate'},respondWith:p=>response=p});assert.equal(await response,cachedPage);
+let intercepted=false;handlers.fetch({request:{url:'http://localhost/api/gemini/generateContent',method:'POST'},respondWith:()=>intercepted=true});assert.equal(intercepted,false);
+console.log('PASS: offline app shell, bundled assets, navigation fallback, and API exclusion');

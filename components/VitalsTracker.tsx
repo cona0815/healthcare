@@ -1,3 +1,4 @@
+import { localDate } from '../services/healthSummary';
 import React, { useState } from 'react';
 import { HeartPulse, Droplets, Activity, History, Plus, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { VitalsRecord } from '../types';
@@ -22,7 +23,7 @@ const VitalsTracker: React.FC<Props> = ({ vitalsRecords, onSaveRecord }) => {
     const now = new Date();
     const newRecord: VitalsRecord = {
       id: Date.now().toString(),
-      date: now.toISOString().split('T')[0],
+      date: localDate(now),
       time: now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false }),
       type: activeTab,
     };
