@@ -16,8 +16,6 @@ import SystemSettings from './components/SystemSettings';
 import VitalsTracker from './components/VitalsTracker';
 import WorkoutPlanner from './components/WorkoutPlanner';
 import Dashboard from './components/Dashboard';
-import GasSetup from './components/GasSetup';
-import ApiKeySetup from './components/ApiKeySetup'; // New component
 import DailySummaryPopup from './components/DailySummaryPopup'; // New component
 import { HealthReport, FoodAnalysis, ViewState, UserProfile, WorkoutLog, SavedAppointment, WorkoutPlanDay, Recipe, DailyHealthLog, VitalsRecord } from './types';
 import { dbService, getGasUrl, clearGasUrl, getLocal } from './services/dbService';
@@ -25,7 +23,7 @@ import { getGeminiKey, clearGeminiKey } from './services/geminiService';
 
 const App: React.FC = () => {
   const demo=isDemoMode();
-  const localOnly=demo || localStorage.getItem('hg_local_mode')==='true';
+  const localOnly=!getGasUrl();
   const [hasApiKey, setHasApiKey] = useState<boolean>(!!getGeminiKey());
   const [hasConnection, setHasConnection] = useState<boolean>(!!getGasUrl());
   const [toolsOpen,setToolsOpen]=useState(false);
@@ -86,9 +84,7 @@ const App: React.FC = () => {
   }, [userProfile.dailySummaryTime, showDailySummary]);
 
   useEffect(() => {
-    if (localOnly || (hasApiKey && hasConnection)) {
-      void loadUserData().catch(()=>{});
-    }
+    void loadUserData().catch(()=>{});
   }, [hasApiKey, hasConnection]);
   useEffect(()=>{
     const retry=()=>{if(!demo&&navigator.onLine&&localStorage.getItem('hg_auto_sync')!=='false')void syncQueue.flush(getGasUrl()||'');};
@@ -396,16 +392,6 @@ const App: React.FC = () => {
       </button>
   );
 
-  // 1. First time Setup: Gemini API Key
-  if (!localOnly && !hasApiKey) {
-    return <ApiKeySetup onComplete={() => setHasApiKey(true)} />;
-  }
-
-  // 2. Second time Setup: Google Sheet DB
-  if (!localOnly && !hasConnection) {
-    return <GasSetup onConnect={() => setHasConnection(true)} />;
-  }
-
   // 3. Loading Data
   if (dataLoading) {
      return (
@@ -527,7 +513,7 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      {toolsOpen && <div className="record-overlay" onClick={()=>setToolsOpen(false)}><section className="record-sheet" style={{maxHeight:'80dvh',overflowY:'auto'}} role="dialog" aria-modal="true" aria-label="工具選單" onClick={e=>e.stopPropagation()}><div><h2>工具</h2><button autoFocus aria-label="關閉工具選單" onClick={()=>setToolsOpen(false)}><X/></button></div>{[['band-wall','彈力帶沿牆上舉・AI 姿勢'],['seated-ankle','坐姿踮腳＋勾腳・AI 姿勢'],['wall-angel','牆壁天使（面向牆）'],['snow-angel','雪天使（背靠牆）'],['wall-sit','靠牆深蹲・AI 姿勢'],['slow-jog','超慢跑計時與姿勢'],['trends','健康趨勢週報'],['stock','藥品庫存與補藥'],['templates','常用範本'],['export','看診摘要 PDF'],['sync','同步中心'],['backup','手機備份還原'],['profile','我的資料與健康管理']].map(([id,label])=><button key={id} onClick={()=>{setToolsOpen(false);if(id==='calendar'){setActiveTab('TASKS');}else if(id==='band-wall'){setActiveTab('BAND_WALL_SLIDE');}else if(id==='seated-ankle'){setActiveTab('SEATED_ANKLE');}else if(id==='wall-angel'){setActiveTab('WALL_ANGEL');}else if(id==='snow-angel'){setActiveTab('SNOW_ANGEL');}else if(id==='wall-sit'){setActiveTab('WALL_SIT');}else if(id==='slow-jog'){setActiveTab('SLOW_JOG');}else if(id==='trends'){setActiveTab('TRENDS');}else if(id==='profile'){setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}else{setCareSection(id);setActiveTab('CARE');}}}>{label}</button>)}</section></div>}
+      {toolsOpen && <div className="record-overlay" onClick={()=>setToolsOpen(false)}><section className="record-sheet" style={{maxHeight:'80dvh',overflowY:'auto'}} role="dialog" aria-modal="true" aria-label="工具選單" onClick={e=>e.stopPropagation()}><div><h2>工具</h2><button autoFocus aria-label="關閉工具選單" onClick={()=>setToolsOpen(false)}><X/></button></div>{[['運動與姿勢',[['band-wall','彈力帶沿牆上舉'],['seated-ankle','坐姿踮腳＋勾腳'],['wall-angel','牆壁天使（面向牆）'],['snow-angel','雪天使（背靠牆）'],['wall-sit','靠牆深蹲'],['slow-jog','超慢跑']]],['健康紀錄與報告',[['trends','健康趨勢週報'],['stock','藥品庫存與補藥'],['templates','常用範本'],['export','看診摘要 PDF']]],['資料備份與同步',[['sync','同步中心'],['backup','手機備份還原']]],['個人與設定',[['settings','設定（GAS／Gemini API）'],['profile','我的資料與健康管理']]]].map(([title,items])=><details className="tools-category" key={String(title)}><summary>{String(title)}<span>展開 ⌄</span></summary>{(items as string[][]).map(([id,label])=><button key={id} onClick={()=>{setToolsOpen(false);if(id==='settings'){setActiveTab('SYSTEM_SETTINGS');}else if(id==='calendar'){setActiveTab('TASKS');}else if(id==='band-wall'){setActiveTab('BAND_WALL_SLIDE');}else if(id==='seated-ankle'){setActiveTab('SEATED_ANKLE');}else if(id==='wall-angel'){setActiveTab('WALL_ANGEL');}else if(id==='snow-angel'){setActiveTab('SNOW_ANGEL');}else if(id==='wall-sit'){setActiveTab('WALL_SIT');}else if(id==='slow-jog'){setActiveTab('SLOW_JOG');}else if(id==='trends'){setActiveTab('TRENDS');}else if(id==='profile'){setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}else{setCareSection(id);setActiveTab('CARE');}}}>{label}</button>)}</details>)}</section></div>}
       {recordOpen && <div className="record-overlay" onClick={()=>setRecordOpen(false)}><section className="record-sheet" role="dialog" aria-modal="true" aria-label="新增紀錄" onClick={e=>e.stopPropagation()}><div><h2>想記錄什麼？</h2><button aria-label="關閉新增紀錄" onClick={()=>setRecordOpen(false)}><X/></button></div>{([{view:'FOOD',label:'拍照記飲食',Icon:Camera},{view:'VITALS',label:'血壓與血糖',Icon:HeartPulse},{view:'WORKOUT',label:'運動紀錄',Icon:Dumbbell},{view:'DASHBOARD',label:'飲水紀錄',Icon:Droplets},{view:'TASKS',label:'症狀與健康日曆',Icon:HeartPulse}] as const).map(({view,label,Icon})=><button key={view} onClick={()=>{setMealContext(null);setActiveTab(view);setRecordOpen(false);}}><Icon size={22}/>{label}</button>)}</section></div>}
       {showDailySummary && (
         <DailySummaryPopup

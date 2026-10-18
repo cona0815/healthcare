@@ -1,8 +1,9 @@
+import {getGeminiModel,saveGeminiModels,validModel} from '../services/aiSettings';
 import React, { useState, useEffect } from 'react';
 import { Settings, Key, Database, CalendarDays, Eye, EyeOff, Save, Code, Check, Cloud, CloudDownload, CloudUpload, RefreshCw, AlertCircle } from 'lucide-react';
 import { UserProfile } from '../types';
-import { getGeminiKey, setGeminiKey } from '../services/geminiService';
-import { getGasUrl, setGasUrl, getLocal, dbService } from '../services/dbService';
+import { getGeminiKey, setGeminiKey, clearGeminiKey } from '../services/geminiService';
+import { getGasUrl, setGasUrl, clearGasUrl, isDemoMode, getLocal, dbService } from '../services/dbService';
 import { GAS_CODE } from './GasSetup';
 
 interface Props {
@@ -12,6 +13,9 @@ interface Props {
 }
 
 const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefreshAllData }) => {
+  const [generalModel,setGeneralModel]=useState(getGeminiModel());
+  const [videoModel,setVideoModel]=useState(getGeminiModel('video'));
+  const [settingsMessage,setSettingsMessage]=useState('');
   const [apiKey, setApiKey] = useState('');
   const [gasUrl, setGasUrlState] = useState('');
   const [showKey, setShowKey] = useState(false);
@@ -103,9 +107,10 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
   };
 
   const handleSaveSystem = () => {
-    if (apiKey.trim()) setGeminiKey(apiKey.trim());
-    if (gasUrl.trim()) setGasUrl(gasUrl.trim());
-    alert("系統設定已更新！(部分變更可能需重整網頁生效)");
+    if(isDemoMode()){setSettingsMessage('示範模式不會修改正式連線設定，請離開示範再設定。');return;}
+    if(!validModel(generalModel)||!validModel(videoModel)){setSettingsMessage('模型 ID 格式錯誤，請參考 Google 官方模型清單。');return;}
+    if(gasUrl.trim()&&!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(gasUrl.trim())){setSettingsMessage('GAS 網址需為 https://script.google.com/macros/s/…/exec');return;}
+    try{saveGeminiModels(generalModel,videoModel);if(apiKey.trim())setGeminiKey(apiKey.trim());else clearGeminiKey();if(gasUrl.trim())setGasUrl(gasUrl.trim());else clearGasUrl();setSettingsMessage('設定已儲存。留空即停用；健康紀錄仍保留在本機。');window.dispatchEvent(new Event('health-sync'));}catch{setSettingsMessage('設定儲存失敗，請檢查裝置空間。');}
   };
 
   const copyGasCode = () => {
@@ -124,6 +129,7 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
         </div>
         
         <div className="p-6 md:p-8 space-y-8">
+          <section className="care-panel"><h3>不設定也能使用</h3><p>預設將資料保存在此裝置。可手動記錄飲食、運動、血壓血糖、症狀、用藥與回診，使用健康日曆、計時、趨勢、手機備份及看診摘要。</p><h3>GAS：選用的 Google Sheets 同步</h3><p>填入部署網址後，可同步健康紀錄至自己的 Google 試算表、重試待同步項目及從雲端載入。GAS 不提供 AI 分析，也不會替你開啟 Gemini。</p><h3>Gemini API：選用的 AI 分析</h3><p>填入 API Key 後，可使用飲食照片分析、健檢／藥單／回診文件辨識、運動計畫與影片姿勢分析。需要網路；只有使用 AI 功能時才傳送相應內容至 Google，可能依帳戶方案產生費用。AI 無法判讀時仍會標示未知。</p><p>兩者可分別啟用；欄位留空並儲存即停用，不會刪除健康紀錄。</p></section>
           <div className="space-y-6">
               <h3 className="font-bold text-gray-800 flex items-center gap-2 text-lg">
                   <Key className="w-5 h-5 text-gray-500" /> 連線設定
@@ -149,7 +155,7 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
                               {showKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                           </button>
                       </div>
-                      <p className="text-xs text-gray-500 mt-2 pl-1">API Key 僅儲存於您的瀏覽器，保障隱私安全。需設定才能使用 AI 分析與營養建議功能。</p>
+                      <p className="text-xs text-gray-500 mt-2 pl-1">金鑰存於此瀏覽器；呼叫 AI 時會交給網站後端代理向 Google 驗證。請勿在共用裝置保存。留空即停用。</p>
                   </div>
                   
                   <div>
@@ -167,6 +173,7 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
               </div>
           </div>
 
+          <section className="care-panel"><h3>Gemini 模型版本</h3><label>一般分析模型<input value={generalModel} onChange={e=>setGeneralModel(e.target.value.trim())} placeholder="gemini-3.8-flash"/></label><label>影片分析模型<input value={videoModel} onChange={e=>setVideoModel(e.target.value.trim())}/></label><p>請填寫帳戶可用且支援所需輸入的模型 ID。系統不會自動切換；更換影片模型後，請先以相同片段驗證評分，舊分數不宜直接比較。</p><a href="https://ai.google.dev/gemini-api/docs/models" target="_blank" rel="noopener noreferrer">官方模型清單 ↗</a><button onClick={handleSaveSystem}>儲存連線與模型設定</button>{settingsMessage&&<p role="status">{settingsMessage}</p>}</section>
           <hr className="border-gray-100" />
 
           <div className="space-y-6">
