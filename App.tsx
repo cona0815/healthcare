@@ -29,6 +29,7 @@ const App: React.FC = () => {
   const [hasConnection, setHasConnection] = useState<boolean>(!!getGasUrl());
   const [toolsOpen,setToolsOpen]=useState(false);
   const [careSection,setCareSection]=useState('symptoms');
+  const [healthCalendarDate,setHealthCalendarDate]=useState(localDate());
   useEffect(()=>{if(!toolsOpen)return;const close=(e:KeyboardEvent)=>{if(e.key==='Escape')setToolsOpen(false);};window.addEventListener('keydown',close);return()=>window.removeEventListener('keydown',close);},[toolsOpen]);
   const [recordOpen, setRecordOpen] = useState(false);
   const [mealContext, setMealContext] = useState<{meal: MealType | null; date: string} | null>(null);
@@ -315,9 +316,9 @@ const App: React.FC = () => {
         );
       case 'CALENDAR':
       case 'TASKS':
-        return <TodayTasks profile={userProfile} vitals={vitalsRecords} workouts={workoutLogs} appointments={appointments} foods={foodLogs} onUpdate={handleUpdateProfile} onNavigate={(view,subTab)=>{if(view==='CARE')setCareSection('stock');if(view==='HEALTH_MANAGEMENT')setActiveHealthSubTab((subTab||'PROFILE') as any);setActiveTab(view);}}/>;
+        return <TodayTasks date={healthCalendarDate} onDateChange={setHealthCalendarDate} profile={userProfile} vitals={vitalsRecords} workouts={workoutLogs} appointments={appointments} foods={foodLogs} onUpdate={handleUpdateProfile} onNavigate={(view,subTab)=>{if(view==='CARE')setCareSection(subTab||'stock');if(view==='HEALTH_MANAGEMENT')setActiveHealthSubTab((subTab||'PROFILE') as any);setActiveTab(view);}}/>;
       case 'CARE':
-        return <div><div className="flex items-center justify-between mb-4"><h2 className="text-xl font-bold">工具</h2><button className="px-3 py-2 rounded-lg border bg-white" onClick={()=>{setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}}>我的資料與健康管理 →</button></div><CareTools key={careSection} initialSection={careSection} profile={userProfile} foods={foodLogs} workouts={workoutLogs} vitals={vitalsRecords} onUpdate={handleUpdateProfile} onFood={handleFoodAnalysisComplete} onWorkout={handleAddWorkout}/></div>;
+        return <div><div className="flex items-center justify-between mb-4"><button className="px-3 py-2 rounded-lg border bg-white" onClick={()=>setActiveTab('TASKS')}>← 健康日曆</button><button className="px-3 py-2 rounded-lg border bg-white" onClick={()=>{setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}}>我的資料與健康管理 →</button></div><CareTools key={careSection} initialSection={careSection} profile={userProfile} foods={foodLogs} workouts={workoutLogs} vitals={vitalsRecords} onUpdate={handleUpdateProfile} onFood={handleFoodAnalysisComplete} onWorkout={handleAddWorkout}/></div>;
       case 'TRENDS':
         return <HealthOverview trendOnly profile={userProfile} vitals={vitalsRecords} workouts={workoutLogs} appointments={appointments} onUpdate={handleUpdateProfile} onNavigate={setActiveTab}/>;
 
@@ -435,12 +436,11 @@ const App: React.FC = () => {
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
           <p className="px-3 text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">選單</p>
           <DesktopNavButton id="DASHBOARD" label="總覽儀表板" icon={LayoutDashboard} colorClass="bg-gray-100 text-gray-900" />
-          <DesktopNavButton id="TASKS" label="今日待辦" icon={CalendarDays} colorClass="bg-teal-50 text-teal-700" />
+          <DesktopNavButton id="TASKS" label="健康日曆" icon={CalendarDays} colorClass="bg-teal-50 text-teal-700" />
           <DesktopNavButton id="CARE" label="健康工具與同步" icon={HeartPulse} colorClass="bg-teal-50 text-teal-700" />
           <DesktopNavButton id="TRENDS" label="健康趨勢週報" icon={BarChart3} colorClass="bg-teal-50 text-teal-700" />
           <DesktopNavButton id="VITALS" label="每日生理量測" icon={HeartPulse} colorClass="bg-rose-50 text-rose-700" />
           <DesktopNavButton id="FOOD" label="飲食分析與購物" icon={Utensils} colorClass="bg-teal-50 text-teal-700" />
-          <DesktopNavButton id="CALENDAR" label="日曆統計" icon={BarChart3} colorClass="bg-indigo-50 text-indigo-700" />
           <DesktopNavButton id="WORKOUT" label="運動建議" icon={Dumbbell} colorClass="bg-orange-50 text-orange-700" />
           <DesktopNavButton id="HEALTH_MANAGEMENT" label="健康管理中心" icon={UserCog} colorClass="bg-blue-50 text-blue-700" />
           <div className="mt-8">
@@ -525,13 +525,13 @@ const App: React.FC = () => {
           <button className="record-nav" aria-label="新增紀錄" onClick={()=>setRecordOpen(true)}><span><Plus size={26}/></span><small>記錄</small></button>
 
           <NavButton id="WORKOUT" label="運動" icon={Dumbbell} />
-          <NavButton id="TASKS" label="今日待辦" icon={CalendarDays} />
+          <NavButton id="TASKS" label="健康日曆" icon={CalendarDays} />
           <button aria-label="工具" aria-haspopup="dialog" aria-expanded={toolsOpen} onClick={()=>setToolsOpen(true)} className="flex-1 min-w-0 flex flex-col items-center justify-center gap-1 text-gray-500 py-2"><Settings className="w-6 h-6"/><span className="text-[10px]">工具</span></button>
         </div>
       </nav>
 
-      {toolsOpen && <div className="record-overlay" onClick={()=>setToolsOpen(false)}><section className="record-sheet" style={{maxHeight:'80dvh',overflowY:'auto'}} role="dialog" aria-modal="true" aria-label="工具選單" onClick={e=>e.stopPropagation()}><div><h2>工具</h2><button autoFocus aria-label="關閉工具選單" onClick={()=>setToolsOpen(false)}><X/></button></div>{[['calendar','待辦日曆與歷史紀錄'],['band-wall','彈力帶沿牆上舉・AI 姿勢'],['seated-ankle','坐姿踮腳＋勾腳・AI 姿勢'],['wall-angel','牆壁天使（面向牆）'],['snow-angel','雪天使（背靠牆）'],['wall-sit','靠牆深蹲・AI 姿勢'],['slow-jog','超慢跑計時與姿勢'],['trends','健康趨勢週報'],['symptoms','症狀日記'],['stock','藥品庫存與補藥'],['templates','常用範本'],['export','看診摘要 PDF'],['sync','同步中心'],['profile','我的資料與健康管理']].map(([id,label])=><button key={id} onClick={()=>{setToolsOpen(false);if(id==='calendar'){setActiveTab('TASKS');}else if(id==='band-wall'){setActiveTab('BAND_WALL_SLIDE');}else if(id==='seated-ankle'){setActiveTab('SEATED_ANKLE');}else if(id==='wall-angel'){setActiveTab('WALL_ANGEL');}else if(id==='snow-angel'){setActiveTab('SNOW_ANGEL');}else if(id==='wall-sit'){setActiveTab('WALL_SIT');}else if(id==='slow-jog'){setActiveTab('SLOW_JOG');}else if(id==='trends'){setActiveTab('TRENDS');}else if(id==='profile'){setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}else{setCareSection(id);setActiveTab('CARE');}}}>{label}</button>)}</section></div>}
-      {recordOpen && <div className="record-overlay" onClick={()=>setRecordOpen(false)}><section className="record-sheet" role="dialog" aria-modal="true" aria-label="新增紀錄" onClick={e=>e.stopPropagation()}><div><h2>想記錄什麼？</h2><button aria-label="關閉新增紀錄" onClick={()=>setRecordOpen(false)}><X/></button></div>{([{view:'FOOD',label:'拍照記飲食',Icon:Camera},{view:'VITALS',label:'血壓與血糖',Icon:HeartPulse},{view:'WORKOUT',label:'運動紀錄',Icon:Dumbbell},{view:'DASHBOARD',label:'飲水紀錄',Icon:Droplets},{view:'CARE',label:'症狀與常用範本',Icon:HeartPulse}] as const).map(({view,label,Icon})=><button key={view} onClick={()=>{setMealContext(null);setActiveTab(view);setRecordOpen(false);}}><Icon size={22}/>{label}</button>)}</section></div>}
+      {toolsOpen && <div className="record-overlay" onClick={()=>setToolsOpen(false)}><section className="record-sheet" style={{maxHeight:'80dvh',overflowY:'auto'}} role="dialog" aria-modal="true" aria-label="工具選單" onClick={e=>e.stopPropagation()}><div><h2>工具</h2><button autoFocus aria-label="關閉工具選單" onClick={()=>setToolsOpen(false)}><X/></button></div>{[['band-wall','彈力帶沿牆上舉・AI 姿勢'],['seated-ankle','坐姿踮腳＋勾腳・AI 姿勢'],['wall-angel','牆壁天使（面向牆）'],['snow-angel','雪天使（背靠牆）'],['wall-sit','靠牆深蹲・AI 姿勢'],['slow-jog','超慢跑計時與姿勢'],['trends','健康趨勢週報'],['stock','藥品庫存與補藥'],['templates','常用範本'],['export','看診摘要 PDF'],['sync','同步中心'],['profile','我的資料與健康管理']].map(([id,label])=><button key={id} onClick={()=>{setToolsOpen(false);if(id==='calendar'){setActiveTab('TASKS');}else if(id==='band-wall'){setActiveTab('BAND_WALL_SLIDE');}else if(id==='seated-ankle'){setActiveTab('SEATED_ANKLE');}else if(id==='wall-angel'){setActiveTab('WALL_ANGEL');}else if(id==='snow-angel'){setActiveTab('SNOW_ANGEL');}else if(id==='wall-sit'){setActiveTab('WALL_SIT');}else if(id==='slow-jog'){setActiveTab('SLOW_JOG');}else if(id==='trends'){setActiveTab('TRENDS');}else if(id==='profile'){setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}else{setCareSection(id);setActiveTab('CARE');}}}>{label}</button>)}</section></div>}
+      {recordOpen && <div className="record-overlay" onClick={()=>setRecordOpen(false)}><section className="record-sheet" role="dialog" aria-modal="true" aria-label="新增紀錄" onClick={e=>e.stopPropagation()}><div><h2>想記錄什麼？</h2><button aria-label="關閉新增紀錄" onClick={()=>setRecordOpen(false)}><X/></button></div>{([{view:'FOOD',label:'拍照記飲食',Icon:Camera},{view:'VITALS',label:'血壓與血糖',Icon:HeartPulse},{view:'WORKOUT',label:'運動紀錄',Icon:Dumbbell},{view:'DASHBOARD',label:'飲水紀錄',Icon:Droplets},{view:'TASKS',label:'症狀與健康日曆',Icon:HeartPulse}] as const).map(({view,label,Icon})=><button key={view} onClick={()=>{setMealContext(null);setActiveTab(view);setRecordOpen(false);}}><Icon size={22}/>{label}</button>)}</section></div>}
       {showDailySummary && (
         <DailySummaryPopup
           userProfile={userProfile}
