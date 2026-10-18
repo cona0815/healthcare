@@ -1,3 +1,4 @@
+import StorageStatus from './components/StorageStatus';
 import SlowJogging from './components/SlowJogging';
 import TodayTasks from './components/TodayTasks';
 import CareTools from './components/CareTools';
@@ -178,7 +179,7 @@ const App: React.FC = () => {
         setDailyHealthLogs(profile.dailyHealthLogs || []);
     } catch (e) {
         console.error(e);
-        alert("個人資料儲存失敗！請檢查您的 Google Sheets 連線與部署設定。");
+        
         throw e; // Re-throw to let child components know
     }
   };
@@ -234,12 +235,8 @@ const App: React.FC = () => {
   };
 
   const handleSaveVitals = async (record: VitalsRecord) => {
+    await dbService.saveVitalsRecord(record);
     setVitalsRecords(prev => [record, ...prev]);
-    try {
-        await dbService.saveVitalsRecord(record);
-    } catch (e) {
-        alert("生理數據儲存失敗");
-    }
   };
 
   const handleDisconnect = () => {
@@ -316,7 +313,7 @@ const App: React.FC = () => {
         );
       case 'CALENDAR':
       case 'TASKS':
-        return <TodayTasks date={healthCalendarDate} onDateChange={setHealthCalendarDate} profile={userProfile} vitals={vitalsRecords} workouts={workoutLogs} appointments={appointments} foods={foodLogs} onUpdate={handleUpdateProfile} onNavigate={(view,subTab)=>{if(view==='CARE')setCareSection(subTab||'stock');if(view==='HEALTH_MANAGEMENT')setActiveHealthSubTab((subTab||'PROFILE') as any);setActiveTab(view);}}/>;
+        return <TodayTasks onFood={handleFoodAnalysisComplete} onWorkout={handleAddWorkout} onVital={handleSaveVitals} date={healthCalendarDate} onDateChange={setHealthCalendarDate} profile={userProfile} vitals={vitalsRecords} workouts={workoutLogs} appointments={appointments} foods={foodLogs} onUpdate={handleUpdateProfile} onNavigate={(view,subTab)=>{if(view==='CARE')setCareSection(subTab||'stock');if(view==='HEALTH_MANAGEMENT')setActiveHealthSubTab((subTab||'PROFILE') as any);setActiveTab(view);}}/>;
       case 'CARE':
         return <div><div className="flex items-center justify-between mb-4"><button className="px-3 py-2 rounded-lg border bg-white" onClick={()=>setActiveTab('TASKS')}>← 健康日曆</button><button className="px-3 py-2 rounded-lg border bg-white" onClick={()=>{setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}}>我的資料與健康管理 →</button></div><CareTools key={careSection} initialSection={careSection} profile={userProfile} foods={foodLogs} workouts={workoutLogs} vitals={vitalsRecords} onUpdate={handleUpdateProfile} onFood={handleFoodAnalysisComplete} onWorkout={handleAddWorkout}/></div>;
       case 'TRENDS':
@@ -511,7 +508,7 @@ const App: React.FC = () => {
            <div className="max-w-4xl mx-auto w-full p-4 md:p-8">
               {(demo||localOnly)&&<div className="mode-banner">{demo?'示範模式 · 虛構資料，僅存在本機':'本機模式 · 手動紀錄免金鑰'} <a href={demo?'/':'/?demo=1'}>{demo?'離開示範':'體驗示範'}</a></div>}
 
-              {renderContent()}
+              <StorageStatus/>{renderContent()}
            </div>
         </main>
       </div>
@@ -530,7 +527,7 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      {toolsOpen && <div className="record-overlay" onClick={()=>setToolsOpen(false)}><section className="record-sheet" style={{maxHeight:'80dvh',overflowY:'auto'}} role="dialog" aria-modal="true" aria-label="工具選單" onClick={e=>e.stopPropagation()}><div><h2>工具</h2><button autoFocus aria-label="關閉工具選單" onClick={()=>setToolsOpen(false)}><X/></button></div>{[['band-wall','彈力帶沿牆上舉・AI 姿勢'],['seated-ankle','坐姿踮腳＋勾腳・AI 姿勢'],['wall-angel','牆壁天使（面向牆）'],['snow-angel','雪天使（背靠牆）'],['wall-sit','靠牆深蹲・AI 姿勢'],['slow-jog','超慢跑計時與姿勢'],['trends','健康趨勢週報'],['stock','藥品庫存與補藥'],['templates','常用範本'],['export','看診摘要 PDF'],['sync','同步中心'],['profile','我的資料與健康管理']].map(([id,label])=><button key={id} onClick={()=>{setToolsOpen(false);if(id==='calendar'){setActiveTab('TASKS');}else if(id==='band-wall'){setActiveTab('BAND_WALL_SLIDE');}else if(id==='seated-ankle'){setActiveTab('SEATED_ANKLE');}else if(id==='wall-angel'){setActiveTab('WALL_ANGEL');}else if(id==='snow-angel'){setActiveTab('SNOW_ANGEL');}else if(id==='wall-sit'){setActiveTab('WALL_SIT');}else if(id==='slow-jog'){setActiveTab('SLOW_JOG');}else if(id==='trends'){setActiveTab('TRENDS');}else if(id==='profile'){setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}else{setCareSection(id);setActiveTab('CARE');}}}>{label}</button>)}</section></div>}
+      {toolsOpen && <div className="record-overlay" onClick={()=>setToolsOpen(false)}><section className="record-sheet" style={{maxHeight:'80dvh',overflowY:'auto'}} role="dialog" aria-modal="true" aria-label="工具選單" onClick={e=>e.stopPropagation()}><div><h2>工具</h2><button autoFocus aria-label="關閉工具選單" onClick={()=>setToolsOpen(false)}><X/></button></div>{[['band-wall','彈力帶沿牆上舉・AI 姿勢'],['seated-ankle','坐姿踮腳＋勾腳・AI 姿勢'],['wall-angel','牆壁天使（面向牆）'],['snow-angel','雪天使（背靠牆）'],['wall-sit','靠牆深蹲・AI 姿勢'],['slow-jog','超慢跑計時與姿勢'],['trends','健康趨勢週報'],['stock','藥品庫存與補藥'],['templates','常用範本'],['export','看診摘要 PDF'],['sync','同步中心'],['backup','手機備份還原'],['profile','我的資料與健康管理']].map(([id,label])=><button key={id} onClick={()=>{setToolsOpen(false);if(id==='calendar'){setActiveTab('TASKS');}else if(id==='band-wall'){setActiveTab('BAND_WALL_SLIDE');}else if(id==='seated-ankle'){setActiveTab('SEATED_ANKLE');}else if(id==='wall-angel'){setActiveTab('WALL_ANGEL');}else if(id==='snow-angel'){setActiveTab('SNOW_ANGEL');}else if(id==='wall-sit'){setActiveTab('WALL_SIT');}else if(id==='slow-jog'){setActiveTab('SLOW_JOG');}else if(id==='trends'){setActiveTab('TRENDS');}else if(id==='profile'){setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}else{setCareSection(id);setActiveTab('CARE');}}}>{label}</button>)}</section></div>}
       {recordOpen && <div className="record-overlay" onClick={()=>setRecordOpen(false)}><section className="record-sheet" role="dialog" aria-modal="true" aria-label="新增紀錄" onClick={e=>e.stopPropagation()}><div><h2>想記錄什麼？</h2><button aria-label="關閉新增紀錄" onClick={()=>setRecordOpen(false)}><X/></button></div>{([{view:'FOOD',label:'拍照記飲食',Icon:Camera},{view:'VITALS',label:'血壓與血糖',Icon:HeartPulse},{view:'WORKOUT',label:'運動紀錄',Icon:Dumbbell},{view:'DASHBOARD',label:'飲水紀錄',Icon:Droplets},{view:'TASKS',label:'症狀與健康日曆',Icon:HeartPulse}] as const).map(({view,label,Icon})=><button key={view} onClick={()=>{setMealContext(null);setActiveTab(view);setRecordOpen(false);}}><Icon size={22}/>{label}</button>)}</section></div>}
       {showDailySummary && (
         <DailySummaryPopup

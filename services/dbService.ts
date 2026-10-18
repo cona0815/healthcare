@@ -34,7 +34,7 @@ export const getLocal = <T>(key: string, defaultValue: T): T => {
 };
 
 export const setLocal = <T>(key: string, value: T): void => {
-  localStorage.setItem(storageKey(key), JSON.stringify(value));
+  try{localStorage.setItem(storageKey(key), JSON.stringify(value));if(typeof window!=='undefined')window.dispatchEvent(new Event('health-saved'));}catch(error){if(typeof window!=='undefined')window.dispatchEvent(new Event('health-save-failed'));throw error;}
 };
 
 // Timeout fetch helper

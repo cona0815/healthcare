@@ -5,7 +5,7 @@ import { VitalsRecord } from '../types';
 
 interface Props {
   vitalsRecords: VitalsRecord[];
-  onSaveRecord: (record: VitalsRecord) => void;
+  onSaveRecord: (record: VitalsRecord) => Promise<void>;
 }
 
 const VitalsTracker: React.FC<Props> = ({ vitalsRecords, onSaveRecord }) => {
@@ -19,7 +19,8 @@ const VitalsTracker: React.FC<Props> = ({ vitalsRecords, onSaveRecord }) => {
   const [bloodSugar, setBloodSugar] = useState('');
   const [bsContext, setBsContext] = useState<'fasting' | 'postprandial' | 'random'>('fasting');
 
-  const handleSave = () => {
+  const [saving,setSaving]=useState(false);
+  const handleSave = async () => {
     const now = new Date();
     const newRecord: VitalsRecord = {
       id: Date.now().toString(),
@@ -39,7 +40,8 @@ const VitalsTracker: React.FC<Props> = ({ vitalsRecords, onSaveRecord }) => {
       newRecord.bloodSugarContext = bsContext;
     }
 
-    onSaveRecord(newRecord);
+    setSaving(true);
+    try{await onSaveRecord(newRecord);}catch{alert('儲存失敗，輸入已保留，請重試。');return;}finally{setSaving(false);}
 
     // Reset forms
     setSystolic('');
@@ -195,7 +197,7 @@ const VitalsTracker: React.FC<Props> = ({ vitalsRecords, onSaveRecord }) => {
             )}
 
             <button
-               onClick={handleSave}
+               disabled={saving} onClick={handleSave}
                className="w-full py-4 mt-6 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-xl font-black rounded-xl shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
             >
                <Plus className="w-6 h-6" /> 儲存今日紀錄
