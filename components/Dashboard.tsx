@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Camera, ChevronLeft, ChevronRight, Plus, Utensils, Droplets, ClipboardCheck, HeartPulse, Dumbbell, Coffee, Sun, Moon } from 'lucide-react';
+import { Camera, ChevronRight, Plus, Utensils, Droplets, ClipboardCheck, HeartPulse, Dumbbell, Coffee, Sun, Moon } from 'lucide-react';
 import { FoodAnalysis, SavedAppointment, WorkoutPlanDay, WorkoutLog, UserProfile, ViewState, VitalsRecord, MealType, DailyHealthLog } from '../types';
 import { localDate } from '../services/healthSummary';
 import { nutritionSummary } from '../services/nutritionSummary';
@@ -8,13 +8,12 @@ interface Props {dataLoading?:boolean;userProfile:UserProfile;foodLogs:FoodAnaly
 const mealTypes:MealType[]=['早餐','午餐','晚餐','點心/飲料'];
 const icons=[Sun,Utensils,Moon,Coffee];
 export default function Dashboard({userProfile,foodLogs,appointments,workoutLogs,vitalsRecords,onNavigate,onAnalyzeImage,onUpdateProfile,onRecordMeal}:Props){
- const [date,setDate]=useState(localDate());const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [goals,setGoals]=useState(false);const camera=useRef<HTMLInputElement>(null);
+ const date=localDate();const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [goals,setGoals]=useState(false);const camera=useRef<HTMLInputElement>(null);
  const today=localDate();const meals=foodLogs.filter(m=>localDate(m.timestamp)===date);const nutrition=nutritionSummary(meals);const daily=userProfile.dailyHealthLogs?.find(d=>d.date===date);const taken=daily?.medicationsTaken||[];const reminders=userProfile.medicationReminders||[];const water=Number(daily?.waterIntake)||0;const calorieGoal=userProfile.calorieGoal;const waterGoal=userProfile.waterGoal;
- const shift=(n:number)=>{const next=new Date(`${date}T12:00:00`);next.setDate(next.getDate()+n);setDate(localDate(next));setError('');};
  const saveDaily=async(patch:Partial<DailyHealthLog>)=>{setBusy(true);setError('');try{await onUpdateProfile({...userProfile,dailyHealthLogs:[...(userProfile.dailyHealthLogs||[]).filter(d=>d.date!==date),{...daily,date,...patch}]});}catch{setError('儲存失敗，請重試。');}finally{setBusy(false);}};
  const record=(meal:MealType|null,file?:File)=>{if(onRecordMeal)onRecordMeal(meal,date,file);else if(file&&onAnalyzeImage)onAnalyzeImage(file);else onNavigate('FOOD');};
  return <div className="nutrition-home">
- <div className="diary-date"><button aria-label="前一天" onClick={()=>shift(-1)}><ChevronLeft/></button><h2>{date===today?'今天，':''}{new Date(`${date}T12:00:00`).toLocaleDateString('zh-TW',{month:'long',day:'numeric'})}</h2><button aria-label="後一天" disabled={date>=today} onClick={()=>shift(1)}><ChevronRight/></button></div>
+ <div className="diary-date"><h2>今天，<time dateTime={date}>{new Date(`${date}T12:00:00`).toLocaleDateString('zh-TW',{month:'long',day:'numeric'})}</time></h2></div>
 
  <section className="nutrition-card"><div className="diary-title"><h3><Utensils/> {date===today?'今日':'當日'}營養</h3><button onClick={()=>setGoals(!goals)}>{goals?'收合':'設定目標'} <ChevronRight size={14}/></button></div><div className="energy-total"><strong>{Math.round(nutrition.calories).toLocaleString()}</strong><span>{calorieGoal?` / ${calorieGoal.toLocaleString()}`:''} kcal</span></div>{calorieGoal?<progress aria-label="熱量目標進度" value={nutrition.calories} max={calorieGoal}/>:<p className="diary-note">已記錄攝取 · 可設定自己的每日目標</p>}
  <div className="macro-grid">{[['蛋白質',nutrition.protein],['碳水',nutrition.carbs],['脂肪',nutrition.fat]].map(([label,entry])=>{const n=entry as typeof nutrition.protein;return <div key={String(label)}><span>{String(label)}</span><strong>{n.value===null?'—':`${n.value} g`}</strong><small>{n.value===null?'尚無數據':n.partial?'部分餐點資料':'已記錄'}</small></div>;})}</div>
