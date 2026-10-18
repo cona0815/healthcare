@@ -9,7 +9,6 @@ import { MealType } from './types';
 import React, { useState, useEffect, useRef } from 'react';
 import { Utensils, BarChart3, UserCog, Activity, Dumbbell, Loader2, LogOut, Database, User, Key, LayoutDashboard, Settings, HeartPulse } from 'lucide-react';
 import FoodAnalyzer from './components/FoodAnalyzer';
-import CalendarStats from './components/CalendarStats';
 import AnalysisResultCard from './components/AnalysisResultCard';
 import HealthManagement from './components/HealthManagement';
 import SystemSettings from './components/SystemSettings';
@@ -314,14 +313,14 @@ const App: React.FC = () => {
             )}
           </div>
         );
+      case 'CALENDAR':
       case 'TASKS':
         return <TodayTasks profile={userProfile} vitals={vitalsRecords} workouts={workoutLogs} appointments={appointments} foods={foodLogs} onUpdate={handleUpdateProfile} onNavigate={(view,subTab)=>{if(view==='CARE')setCareSection('stock');if(view==='HEALTH_MANAGEMENT')setActiveHealthSubTab((subTab||'PROFILE') as any);setActiveTab(view);}}/>;
       case 'CARE':
         return <div><div className="flex items-center justify-between mb-4"><h2 className="text-xl font-bold">工具</h2><button className="px-3 py-2 rounded-lg border bg-white" onClick={()=>{setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}}>我的資料與健康管理 →</button></div><CareTools key={careSection} initialSection={careSection} profile={userProfile} foods={foodLogs} workouts={workoutLogs} vitals={vitalsRecords} onUpdate={handleUpdateProfile} onFood={handleFoodAnalysisComplete} onWorkout={handleAddWorkout}/></div>;
       case 'TRENDS':
         return <HealthOverview trendOnly profile={userProfile} vitals={vitalsRecords} workouts={workoutLogs} appointments={appointments} onUpdate={handleUpdateProfile} onNavigate={setActiveTab}/>;
-      case 'CALENDAR':
-        return <CalendarStats logs={foodLogs} workoutLogs={workoutLogs} appointments={appointments} onUpdateLog={handleUpdateLog} userProfile={userProfile} />;
+
       case 'SEATED_ANKLE': return <SlowJogging onBack={returnToWorkouts} key="ankle" exercise="seated_ankle" logs={workoutLogs} onSave={handleAddWorkout}/>;
       case 'WALL_ANGEL': return <SlowJogging onBack={returnToWorkouts} key="angel-front" exercise="wall_angel" logs={workoutLogs} onSave={handleAddWorkout}/>;
       case 'BAND_WALL_SLIDE': return <SlowJogging onBack={returnToWorkouts} key="band-wall" exercise="band_wall_slide" logs={workoutLogs} onSave={handleAddWorkout}/>;
@@ -531,7 +530,7 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      {toolsOpen && <div className="record-overlay" onClick={()=>setToolsOpen(false)}><section className="record-sheet" style={{maxHeight:'80dvh',overflowY:'auto'}} role="dialog" aria-modal="true" aria-label="工具選單" onClick={e=>e.stopPropagation()}><div><h2>工具</h2><button autoFocus aria-label="關閉工具選單" onClick={()=>setToolsOpen(false)}><X/></button></div>{[['calendar','日曆與歷史紀錄'],['band-wall','彈力帶沿牆上舉・AI 姿勢'],['seated-ankle','坐姿踮腳＋勾腳・AI 姿勢'],['wall-angel','牆壁天使（面向牆）'],['snow-angel','雪天使（背靠牆）'],['wall-sit','靠牆深蹲・AI 姿勢'],['slow-jog','超慢跑計時與姿勢'],['trends','健康趨勢週報'],['symptoms','症狀日記'],['stock','藥品庫存與補藥'],['templates','常用範本'],['export','看診摘要 PDF'],['sync','同步中心'],['profile','我的資料與健康管理']].map(([id,label])=><button key={id} onClick={()=>{setToolsOpen(false);if(id==='calendar'){setActiveTab('CALENDAR');}else if(id==='band-wall'){setActiveTab('BAND_WALL_SLIDE');}else if(id==='seated-ankle'){setActiveTab('SEATED_ANKLE');}else if(id==='wall-angel'){setActiveTab('WALL_ANGEL');}else if(id==='snow-angel'){setActiveTab('SNOW_ANGEL');}else if(id==='wall-sit'){setActiveTab('WALL_SIT');}else if(id==='slow-jog'){setActiveTab('SLOW_JOG');}else if(id==='trends'){setActiveTab('TRENDS');}else if(id==='profile'){setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}else{setCareSection(id);setActiveTab('CARE');}}}>{label}</button>)}</section></div>}
+      {toolsOpen && <div className="record-overlay" onClick={()=>setToolsOpen(false)}><section className="record-sheet" style={{maxHeight:'80dvh',overflowY:'auto'}} role="dialog" aria-modal="true" aria-label="工具選單" onClick={e=>e.stopPropagation()}><div><h2>工具</h2><button autoFocus aria-label="關閉工具選單" onClick={()=>setToolsOpen(false)}><X/></button></div>{[['calendar','待辦日曆與歷史紀錄'],['band-wall','彈力帶沿牆上舉・AI 姿勢'],['seated-ankle','坐姿踮腳＋勾腳・AI 姿勢'],['wall-angel','牆壁天使（面向牆）'],['snow-angel','雪天使（背靠牆）'],['wall-sit','靠牆深蹲・AI 姿勢'],['slow-jog','超慢跑計時與姿勢'],['trends','健康趨勢週報'],['symptoms','症狀日記'],['stock','藥品庫存與補藥'],['templates','常用範本'],['export','看診摘要 PDF'],['sync','同步中心'],['profile','我的資料與健康管理']].map(([id,label])=><button key={id} onClick={()=>{setToolsOpen(false);if(id==='calendar'){setActiveTab('TASKS');}else if(id==='band-wall'){setActiveTab('BAND_WALL_SLIDE');}else if(id==='seated-ankle'){setActiveTab('SEATED_ANKLE');}else if(id==='wall-angel'){setActiveTab('WALL_ANGEL');}else if(id==='snow-angel'){setActiveTab('SNOW_ANGEL');}else if(id==='wall-sit'){setActiveTab('WALL_SIT');}else if(id==='slow-jog'){setActiveTab('SLOW_JOG');}else if(id==='trends'){setActiveTab('TRENDS');}else if(id==='profile'){setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}else{setCareSection(id);setActiveTab('CARE');}}}>{label}</button>)}</section></div>}
       {recordOpen && <div className="record-overlay" onClick={()=>setRecordOpen(false)}><section className="record-sheet" role="dialog" aria-modal="true" aria-label="新增紀錄" onClick={e=>e.stopPropagation()}><div><h2>想記錄什麼？</h2><button aria-label="關閉新增紀錄" onClick={()=>setRecordOpen(false)}><X/></button></div>{([{view:'FOOD',label:'拍照記飲食',Icon:Camera},{view:'VITALS',label:'血壓與血糖',Icon:HeartPulse},{view:'WORKOUT',label:'運動紀錄',Icon:Dumbbell},{view:'DASHBOARD',label:'飲水紀錄',Icon:Droplets},{view:'CARE',label:'症狀與常用範本',Icon:HeartPulse}] as const).map(({view,label,Icon})=><button key={view} onClick={()=>{setMealContext(null);setActiveTab(view);setRecordOpen(false);}}><Icon size={22}/>{label}</button>)}</section></div>}
       {showDailySummary && (
         <DailySummaryPopup
