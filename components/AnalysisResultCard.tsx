@@ -40,8 +40,8 @@ const AnalysisResultCard: React.FC<Props> = ({ data, onUpdateLog }) => {
   const getNutrient = (keyword: string) => {
       // 防呆：確保 nutrients 存在且為陣列
       const list = Array.isArray(data.nutrients) ? data.nutrients : [];
-      const nutrient = list.find(n => n && n.name && n.name.includes(keyword));
-      return nutrient ? nutrient.amount : '0';
+      const nutrient = list.find(n => n && n.name && (n.name.includes(keyword)||(keyword==='碳水'&&n.name.includes('醣'))));
+      return nutrient ? nutrient.amount : '—';
   };
   
   const protein = getNutrient('蛋白');
@@ -55,6 +55,7 @@ const AnalysisResultCard: React.FC<Props> = ({ data, onUpdateLog }) => {
 
   return (
     <div className="w-full bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden mb-6 animate-fade-in-up transition-all hover:shadow-xl">
+      {data.thumbnail?.startsWith('data:image/jpeg;base64,')&&<img src={data.thumbnail} alt={`${data.foodName||'餐點'}縮圖`} className="food-thumbnail result-thumbnail"/>}
       {/* Header Section */}
       <div className="p-6 pb-2">
         <div className="flex justify-between items-start mb-4">
@@ -81,7 +82,7 @@ const AnalysisResultCard: React.FC<Props> = ({ data, onUpdateLog }) => {
                     {getRiskLabel(data.riskLevel)}
                  </span>
               </div>
-              <h2 className="text-2xl font-black text-gray-800 leading-tight">{data.foodName}</h2>
+              <h2 className="text-2xl font-black text-gray-800 leading-tight">{data.foodName||'未命名餐點'}</h2>
               {data.estimatedWeight && (
                   <p className="text-sm text-gray-400 mt-1 flex items-center gap-1 font-medium">
                       <Scale className="w-3.5 h-3.5" /> {data.estimatedWeight}

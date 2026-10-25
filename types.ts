@@ -36,6 +36,7 @@ export interface MedicineStock { id: string; name: string; remaining: number; da
 export interface QuickTemplate { id: string; kind: 'food' | 'workout'; name: string; calories?: number; mealType?: MealType; duration?: number; }
 export interface CustomTask {id:string;title:string;notes:string;time:string;repeat:'once'|'daily';date:string;}
 export interface UserProfile {
+  practiceCards?: {id:string;title:string;detail:string;category:string;hidden?:boolean;custom?:boolean}[];
   customTasks?: CustomTask[];
   taskCardOrder?: string[];
   symptoms?: SymptomEntry[];
@@ -44,6 +45,9 @@ export interface UserProfile {
 
   exerciseOptions?: string[];
   calorieGoal?: number;
+  calorieDisplayMode?: 'consumed' | 'remaining';
+  calorieGoalSource?: 'manual' | 'tdee';
+  fastingSchedule?: {enabled:boolean; eatingStart:string};
   waterGoal?: number;
   name?: string; 
   height: string; // cm
@@ -68,6 +72,7 @@ export interface Nutrient {
 }
 
 export interface FoodAnalysis {
+  thumbnail?: string;
   foodName: string;
   calories: number;
   estimatedWeight?: string; 

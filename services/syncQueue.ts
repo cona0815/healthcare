@@ -18,7 +18,7 @@ export class SyncQueue {
         if(!this.list().some(r=>r.id===row.id)) continue;
         try {
           const response=await this.send(row.payload,destination);
-          if(response?.status!=='success') throw new Error(response?.message || '雲端未確認儲存成功');
+          if(response?.status!=='success' && !(row.payload.action==='delete' && response?.status==='deleted')) throw new Error(response?.message || '雲端未確認儲存成功');
           this.write(this.list().filter(r=>r.id!==row.id));
           this.storage.setItem('hg_sync_last_success',new Date().toISOString());
         } catch(error) {

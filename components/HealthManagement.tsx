@@ -1,3 +1,4 @@
+import {estimateTDEE} from '../services/nutritionGoals';
 import React, { useState, useEffect } from 'react';
 import { User, FileText, Calendar, Ruler, Weight, Activity, Pill, UserCircle, Settings, Key, Database, Save, Eye, EyeOff, Code, Copy, Check, TrendingUp, Plus, History, Trash2, Zap, CalendarDays, ChevronDown, Target, Flame, Loader2, UtensilsCrossed, AlertCircle, X, Clock } from 'lucide-react';
 import { UserProfile, HealthReport, SavedAppointment, MedicationReminder, Gender, ActivityLevel } from '../types';
@@ -98,6 +99,7 @@ const HealthManagement: React.FC<Props> = ({
   
   // States for UX
   const [isSaving, setIsSaving] = useState(false);
+  const [profileNotice,setProfileNotice]=useState('');
   const [newWeight, setNewWeight] = useState('');
   const [showWeightInput, setShowWeightInput] = useState(false);
 
@@ -131,28 +133,7 @@ const HealthManagement: React.FC<Props> = ({
     return (weightKg / (heightM * heightM)).toFixed(1);
   };
 
-  const calculateTDEE = () => {
-      const w = parseFloat(tempWeight);
-      const h = parseFloat(tempHeight);
-      
-      if (!w || !h || !tempBirthDate) return null;
-      
-      const birth = new Date(tempBirthDate);
-      const today = new Date();
-      let age = today.getFullYear() - birth.getFullYear();
-      const m = today.getMonth() - birth.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-          age--;
-      }
-
-      // Mifflin-St Jeor Equation
-      let bmr = (10 * w) + (6.25 * h) - (5 * age);
-      if (tempGender === 'male') bmr += 5;
-      else bmr -= 161;
-
-      const factor = ACTIVITY_LEVELS.find(a => a.value === tempActivity)?.factor || 1.2;
-      return Math.round(bmr * factor);
-  };
+  const calculateTDEE = () => estimateTDEE({weight:tempWeight,height:tempHeight,birthDate:tempBirthDate,gender:tempGender,activityLevel:tempActivity});
 
   const bmi = calculateBMI(tempHeight, tempWeight);
   const tdee = calculateTDEE();
@@ -168,6 +149,7 @@ const HealthManagement: React.FC<Props> = ({
         birthDate: tempBirthDate,
         activityLevel: tempActivity,
         targetDeficit: tempDeficit,
+        ...(tdee&&tdee-tempDeficit>0?{calorieGoal:tdee-tempDeficit,calorieGoalSource:'tdee' as const}:{}),
         dietaryPreferences: tempDietary,
         allergies: tempAllergies,
         medicalConditions: tempMedical,
@@ -176,9 +158,9 @@ const HealthManagement: React.FC<Props> = ({
     
     try {
         await onUpdateProfile(updatedProfile);
-        alert("成功！資料已安全儲存至 Google Sheets。");
+        setProfileNotice('個人資料已儲存；有效的 TDEE 熱量目標已同步到總覽。');
     } catch (e) {
-        // Error is handled in App.tsx but we stop loading here
+        setProfileNotice('儲存失敗，輸入已保留，請重試。');
     } finally {
         setIsSaving(false);
     }
@@ -217,6 +199,7 @@ const HealthManagement: React.FC<Props> = ({
           birthDate: tempBirthDate,
           activityLevel: tempActivity,
           targetDeficit: tempDeficit,
+        ...(tdee&&tdee-tempDeficit>0?{calorieGoal:tdee-tempDeficit,calorieGoalSource:'tdee' as const}:{}),
           dietaryPreferences: tempDietary,
           allergies: tempAllergies,
           medicalConditions: tempMedical,
@@ -323,20 +306,15 @@ const HealthManagement: React.FC<Props> = ({
 
   return (
     <div className="space-y-6">
+      {profileNotice&&<p role="status" className="care-notice">{profileNotice}</p>}
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="flex border-b border-gray-100 overflow-x-auto scrollbar-hide">
-          <TabButton id="PROFILE" label="個人資料" icon={User} />
-          <TabButton id="REPORTS" label="健檢報告" icon={FileText} />
-          <TabButton id="MEDICATION" label="智慧藥師" icon={Pill} />
-          <TabButton id="APPOINTMENTS" label="預約掛號" icon={Calendar} />
-        </div>
 
         <div className="p-4 sm:p-6">
           {activeSubTab === 'PROFILE' && (
             <div className="space-y-6 animate-fade-in">
               <div className="text-center mb-6">
                 <h3 className="text-xl font-bold text-gray-800">您的個人檔案與 TDEE</h3>
-                <p className="text-gray-500 text-sm">完善資料以精準計算您的每日熱量消耗 (TDEE)</p>
+                <p className="text-gray-500 text-sm">完善成人資料以估計每日熱量消耗；儲存後套用到總覽目標</p>
               </div>
 
               {/* Basic Info */}
@@ -728,6 +706,7 @@ const HealthManagement: React.FC<Props> = ({
                                                     birthDate: tempBirthDate,
                                                     activityLevel: tempActivity,
                                                     targetDeficit: tempDeficit,
+        ...(tdee&&tdee-tempDeficit>0?{calorieGoal:tdee-tempDeficit,calorieGoalSource:'tdee' as const}:{}),
                                                     dietaryPreferences: tempDietary,
                                                     allergies: tempAllergies,
                                                     medicalConditions: tempMedical,

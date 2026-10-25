@@ -1,3 +1,4 @@
+import TeachingVideos from './TeachingVideos';
 import ExerciseHub from './ExerciseHub';
 import ExerciseOptions from './ExerciseOptions';
 import React, { useState } from 'react';
@@ -145,13 +146,14 @@ const WorkoutPlanner: React.FC<Props> = ({ workoutCategory,onCategoryChange,onAs
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in pb-20">
-      <ExerciseHub category={workoutCategory} onCategoryChange={onCategoryChange} onSlowJog={onSlowJog} onWallSit={onWallSit} onAssistedExercise={onAssistedExercise}/>
+      <ExerciseHub profile={userProfile} onUpdate={onUpdateProfile} onLog={onAddWorkout} category={workoutCategory} onCategoryChange={onCategoryChange} onSlowJog={onSlowJog} onWallSit={onWallSit} onAssistedExercise={onAssistedExercise}/>
+
       <div className="bg-gradient-to-r from-orange-400 to-red-500 p-5 md:p-6 rounded-2xl text-white shadow-lg">
         <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
           <Dumbbell className="w-5 h-5 md:w-6 md:h-6" />
           個人化運動處方
         </h2>
-        <p className="opacity-90 mt-2 text-sm md:text-base">根據您的 BMI 與健檢紅字，量身打造安全有效的運動計畫。</p>
+        <p className="opacity-90 mt-2 text-sm md:text-base">依個人資料規劃練習，選擇適合自己的強度。</p>
       </div>
 
       {/* Manual Entry Section */}
@@ -162,6 +164,7 @@ const WorkoutPlanner: React.FC<Props> = ({ workoutCategory,onCategoryChange,onAs
          <div className="flex flex-col md:flex-row gap-3">
              <div className="flex-1">
                  <select
+                    aria-label="運動項目"
                     value={manualActivity}
                     onChange={(e) => setManualActivity(e.target.value)}
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-200 text-sm"
@@ -187,6 +190,7 @@ const WorkoutPlanner: React.FC<Props> = ({ workoutCategory,onCategoryChange,onAs
                     type="number"
                     value={manualDuration}
                     onChange={(e) => setManualDuration(e.target.value)}
+                    aria-label="運動分鐘數"
                     placeholder="分鐘"
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-200 text-sm"
                  />
@@ -389,6 +393,7 @@ const WorkoutPlanner: React.FC<Props> = ({ workoutCategory,onCategoryChange,onAs
           })}
         </div>
       )}
+      <details className="exercise-video-library"><summary>影片教學 <span>展開參考影片 ⌄</span></summary><TeachingVideos videos={[['每天20下讓你強心臟！75歲婦人爬梯不再喘！｜聚焦2.0 第432集','https://www.youtube.com/watch?v=v4lAuh4V7bk']]}/></details>
     </div>
   );
 };

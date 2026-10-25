@@ -77,7 +77,7 @@ const callGasApi = async (data: any, destination?: string) => {
     
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.indexOf("application/json") === -1) {
-       throw new Error("Invalid response format. Likely permission error.");
+       throw new Error("雲端未回傳資料，可能是 Google 登入或權限頁面。請確認 GAS 的執行身分及存取權限，並使用 /exec 部署網址。");
      }
 
     const json = await response.json();
@@ -87,7 +87,7 @@ const callGasApi = async (data: any, destination?: string) => {
     return json;
   } catch (error: any) {
     console.error("GAS API Error:", error);
-    if (error.message === 'Failed to fetch' || (error.cause && error.cause.message === 'Failed to fetch')) {
+    if (/Failed to fetch|Load failed|NetworkError|Network request failed/i.test(error.message||'')) {
         throw new Error("網路連線失敗 (Failed to fetch)。請檢查您的 GAS 網址是否正確 (需為 /exec 結尾)，或是您的瀏覽器擴充功能(如廣告阻擋)可能阻擋了連線。");
     }
     throw error;
@@ -106,35 +106,10 @@ const ensureArray = (item: any): any[] => {
 export const dbService = {
   // Test connection to Google Sheet Link
   testConnection: async (url: string) => {
-    try {
-        const response = await fetchWithTimeout(url, {
-            method: 'POST',
-            body: JSON.stringify({ action: "read_all" }),
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-        }, 60000);
-        
-        const text = await response.text();
-        try {
-            const json = JSON.parse(text);
-            if (json && typeof json === 'object') {
-                return true;
-            } else {
-                throw new Error("Invalid JSON structure");
-            }
-        } catch (e) {
-            console.error("Connection test failed: Response is not JSON", text.substring(0, 100));
-            if (text.includes("Google Drive") || text.includes("Google Docs")) {
-                 throw new Error("回傳了 Google 登入頁面，請確認部署設定：「誰可以存取」必須設為「任何人」。");
-            }
-            throw new Error("回傳格式錯誤 (非 JSON)，請確認您複製的是「網頁應用程式網址」而非編輯器網址。");
-        }
-    } catch (e: any) {
-        console.error("Connection test network error", e);
-        if (e.message === 'Failed to fetch' || (e.cause && e.cause.message === 'Failed to fetch')) {
-             throw new Error("網路連線錯誤 (Failed to fetch)。請檢查網址是否完整，並確認瀏覽器無阻擋跨站請求 (CORS)。");
-        }
-        throw e;
-    }
+    if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url.trim())) throw new Error('請填入完整的 GAS 網頁應用程式網址（/exec 結尾）。');
+    const data=await callGasApi({action:'read_all'},url.trim());
+    if(!Array.isArray(data.foodLogs)||!Array.isArray(data.workouts)||!('profile' in data)) throw new Error('GAS 回傳的資料格式不符，請確認部署的是本系統的 GAS 程式及最新版本。');
+    return true;
   },
 
   // Load health/profile data -> Reads from localStorage instantly! Falls back to Sheet if empty.
@@ -179,6 +154,7 @@ export const dbService = {
     const rawFoodLogs = Array.isArray(data.foodLogs) ? data.foodLogs : [];
     const foodLogs = rawFoodLogs.map((log: any) => ({
         ...log,
+        thumbnail:getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs,[]).find(f=>f.timestamp===log.timestamp)?.thumbnail,
         nutrients: ensureArray(log.nutrients),
         ingredients: ensureArray(log.ingredients),
         calories: Number(log.calories) || 0
@@ -319,6 +295,7 @@ export const dbService = {
     if(isDemoMode()) return;
     const id = data.id || data.timestamp || data.analyzedAt;
     const singleton = type === 'Profile' || type === 'WorkoutPlan';
+    if(type==='FoodLogs'){const {thumbnail,...withoutPhoto}=data;data=withoutPhoto;}
     const stableData = singleton ? data : {...data, id: id || crypto.randomUUID()};
     syncQueue.enqueue(getGasUrl() || '', singleton ? type : type + ':' + stableData.id, {action:'save',type,data:stableData});
     if (typeof navigator !== 'undefined' && navigator.onLine && localStorage.getItem('hg_auto_sync')!=='false') void syncQueue.flush(getGasUrl() || '');

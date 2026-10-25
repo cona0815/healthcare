@@ -1,0 +1,145 @@
+/* Shared visual system. Semantic status/error colors remain owned by each feature. */
+.health-shell {
+  --ink: #203b32; --muted: #67796f; --forest: #2f7155;
+  --canvas: #f6f7f2; --line: #e0e7de; --sage: #edf3e9;
+  color: var(--ink); font-family: Inter, "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+.health-shell h1,.health-shell h2,.health-shell h3,.health-shell h4 {font-family:inherit;letter-spacing:-.025em}
+.health-shell button,.health-shell a,.health-shell summary {touch-action:manipulation}
+.health-shell button {cursor:pointer}
+.health-shell button:disabled {cursor:not-allowed}
+.health-shell :is(button,a,input,textarea,select,summary):focus-visible {outline:3px solid #65997a;outline-offset:3px}
+.health-shell input:not([type=checkbox]):not([type=range]),.health-shell textarea,.health-shell select {font-size:16px;min-height:44px}
+.health-shell>aside+div {background:var(--canvas)}
+.health-shell>aside+div>header {background:var(--canvas);border-bottom:1px solid var(--line)}
+.health-shell>aside+div>header h1 {font-size:18px;letter-spacing:-.7px;color:var(--ink)}
+.health-shell>aside+div>header .bg-gradient-to-br {background:#2f7155;box-shadow:none;border-radius:11px}
+.health-shell>aside+div>header button {min-width:44px;min-height:44px;color:#748379}
+.health-shell main {scrollbar-width:thin;scrollbar-color:#b7c5b7 transparent}
+.health-shell .mode-banner {background:#ebf0e6;color:#58705a;border:1px solid #e0e7d9;border-radius:8px;font-size:10px;padding:6px 8px;line-height:1.5;margin-bottom:12px}
+.health-shell .mode-banner a {font-weight:600;text-underline-offset:3px;display:inline-block;padding:4px}
+.health-shell .storage-status {font-size:11px;color:#617468;line-height:1.5;margin:0 0 12px}
+.health-shell .section-back {background:transparent;border:0;padding:6px 0;color:var(--forest);font-size:13px;margin-bottom:10px}
+.health-shell .nutrition-home {font-family:inherit}
+.health-shell .diary-date {justify-content:space-between;align-items:flex-end;margin:6px 2px 18px;gap:12px}
+.health-shell .diary-date h2 {font-size:25px;font-weight:700;line-height:1.3;margin-top:4px;color:var(--ink)}
+.health-shell .page-eyebrow {font-size:11px;letter-spacing:.08em;color:var(--muted)}
+.health-shell .diary-date time {font-size:11px;color:var(--muted);white-space:nowrap;padding-bottom:3px}
+.health-shell .nutrition-card {border:1px solid var(--line);border-radius:20px;box-shadow:0 3px 16px #233d2a03;margin-bottom:14px;padding:18px}
+.health-shell .nutrition-home .nutrition-glance {background:#edf3e7;border-color:#d8e4cf;padding:22px 20px 17px;position:relative}
+.health-shell .nutrition-glance-main {gap:18px}
+.health-shell .calorie-ring {width:84px;height:84px;color:var(--forest)}
+.health-shell .calorie-ring circle {stroke-width:5}
+.health-shell .calorie-ring-base {stroke:#d8e4cf}
+.health-shell .calorie-ring-fill {stroke:var(--forest)}
+.health-shell .nutrition-glance-copy h3 {font-size:12px;color:#526c58;font-weight:500}
+.health-shell .nutrition-glance-copy .energy-total strong {font-size:40px;letter-spacing:-1.6px;color:#285a40;font-weight:650;line-height:1.15}
+.health-shell .nutrition-glance-copy .energy-total {margin:4px 0 6px}
+.health-shell .nutrition-glance-copy .tdee-consumed {font-size:11px;color:#5b705c;white-space:normal}
+.health-shell .nutrition-assistant-link {color:#526c58;top:-12px;right:-12px;border-radius:50%}
+.health-shell .nutrition-assistant-link:hover {background:#dfead8}
+.health-shell .fasting-glance {margin-top:18px;padding-top:14px;border-color:#d4e1cc}
+.health-shell .fasting-glance-heading>span {font-size:12px;color:#4c6752}
+.health-shell .fasting-glance-heading strong {font-size:21px;color:#285a40;letter-spacing:.3px;font-weight:600}
+.health-shell .fasting-day-track {height:5px;margin:12px 0 8px}
+.health-shell .fasting-day-caption small,.health-shell .fasting-off-caption {font-size:10px;color:#5d745d}
+.health-shell .nutrition-glance.is-over-goal .energy-total strong {color:#95672f}
+.health-shell .nutrition-glance.is-over-goal .calorie-ring-fill {stroke:#ad7f43}
+.health-shell .diary-title h3 {font-size:16px;font-weight:650;gap:7px}
+.health-shell .diary-title h3 svg {width:20px;stroke-width:1.75}
+.health-shell .camera-action {font-size:11px;padding:0 10px;background:#f0f5eb!important;border:1px solid #e4ecde;border-radius:10px;min-height:40px}
+.health-shell .meal-diary {padding-bottom:3px}
+.health-shell .meal-diary-row {min-height:82px;padding:14px 0;gap:12px;border-color:#edf0e9}
+.health-shell .meal-symbol {width:48px;height:48px;border-radius:14px}
+.health-shell .meal-symbol svg {width:22px;stroke-width:1.6}
+.health-shell .meal-info h4 {font-size:14px;font-weight:600}
+.health-shell .meal-info strong {font-size:13px;margin-top:2px}
+.health-shell .meal-info p {font-size:11px;color:#66776b}
+.health-shell .meal-add {background:transparent;border:1px solid #dce6d8;width:38px;min-height:38px;height:38px;border-radius:12px}
+.health-shell .meal-add:hover {background:var(--sage);border-color:#97b39b}
+.health-shell .snack-row .meal-symbol {background:#f5efe6;height:48px}
+.health-shell .water-card .diary-title {gap:6px}
+.health-shell .water-card .diary-title>button {border:1px solid #dce6d8;border-radius:10px;background:#f0f5eb;font-size:12px}
+.health-shell .water-options {color:#66776b}
+.health-shell>nav {border-color:var(--line);background:#fffffff5;box-shadow:0 -4px 20px #243f2905}
+.health-shell .mobile-shortcuts {height:70px;padding:2px 5px}
+.health-shell .mobile-shortcuts>button {gap:4px;min-height:56px;color:#758079}
+.health-shell .mobile-shortcuts>button>svg {width:22px;height:22px;stroke-width:1.7;transform:none}
+.health-shell .mobile-shortcuts>button.text-teal-600 {color:#286546}
+.health-shell .mobile-shortcuts>button.text-teal-600>svg {box-sizing:content-box;background:#eaf2e5;padding:5px 13px;border-radius:12px;margin:-5px -13px}
+.health-shell .mobile-shortcuts>button>span:last-child {font-size:10px;font-weight:500;line-height:1.4}
+.health-shell .record-nav>span {width:46px;height:46px;border-radius:16px;background:var(--forest);border:0;margin-top:-6px;box-shadow:0 4px 9px #2f715518}
+.health-shell .record-nav small {font-size:10px}
+.health-shell .record-sheet {border-radius:24px 24px 0 0;padding:24px;box-shadow:0 -12px 40px #1d35221a}
+.health-shell .record-sheet>button {font-size:15px;padding:17px 4px}
+.health-shell .task-heading {margin:4px 2px 18px}
+.health-shell .task-heading h1,.health-shell .care-tools h1 {font-size:25px;color:var(--ink)}
+.health-shell .task-heading p {font-size:12px;line-height:1.7;color:var(--muted)}
+.health-shell .task-calendar {border-color:var(--line);border-radius:20px;padding:14px;margin-bottom:14px}
+.health-shell .calendar-expand {background:#f3f6ef;font-size:12px;border-radius:8px}
+.health-shell .calendar-help {color:var(--muted)}
+.health-shell .assistant-directory {border:1px solid var(--line);border-radius:14px;background:white;margin:12px 0;overflow:hidden}
+.health-shell .assistant-directory>summary {display:flex;align-items:center;justify-content:space-between;padding:14px;min-height:54px;list-style:none;cursor:pointer;gap:8px}
+.health-shell .assistant-directory>summary::-webkit-details-marker {display:none}
+.health-shell .assistant-directory>summary>span:first-child {display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
+.health-shell .assistant-directory>summary>span:last-child {font-size:10px;color:var(--muted)}
+.health-shell .assistant-directory-body {padding:0 14px 4px;border-top:1px solid var(--line)}
+.health-shell .assistant-directory-body h2 {font-size:11px;letter-spacing:.08em;color:var(--muted);margin-top:14px}
+.health-shell .assistant-health-sections,.health-shell .calendar-actions {gap:8px;margin:8px 0 16px}
+.health-shell .assistant-health-sections button,.health-shell .calendar-actions button {font-size:12px;background:#f8faf6;border-color:var(--line);border-radius:10px;padding:9px 7px;min-height:44px}
+.health-shell .task-board-actions button {background:transparent;border-color:var(--line);font-size:12px;border-radius:9px}
+.health-shell .task-collapsible {border-radius:16px;border-color:var(--line)}
+.health-shell .task-collapsible>summary {min-height:66px;padding:16px}
+.health-shell .task-collapsible h2 {font-size:15px}
+.health-shell .task-collapsible h2 svg {background:#f0f5eb;box-sizing:content-box;padding:7px;border-radius:10px;width:18px;height:18px;stroke-width:1.7}
+.health-shell .care-panel {border-radius:18px;border-color:var(--line);box-shadow:none}
+.health-shell .care-tabs:not([hidden]) {background:#edf2e8;padding:5px;border-radius:14px;gap:4px}
+.health-shell .care-tabs button {border:0;background:transparent;border-radius:10px;font-size:12px}
+.health-shell .care-tabs button[aria-pressed=true] {background:white;color:var(--forest);box-shadow:0 1px 4px #233d2a0c;font-weight:600}
+.health-shell .exercise-hub {border-radius:20px;border-color:var(--line);padding:18px}
+.health-shell .exercise-hub h2 {font-size:20px}
+.health-shell .exercise-categories {background:#eff3e9;border-radius:12px;padding:5px;margin:18px 0 8px}
+.health-shell .exercise-categories button {min-height:44px;font-size:13px}
+.health-shell .exercise-hub-row {padding:20px 0;min-height:78px}
+.health-shell .exercise-hub-row strong {font-size:15px}
+.health-shell .exercise-hub-row small {font-size:12px;color:var(--muted);line-height:1.6}
+.health-shell main[data-view=WORKOUT] .bg-gradient-to-r {background:#eaf1e4;color:var(--ink);box-shadow:none;border:1px solid #dce5d4}
+.health-shell main[data-view=WORKOUT] .bg-orange-500 {background:var(--forest)}
+.health-shell main[data-view=WORKOUT] .text-orange-500,.health-shell main[data-view=WORKOUT] .text-orange-600 {color:var(--forest)}
+.health-shell main[data-view=WORKOUT] .border-orange-100 {border-color:var(--line)}
+.health-shell main[data-view=FOOD] .shadow-inner {box-shadow:none;background:#ecf1e7}
+.health-shell main[data-view=FOOD] .border-dashed {background:#f5f8f0;border-color:#c7d6bf;border-width:1px}
+.health-shell main[data-view=FOOD] .rounded-3xl {border-radius:20px;box-shadow:none;border-color:var(--line)}
+.health-shell main[data-view=FOOD] .text-teal-600,.health-shell main[data-view=FOOD] .text-teal-700 {color:var(--forest)}
+@media(max-width:767px){
+ .health-shell main>div {padding:12px 16px 20px}
+ .health-shell>aside+div>header>div:first-child {height:62px;padding:0 20px}
+ .health-shell main {padding-bottom:calc(86px + env(safe-area-inset-bottom))}
+}
+@media(max-width:350px){
+ .health-shell main>div {padding:10px 12px 16px}
+ .health-shell .nutrition-home .nutrition-glance {padding:18px 14px 15px}
+ .health-shell .calorie-ring {width:68px;height:68px}
+ .health-shell .nutrition-glance-main {gap:12px}
+ .health-shell .nutrition-glance-copy .energy-total strong {font-size:34px}
+ .health-shell .nutrition-glance-copy .tdee-consumed {font-size:10px}
+ .health-shell .diary-date h2 {font-size:23px}
+ .health-shell .diary-date time {font-size:10px}
+ .health-shell .diary-title h3 {font-size:14px}
+ .health-shell .assistant-directory>summary>span:last-child {font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){.health-shell * {animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+@media(hover:hover){.health-shell button:not(:disabled){transition:background-color .15s,color .15s,border-color .15s}.health-shell .exercise-hub-row:hover{background:#f5f8f1}.health-shell .assistant-health-sections button:hover,.health-shell .calendar-actions button:hover{background:#eaf2e4}}
+.health-shell .meal-add {width:44px;min-height:44px;height:44px}
+.health-shell .exercise-video-library {border:1px solid var(--line);background:white;border-radius:16px;overflow:hidden}
+.health-shell .exercise-video-library>summary {display:flex;justify-content:space-between;align-items:center;list-style:none;cursor:pointer;padding:17px;font-size:14px;font-weight:600;gap:8px}
+.health-shell .exercise-video-library>summary::-webkit-details-marker {display:none}
+.health-shell .exercise-video-library>summary span {font-size:11px;font-weight:400;color:var(--muted)}
+.health-shell .exercise-video-library .teaching-videos {border:0;border-radius:0;margin:0}
+.health-shell main[data-view=WORKOUT] .bg-gradient-to-r {padding:16px 18px;border-radius:16px}
+.health-shell main[data-view=WORKOUT] .bg-gradient-to-r h2 {font-size:17px}
+.health-shell main[data-view=WORKOUT] .bg-gradient-to-r p {font-size:12px;line-height:1.7}
+.health-shell main[data-view=SYSTEM_SETTINGS] .rounded-3xl {border-radius:20px;border-color:var(--line);box-shadow:none}
+.health-shell main[data-view=SYSTEM_SETTINGS] .text-2xl {font-size:23px;color:var(--ink)}
+@media(max-width:767px){.health-shell main[data-view=SYSTEM_SETTINGS] .p-6 {padding:18px}.health-shell main[data-view=SYSTEM_SETTINGS] .space-y-8>section {padding:14px}}

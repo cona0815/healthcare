@@ -1,0 +1,8 @@
+import React from 'react';
+import {Check, Leaf, Palette, Sprout} from 'lucide-react';
+export type ThemeName='forest'|'colorful'|'island';
+export function readTheme(demo:boolean):ThemeName {try{const value=localStorage.getItem(demo?'hg_theme_demo':'hg_theme');return value==='colorful'||value==='island'?value:'forest';}catch{return 'forest';}}
+export default function ThemePicker({value,onChange,notice,title,onTitle}:{title:string;onTitle:(v:string)=>void;value:ThemeName;onChange:(v:ThemeName)=>void;notice:string}){
+ const themes=[{id:'forest' as const,title:'森林日常',detail:'沉穩・清爽',Icon:Leaf},{id:'colorful' as const,title:'多彩日常',detail:'明亮・活力',Icon:Palette},{id:'island' as const,title:'小島日常',detail:'動森風・療癒',Icon:Sprout}];
+ return <section className="theme-picker" aria-label="外觀主題"><form className="brand-editor" onSubmit={e=>{e.preventDefault();onTitle(String(new FormData(e.currentTarget).get('title')||''));}}><label>我的首頁名稱<input key={title} name="title" defaultValue={title} maxLength={12} placeholder="健康日常"/></label><button type="submit">儲存名稱</button><small>最多 12 字；留空恢復「健康日常」。</small></form><header><h2>選一個喜歡的日常</h2><p>即時切換，會記住這台裝置的選擇。</p></header><div className="theme-options">{themes.map(({id,title,detail,Icon})=><button key={id} className={`theme-option theme-sample-${id}`} aria-pressed={value===id} onClick={()=>onChange(id)}><span className="theme-preview"><Icon size={24}/><span className="theme-swatches"><i/><i/><i/></span>{value===id&&<Check className="theme-check" size={16}/>}</span><strong>{title}</strong><small>{detail}</small></button>)}</div>{notice&&<p role="status">{notice}</p>}</section>;
+}

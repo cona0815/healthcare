@@ -1,0 +1,4 @@
+export async function makeFoodThumbnail(file:File):Promise<string>{
+ if(!file.type.startsWith('image/')||file.size>20*1024*1024)throw new Error('請選擇 20 MB 內的圖片');
+ const url=URL.createObjectURL(file);try{const image=new Image();image.src=url;await image.decode();const scale=Math.min(1,240/Math.max(image.naturalWidth,image.naturalHeight)),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));const ctx=canvas.getContext('2d');if(!ctx)throw new Error('無法建立縮圖');ctx.drawImage(image,0,0,canvas.width,canvas.height);let result=canvas.toDataURL('image/jpeg',0.65);if(result.length>60000)result=canvas.toDataURL('image/jpeg',0.35);if(result.length>60000)throw new Error('縮圖過大，請換一張圖片');return result;}finally{URL.revokeObjectURL(url);}
+}

@@ -1,3 +1,6 @@
+import DeviceBackup from './DeviceBackup';
+import {SyncCenter} from './CareTools';
+import ApiGuide from './ApiGuide';
 import {getGeminiModel,saveGeminiModels,validModel} from '../services/aiSettings';
 import React, { useState, useEffect } from 'react';
 import { Settings, Key, Database, CalendarDays, Eye, EyeOff, Save, Code, Check, Cloud, CloudDownload, CloudUpload, RefreshCw, AlertCircle } from 'lucide-react';
@@ -173,6 +176,7 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
               </div>
           </div>
 
+          <ApiGuide/>
           <section className="care-panel"><h3>Gemini 模型版本</h3><label>一般分析模型<input value={generalModel} onChange={e=>setGeneralModel(e.target.value.trim())} placeholder="gemini-3.8-flash"/></label><label>影片分析模型<input value={videoModel} onChange={e=>setVideoModel(e.target.value.trim())}/></label><p>請填寫帳戶可用且支援所需輸入的模型 ID。系統不會自動切換；更換影片模型後，請先以相同片段驗證評分，舊分數不宜直接比較。</p><a href="https://ai.google.dev/gemini-api/docs/models" target="_blank" rel="noopener noreferrer">官方模型清單 ↗</a><button onClick={handleSaveSystem}>儲存連線與模型設定</button>{settingsMessage&&<p role="status">{settingsMessage}</p>}</section>
           <hr className="border-gray-100" />
 
@@ -264,10 +268,10 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
 
           <div className="bg-orange-50/50 p-6 rounded-2xl border border-orange-100 mt-8">
               <h4 className="font-bold text-orange-800 text-lg mb-3 flex items-center gap-2">
-                  <Code className="w-5 h-5" /> Apps Script 部署說明 (必須設定才能使用本系統)
+                  <Code className="w-5 h-5" /> Apps Script 部署說明（僅雲端同步需要）
               </h4>
               <div className="text-sm text-orange-800 mb-4 space-y-3 leading-relaxed">
-                  <p>本系統使用 Google Sheets 作為您的專屬免費資料庫。為了讓系統能讀寫資料，您必須部署一個 Apps Script 服務：</p>
+                  <p>如需跨裝置同步，可使用自己的 Google Sheets；本機紀錄不需要設定。啟用雲端前，請部署 Apps Script 服務：</p>
                   <ol className="list-decimal pl-5 space-y-1">
                       <li>登入您的 Google 帳號，並建立一個新的空白 Google 試算表。</li>
                       <li>點選上方選單的 <strong>擴充功能 &gt; Apps Script</strong>。</li>
@@ -298,6 +302,8 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
               )}
           </div>
 
+          <SyncCenter/>
+          <DeviceBackup/>
           <div className="pt-4 flex justify-end">
               <button 
                   onClick={handleSaveSystem}

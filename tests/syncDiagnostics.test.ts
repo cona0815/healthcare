@@ -1,0 +1,6 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {SyncQueue} from '../services/syncQueue';
+import {dbService} from '../services/dbService';
+test('GAS deleted acknowledgement clears deletes but never acknowledges a save',async()=>{const data=new Map<string,string>();const queue=new SyncQueue({getItem:(k:string)=>data.get(k)||null,setItem:(k:string,v:string)=>data.set(k,v)} as Storage,async()=>({status:'deleted'}));queue.enqueue('cloud','a',{action:'delete'});await queue.flush('cloud');assert.equal(queue.list().length,0);queue.enqueue('cloud','b',{action:'save'});await queue.flush('cloud');assert.equal(queue.list().length,1);assert.equal(queue.list()[0].attempts,1);});
+test('cloud connection test rejects error JSON, unrelated JSON and HTTP errors',async()=>{const original=globalThis.fetch;try{for(const response of [Response.json({status:'error',message:'Permission denied'}),Response.json({hello:'world'}),Response.json({},{status:503})]){globalThis.fetch=async()=>response;await assert.rejects(dbService.testConnection('https://script.google.com/macros/s/test/exec'));}globalThis.fetch=async()=>Response.json({foodLogs:[],workouts:[],profile:{}});assert.equal(await dbService.testConnection('https://script.google.com/macros/s/test/exec'),true);}finally{globalThis.fetch=original;}});

@@ -1,3 +1,6 @@
+import ManualFoodEntry from './ManualFoodEntry';
+import {makeFoodThumbnail} from '../services/foodThumbnail';
+import {getGeminiKey} from '../services/geminiService';
 import React, { useState, useRef, useMemo } from 'react';
 import { Camera, Loader2, Utensils, Sparkles, ChefHat, RefreshCw, MapPin, ExternalLink, Navigation, ShoppingBag, Flame, Calendar, Dumbbell, ArrowRight } from 'lucide-react';
 import { analyzeFoodImage, fileToGenerativePart, generateFoodSuggestions, findNearbyRestaurants } from '../services/geminiService';
@@ -12,7 +15,7 @@ interface Props {
   userProfile: UserProfile;
   pendingImageFile?: File | null;
   onClearPendingImage?: () => void;
-  onAnalysisComplete: (result: FoodAnalysis) => void;
+  onAnalysisComplete: (result: FoodAnalysis) => Promise<void>;
   onUpdateLog?: (timestamp: string, updatedLog: FoodAnalysis) => void;
   savedRecipes: Recipe[];
   onSaveRecipe: (recipe: Recipe) => void;
@@ -33,6 +36,7 @@ const FoodAnalyzer: React.FC<Props> = ({
   const [suggestionLoading, setSuggestionLoading] = useState(false);
   const [mapLoadingId, setMapLoadingId] = useState<number | null>(null);
 
+  const [thumbnail,setThumbnail]=useState<string>();
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,13 +55,16 @@ const FoodAnalyzer: React.FC<Props> = ({
     setLoading(true);
 
     try {
+      const thumb=await makeFoodThumbnail(file);setThumbnail(thumb);
+      if(!getGeminiKey()){setError('AI 尚未啟用，可在下方手動填寫餐點並保存縮圖。');return;}
       const base64 = await fileToGenerativePart(file);
       const analyzed = await analyzeFoodImage(base64, file.type, healthReport || undefined, userProfile);
-      const result: FoodAnalysis = {...analyzed, mealType: (selectedMeal || analyzed.mealType) as FoodAnalysis['mealType'], timestamp: selectedDate ? new Date(selectedDate + 'T' + new Date(analyzed.timestamp).toTimeString().slice(0,8)).toISOString() : analyzed.timestamp};
+      const result: FoodAnalysis = {...analyzed, thumbnail:thumb, mealType: (selectedMeal || analyzed.mealType) as FoodAnalysis['mealType'], timestamp: selectedDate ? new Date(selectedDate + 'T' + new Date(analyzed.timestamp).toTimeString().slice(0,8)).toISOString() : analyzed.timestamp};
+      if(!result.foodName?.trim()||!Number.isFinite(Number(result.calories)))throw new Error('AI 餐點資料不完整，請改用手動紀錄');
+      await onAnalysisComplete(result);
       setCurrentResult(result);
-      onAnalysisComplete(result);
     } catch (err) {
-      setError("分析失敗，請確認照片清晰或網路連線正常。");
+      setError((err as Error).message||'分析或儲存失敗，請重試。');
       console.error(err);
     } finally {
       setLoading(false);
@@ -74,6 +81,7 @@ const FoodAnalyzer: React.FC<Props> = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingImageFile]);
 
+  React.useEffect(()=>()=>{if(preview)URL.revokeObjectURL(preview);},[preview]);
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -150,6 +158,7 @@ const FoodAnalyzer: React.FC<Props> = ({
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in pb-20">
+      <ManualFoodEntry key={`${selectedDate||'today'}-${selectedMeal||'all'}`} date={selectedDate} meal={selectedMeal} initialThumbnail={thumbnail} onSave={onAnalysisComplete}/>
       {/* View Toggle */}
       <div className="flex p-1.5 bg-gray-100 rounded-2xl mb-6 shadow-inner">
         <button
