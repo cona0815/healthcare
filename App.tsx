@@ -528,7 +528,7 @@ const App: React.FC = () => {
            <div className="max-w-4xl mx-auto w-full p-4 md:p-8">
               {(demo||localOnly)&&<div className="mode-banner">{demo?'示範模式 · 虛構資料，僅存在本機':'本機模式 · 手動紀錄免金鑰'} <a href={demo?'/':'/?demo=1'}>{demo?'離開示範':'體驗示範'}</a></div>}
 
-              <StorageStatus/>{['TRENDS','VITALS','HEALTH_MANAGEMENT'].includes(activeTab)&&<button className="section-back" onClick={()=>setActiveTab('TASKS')}>← 返回健康助手</button>}{activeTab==='FOOD'&&<button className="section-back" onClick={()=>setActiveTab('DASHBOARD')}>← 返回總覽</button>}{activeTab==='SYSTEM_SETTINGS'&&<button className="section-back" onClick={()=>setActiveTab('DASHBOARD')}>← 返回總覽</button>}{activeTab==='SYSTEM_SETTINGS'&&<ThemePicker title={brandTitle} onTitle={saveTitle} value={theme} onChange={changeTheme} notice={themeNotice}/>} {renderContent()}
+              <div hidden={activeTab!=='SYSTEM_SETTINGS'}><StorageStatus/></div>{['TRENDS','VITALS','HEALTH_MANAGEMENT'].includes(activeTab)&&<button className="section-back" onClick={()=>setActiveTab('TASKS')}>← 返回健康助手</button>}{activeTab==='FOOD'&&<button className="section-back" onClick={()=>setActiveTab('DASHBOARD')}>← 返回總覽</button>}{activeTab==='SYSTEM_SETTINGS'&&<button className="section-back" onClick={()=>setActiveTab('DASHBOARD')}>← 返回總覽</button>}{activeTab==='SYSTEM_SETTINGS'&&<ThemePicker title={brandTitle} onTitle={saveTitle} value={theme} onChange={changeTheme} notice={themeNotice}/>} {renderContent()}
            </div>
         </main>
       </div>
