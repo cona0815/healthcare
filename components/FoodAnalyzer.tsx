@@ -29,7 +29,7 @@ interface Props {
 
 const FoodAnalyzer: React.FC<Props> = ({
     healthReport, userProfile, selectedMeal, selectedDate, pendingImageFile, onClearPendingImage, onAnalysisComplete, onUpdateLog,
-    savedRecipes, onSaveRecipe, onDeleteRecipe
+    foodLogs, savedRecipes, onSaveRecipe, onDeleteRecipe
 }) => {
   const [viewMode, setViewMode] = useState<'MEAL' | 'GROCERY'>('MEAL');
   const [loading, setLoading] = useState(false);
@@ -46,7 +46,9 @@ const FoodAnalyzer: React.FC<Props> = ({
 
   // --- Handlers ---
 
+  const fileBusy=useRef(false);
   const processFile = async (file: File) => {
+    if(fileBusy.current)return; fileBusy.current=true;
     setError(null);
     setCurrentResult(null);
     setSuggestions([]);
@@ -59,7 +61,7 @@ const FoodAnalyzer: React.FC<Props> = ({
       if(!getGeminiKey()){setError('AI 尚未啟用，可在下方手動填寫餐點並保存縮圖。');return;}
       const base64 = await fileToGenerativePart(file);
       const analyzed = await analyzeFoodImage(base64, file.type, healthReport || undefined, userProfile);
-      const result: FoodAnalysis = {...analyzed, thumbnail:thumb, mealType: (selectedMeal || analyzed.mealType) as FoodAnalysis['mealType'], timestamp: selectedDate ? new Date(selectedDate + 'T' + new Date(analyzed.timestamp).toTimeString().slice(0,8)).toISOString() : analyzed.timestamp};
+      const result: FoodAnalysis = {...analyzed, id:crypto.randomUUID(), thumbnail:thumb, mealType: (selectedMeal || analyzed.mealType) as FoodAnalysis['mealType'], timestamp: selectedDate ? new Date(selectedDate + 'T' + new Date(analyzed.timestamp).toTimeString().slice(0,8)).toISOString() : analyzed.timestamp};
       if(!result.foodName?.trim()||!Number.isFinite(Number(result.calories)))throw new Error('AI 餐點資料不完整，請改用手動紀錄');
       await onAnalysisComplete(result);
       setCurrentResult(result);
@@ -67,7 +69,7 @@ const FoodAnalyzer: React.FC<Props> = ({
       setError((err as Error).message||'分析或儲存失敗，請重試。');
       console.error(err);
     } finally {
-      setLoading(false);
+      fileBusy.current=false;setLoading(false);
     }
   };
 
@@ -279,7 +281,7 @@ const FoodAnalyzer: React.FC<Props> = ({
            {currentResult && (
              <div className="animate-fade-in">
                 <h3 className="text-lg font-bold text-gray-800 mb-3 px-1">分析結果</h3>
-                <AnalysisResultCard data={currentResult} onUpdateLog={onUpdateLog} />
+                {foodLogs.find(f=>(f.id||f.timestamp)===(currentResult.id||currentResult.timestamp)) ? <AnalysisResultCard data={foodLogs.find(f=>(f.id||f.timestamp)===(currentResult.id||currentResult.timestamp))!} onUpdateLog={onUpdateLog} /> : <p>此餐點已刪除。</p>}
              </div>
            )}
         </>

@@ -1,3 +1,4 @@
+import {localDate} from '../services/healthSummary';
 import {estimateTDEE} from '../services/nutritionGoals';
 import React, { useState, useEffect } from 'react';
 import { User, FileText, Calendar, Ruler, Weight, Activity, Pill, UserCircle, Settings, Key, Database, Save, Eye, EyeOff, Code, Copy, Check, TrendingUp, Plus, History, Trash2, Zap, CalendarDays, ChevronDown, Target, Flame, Loader2, UtensilsCrossed, AlertCircle, X, Clock } from 'lucide-react';
@@ -102,6 +103,7 @@ const HealthManagement: React.FC<Props> = ({
   const [profileNotice,setProfileNotice]=useState('');
   const [newWeight, setNewWeight] = useState('');
   const [showWeightInput, setShowWeightInput] = useState(false);
+  const [weightMessage,setWeightMessage]=useState('');
 
 
 
@@ -167,13 +169,13 @@ const HealthManagement: React.FC<Props> = ({
   };
 
   const handleAddWeight = async () => {
-      if (!newWeight || isNaN(parseFloat(newWeight))) {
-          alert("請輸入有效的體重數字");
+      if (!newWeight || !Number.isFinite(Number(newWeight)) || Number(newWeight)<=0 || Number(newWeight)>500) {
+          setWeightMessage("請輸入大於 0 且不超過 500 kg 的體重");
           return;
       }
       setIsSaving(true);
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = localDate();
       const newRecord = { date: today, weight: newWeight };
       
       const currentHistory = userProfile.weightHistory || [];
@@ -211,8 +213,9 @@ const HealthManagement: React.FC<Props> = ({
         await onUpdateProfile(updatedProfile);
         setNewWeight('');
         setShowWeightInput(false);
-        alert("體重記錄已同步更新！");
+        setWeightMessage("體重已儲存，人物體型已依紀錄重新計算。");
       } catch (e) {
+        setWeightMessage("儲存失敗，請重試。");
       } finally {
         setIsSaving(false);
       }
@@ -845,6 +848,7 @@ const HealthManagement: React.FC<Props> = ({
                         </button>
                     </div>
 
+                    {weightMessage&&<p role="status" className="text-sm my-2">{weightMessage}</p>}
                     {showWeightInput && (
                         <div className="mb-4 flex gap-2 animate-fade-in-up">
                             <input 

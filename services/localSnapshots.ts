@@ -1,0 +1,12 @@
+import {createBackup,parseBackup} from './deviceBackup';
+export interface LocalSnapshot {id:string;createdAt:string;demo:boolean;payload:ReturnType<typeof createBackup>}
+export interface SnapshotStore {list():Promise<LocalSnapshot[]>;putAndPrune(snapshot:LocalSnapshot,keep:number):Promise<void>}
+const runs=new WeakMap<SnapshotStore,Promise<unknown>>();
+export function backupIfDue(storage:Storage,store:SnapshotStore,demo:boolean,interval:number,now=new Date(),force=false):Promise<boolean>{
+ const previous=runs.get(store)||Promise.resolve();
+ const result=previous.catch(()=>{}).then(async()=>{const rows=(await store.list()).filter(r=>r.demo===demo).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));if(!force&&rows[0]&&now.getTime()-Date.parse(rows[0].createdAt)<interval)return false;const payload=parseBackup(JSON.stringify(createBackup(storage,demo)));payload.createdAt=now.toISOString();await store.putAndPrune({id:crypto.randomUUID(),createdAt:payload.createdAt,demo,payload},7);return true;});
+ runs.set(store,result);const cleanup=()=>{if(runs.get(store)===result)runs.delete(store);};void result.then(cleanup,cleanup);return result;
+}
+
+function openDb():Promise<IDBDatabase>{return new Promise((resolve,reject)=>{const request=indexedDB.open('health-daily-local-backups',1);request.onupgradeneeded=()=>request.result.createObjectStore('snapshots',{keyPath:'id'});request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error('無法開啟備份儲存空間'));request.onblocked=()=>reject(new Error('備份資料庫被其他分頁占用，請關閉其他分頁重試'));});}
+export const snapshotStore:SnapshotStore={async list(){const db=await openDb();try{return await new Promise<LocalSnapshot[]>((resolve,reject)=>{const tx=db.transaction('snapshots','readonly');const req=tx.objectStore('snapshots').getAll();tx.oncomplete=()=>resolve(req.result);tx.onerror=()=>reject(tx.error);});}finally{db.close();}},async putAndPrune(snapshot,keep){const db=await openDb();try{await new Promise<void>((resolve,reject)=>{const tx=db.transaction('snapshots','readwrite');const store=tx.objectStore('snapshots');store.put(snapshot);const req=store.getAll();req.onsuccess=()=>{req.result.filter((r:LocalSnapshot)=>r.demo===snapshot.demo).sort((a:LocalSnapshot,b:LocalSnapshot)=>b.createdAt.localeCompare(a.createdAt)).slice(keep).forEach((r:LocalSnapshot)=>store.delete(r.id));};tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||new Error('備份寫入失敗'));tx.onabort=()=>reject(tx.error||new Error('裝置空間不足，備份未完成'));});}finally{db.close();}}};

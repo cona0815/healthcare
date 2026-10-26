@@ -1,11 +1,13 @@
+import {foodId, visibleFoods} from './foodRecords';
+import {getStorageMode,setStorageMode} from './storageMode';
 import { SyncQueue } from './syncQueue';
 import { FoodAnalysis, HealthReport, UserProfile, WorkoutLog, SavedAppointment, WorkoutPlanDay, Recipe, VitalsRecord } from '../types';
 
 const GAS_URL_KEY = 'hg_gas_api_url';
 export const isDemoMode = () => typeof location !== 'undefined' && new URLSearchParams(location.search).get('demo') === '1';
-export const getGasUrl = () => isDemoMode() ? null : localStorage.getItem(GAS_URL_KEY);
+export const getGasUrl = () => isDemoMode() || getStorageMode()==='local' ? null : localStorage.getItem(GAS_URL_KEY);
 const storageKey = (key: string) => isDemoMode() ? 'demo_v2_' + key : key;
-export const setGasUrl = (url: string) => localStorage.setItem(GAS_URL_KEY, url);
+export const setGasUrl = (url: string) => {localStorage.setItem(GAS_URL_KEY,url);setStorageMode('gas');};
 export const clearGasUrl = () => localStorage.removeItem(GAS_URL_KEY);
 
 // Define local storage keys
@@ -120,7 +122,7 @@ export const dbService = {
     // If local data exists and we are NOT forcing from cloud, return immediately!
     if ((!getGasUrl() || hasLocalProfile || hasLocalFood) && !forceFromCloud) {
       return {
-        foodLogs: getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs, []),
+        foodLogs: visibleFoods(getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs, [])),
         reports: getLocal<HealthReport[]>(LOCAL_STORAGE_KEYS.reports, []),
         workouts: getLocal<WorkoutLog[]>(LOCAL_STORAGE_KEYS.workouts, []),
         profile: getLocal<UserProfile>(LOCAL_STORAGE_KEYS.profile, { name: '', height: '', weight: '' }),
@@ -154,7 +156,7 @@ export const dbService = {
     const rawFoodLogs = Array.isArray(data.foodLogs) ? data.foodLogs : [];
     const foodLogs = rawFoodLogs.map((log: any) => ({
         ...log,
-        thumbnail:getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs,[]).find(f=>f.timestamp===log.timestamp)?.thumbnail,
+        thumbnail:getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs,[]).find(f=>foodId(f)===foodId(log))?.thumbnail,
         nutrients: ensureArray(log.nutrients),
         ingredients: ensureArray(log.ingredients),
         calories: Number(log.calories) || 0
@@ -185,6 +187,7 @@ export const dbService = {
     let profile = data.profile || { name: '', height: '', weight: '' };
     if (profile.exerciseOptions !== undefined && profile.exerciseOptions !== null && profile.exerciseOptions !== '') profile.exerciseOptions = ensureArray(profile.exerciseOptions);
     for (const key of ['symptoms','medicineStock','quickTemplates','customTasks','taskCardOrder']) profile[key] = ensureArray(profile[key]);
+    if(typeof profile.companion==='string'){try{profile.companion=JSON.parse(profile.companion);}catch{delete profile.companion;}}
     profile.weightHistory = ensureArray(profile.weightHistory);
     profile.medicationReminders = ensureArray(profile.medicationReminders);
     profile.dailyHealthLogs = ensureArray(profile.dailyHealthLogs);
@@ -203,7 +206,7 @@ export const dbService = {
     setLocal(LOCAL_STORAGE_KEYS.vitals, vitals);
 
     return {
-      foodLogs,
+      foodLogs: visibleFoods(foodLogs),
       reports,
       workouts,
       profile,
@@ -226,15 +229,38 @@ export const dbService = {
 
   addFoodLog: async (log: FoodAnalysis) => {
     const logs = getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs, []);
-    setLocal(LOCAL_STORAGE_KEYS.foodLogs, [log, ...logs]);
-    dbService.queueSync('FoodLogs', log);
+    const id=foodId(log);
+    const existing=logs.find(l=>foodId(l)===id);
+    if(existing){dbService.queueSync('FoodLogs',{...existing,id});return;}
+    const saved={...log,id,revision:1};
+    setLocal(LOCAL_STORAGE_KEYS.foodLogs,[saved,...logs]);
+    dbService.queueSync('FoodLogs',saved);
   },
-
-  updateFoodLog: async (timestamp: string, updatedLog: FoodAnalysis) => {
-    const logs = getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs, []);
-    const updated = logs.map(l => l.timestamp === timestamp ? updatedLog : l);
-    setLocal(LOCAL_STORAGE_KEYS.foodLogs, updated);
-    dbService.queueSync('FoodLogs', updatedLog);
+  updateFoodLog: async (key:string, log:FoodAnalysis) => {
+    const logs=getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs,[]);
+    const old=logs.find(l=>foodId(l)===key||l.timestamp===key);
+    if(!old||old.deletedAt) throw new Error('這筆餐點已刪除，請重新開啟紀錄。');
+    if(log.revision!==undefined && log.revision!==(old.revision||1)) throw new Error('餐點已被更新，請重新開啟後編輯。');
+    const saved={...log,id:foodId(old),revision:(old.revision||1)+1};
+    setLocal(LOCAL_STORAGE_KEYS.foodLogs,logs.map(l=>foodId(l)===foodId(old)?saved:l));
+    dbService.queueSync('FoodLogs',saved);
+  },
+  deleteFoodLog: async (key:string) => {
+    const logs=getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs,[]);
+    const old=logs.find(l=>foodId(l)===key);
+    if(!old||old.deletedAt)return;
+    // A tombstone travels through ordinary upserts and backups; old retries cannot re-add locally.
+    const deleted={...old,id:key,revision:(old.revision||1)+1,deletedAt:new Date().toISOString()};
+    setLocal(LOCAL_STORAGE_KEYS.foodLogs,logs.map(l=>foodId(l)===key?deleted:l));
+    dbService.queueSync('FoodLogs',deleted);
+  },
+  restoreFoodLog: async(key:string) => {
+    const logs=getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs,[]);
+    const old=logs.find(l=>foodId(l)===key);
+    if(!old?.deletedAt)return;
+    const restored={...old,deletedAt:'',revision:(old.revision||1)+1};
+    setLocal(LOCAL_STORAGE_KEYS.foodLogs,logs.map(l=>foodId(l)===key?restored:l));
+    dbService.queueSync('FoodLogs',restored);
   },
 
   addHealthReport: async (report: HealthReport) => {
@@ -292,7 +318,7 @@ export const dbService = {
 
   // Helper inside save calls to execute silent sync
   queueSync: (type: string, data: any) => {
-    if(isDemoMode()) return;
+    if(isDemoMode()||getStorageMode()==='local') return;
     const id = data.id || data.timestamp || data.analyzedAt;
     const singleton = type === 'Profile' || type === 'WorkoutPlan';
     if(type==='FoodLogs'){const {thumbnail,...withoutPhoto}=data;data=withoutPhoto;}
@@ -301,7 +327,7 @@ export const dbService = {
     if (typeof navigator !== 'undefined' && navigator.onLine && localStorage.getItem('hg_auto_sync')!=='false') void syncQueue.flush(getGasUrl() || '');
   },
   queueDelete: (type: string, id: string) => {
-    if(isDemoMode()) return;
+    if(isDemoMode()||getStorageMode()==='local') return;
     syncQueue.enqueue(getGasUrl() || '', type + ':' + id, {action:'delete',type,id});
     if(typeof navigator !== 'undefined' && navigator.onLine && localStorage.getItem('hg_auto_sync')!=='false') void syncQueue.flush(getGasUrl() || '');
   },
@@ -314,7 +340,7 @@ export const dbService = {
 
     const payload = {
       profile: getLocal<UserProfile>(LOCAL_STORAGE_KEYS.profile, { name: '', height: '', weight: '' }),
-      foodLogs: getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs, []),
+      foodLogs: getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs, []).map(f=>({...f,id:foodId(f)})),
       reports: getLocal<HealthReport[]>(LOCAL_STORAGE_KEYS.reports, []),
       workouts: getLocal<WorkoutLog[]>(LOCAL_STORAGE_KEYS.workouts, []),
       appointments: getLocal<SavedAppointment[]>(LOCAL_STORAGE_KEYS.appointments, []),

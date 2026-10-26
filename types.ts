@@ -26,6 +26,7 @@ export interface DailyHealthLog {
   date: string; // YYYY-MM-DD
   appointmentsCompleted?: string[];
   customTasksCompleted?: string[];
+  waterUpdatedAt?: string;
   waterIntake?: number; // ml
   sleepHours?: number; // hours
   medicationsTaken?: string[]; // 已服藥的 Reminder ID
@@ -35,7 +36,9 @@ export interface SymptomEntry { id: string; occurredAt: string; symptom: string;
 export interface MedicineStock { id: string; name: string; remaining: number; dailyUse: number; reminderDays: number; updatedAt: string; }
 export interface QuickTemplate { id: string; kind: 'food' | 'workout'; name: string; calories?: number; mealType?: MealType; duration?: number; }
 export interface CustomTask {id:string;title:string;notes:string;time:string;repeat:'once'|'daily';date:string;}
+export interface CompanionSettings { name:string; createdAt:string; ageMode:"growth"|"young"|"adult"|"senior"; body:"small"|"round"|"sturdy"; bodyMode?:"auto"|"manual"; motionEnabled?:boolean; showHome:boolean; greetingDate?:string; }
 export interface UserProfile {
+  companion?: CompanionSettings;
   practiceCards?: {id:string;title:string;detail:string;category:string;hidden?:boolean;custom?:boolean}[];
   customTasks?: CustomTask[];
   taskCardOrder?: string[];
@@ -72,6 +75,9 @@ export interface Nutrient {
 }
 
 export interface FoodAnalysis {
+  id?: string;
+  revision?: number;
+  deletedAt?: string;
   thumbnail?: string;
   foodName: string;
   calories: number;
@@ -200,4 +206,4 @@ export interface VitalsRecord {
   notes?: string;
 }
 
-export type ViewState = 'DASHBOARD' | 'FOOD' | 'CALENDAR' | 'HEALTH_MANAGEMENT' | 'WORKOUT' | 'SYSTEM_SETTINGS' | 'VITALS' | 'TRENDS' | 'CARE' | 'TASKS' | 'SLOW_JOG' | 'WALL_SIT' | 'SEATED_ANKLE' | 'WALL_ANGEL' | 'SNOW_ANGEL' | 'BAND_WALL_SLIDE';
+export type ViewState = 'COMPANION' | 'DASHBOARD' | 'FOOD' | 'CALENDAR' | 'HEALTH_MANAGEMENT' | 'WORKOUT' | 'SYSTEM_SETTINGS' | 'VITALS' | 'TRENDS' | 'CARE' | 'TASKS' | 'SLOW_JOG' | 'WALL_SIT' | 'SEATED_ANKLE' | 'WALL_ANGEL' | 'SNOW_ANGEL' | 'BAND_WALL_SLIDE';

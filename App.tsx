@@ -1,3 +1,7 @@
+import DuplicateMealDialog from './components/DuplicateMealDialog';
+import MealManager from './components/MealManager';
+import {foodId,visibleFoods,similarFood} from './services/foodRecords';
+import LocalBackupScheduler from './components/LocalBackupScheduler';
 import DemoSettings from './components/DemoSettings';
 import AppIcon, {HomeIcon,FoodIcon,ExerciseIcon,AssistantIcon} from './components/AppIcon';
 import FoodGuidance from './components/FoodGuidance';
@@ -31,6 +35,10 @@ import './components/themes.css';
 
 const App: React.FC = () => {
   const demo=isDemoMode();
+  const [duplicateMeal,setDuplicateMeal]=useState<{name:string;resolve:(add:boolean)=>void}|null>(null);
+  const duplicatePending=useRef(false);
+  const [,refreshStorageMode]=useState(0);
+  useEffect(()=>{const update=()=>refreshStorageMode(n=>n+1);window.addEventListener('health-storage-mode',update);return()=>window.removeEventListener('health-storage-mode',update);},[]);
   const localOnly=!getGasUrl();
   const [theme,setTheme]=useState<ThemeName>(()=>readTheme(demo));
   const [themeNotice,setThemeNotice]=useState('');
@@ -140,30 +148,37 @@ const App: React.FC = () => {
   };
 
   const handleFoodAnalysisComplete = async (result: FoodAnalysis) => {
+    result.id ||= crypto.randomUUID();
 
     try {
+        const existing=getLocal<FoodAnalysis[]>('hg_foodLogs',[]);
+        if(!existing.some(f=>foodId(f)===foodId(result))&&existing.some(f=>similarFood(result,f))){
+          if(duplicatePending.current)throw new Error('請先完成上一筆餐點確認');
+          duplicatePending.current=true;
+          const add=await new Promise<boolean>(resolve=>setDuplicateMeal({name:result.foodName,resolve}));
+          duplicatePending.current=false;
+          if(!add)throw new Error('已取消重複餐點，輸入仍保留。');
+        }
         await dbService.addFoodLog(result);
-        setFoodLogs(prev => [result, ...prev]);
+        setFoodLogs(visibleFoods(getLocal<FoodAnalysis[]>('hg_foodLogs',[])));
     } catch (e) {
         console.error("Save food log failed", e);
         throw e;
     }
   };
 
-  const handleUpdateLog = async (timestamp: string, updatedLog: FoodAnalysis) => {
-    setFoodLogs(prev => prev.map(log => log.timestamp === timestamp ? updatedLog : log));
-    try {
-        await dbService.updateFoodLog(timestamp, updatedLog);
-    } catch (e) {
-        alert("更新失敗，請檢查連線");
-    }
+  const refreshFoods=()=>setFoodLogs(visibleFoods(getLocal<FoodAnalysis[]>('hg_foodLogs',[])));
+  const handleUpdateLog = async (key:string, updatedLog:FoodAnalysis) => {
+    await dbService.updateFoodLog(key,updatedLog); refreshFoods();
   };
+  const handleDeleteFood=async(key:string)=>{await dbService.deleteFoodLog(key);refreshFoods();};
+  const handleRestoreFood=async(key:string)=>{await dbService.restoreFoodLog(key);refreshFoods();};
 
   const handleAddWorkout = async (log: WorkoutLog) => {
 
     try {
         await dbService.addWorkoutLog(log);
-        setWorkoutLogs(prev => [log, ...prev]);
+        setWorkoutLogs(prev => prev.some(w=>(w.id||w.timestamp)===(log.id||log.timestamp))?prev:[log, ...prev]);
     } catch (e) {
         throw e;
     }
@@ -180,6 +195,7 @@ const App: React.FC = () => {
   };
 
   const handleUpdateProfile = async (profile: UserProfile) => {
+    profile={...profile,dailyHealthLogs:profile.dailyHealthLogs?.map(d=>d.waterIntake!==userProfile.dailyHealthLogs?.find(old=>old.date===d.date)?.waterIntake?{...d,waterUpdatedAt:new Date().toISOString()}:d)};
     if(profile.calorieGoalSource==='tdee')profile={...profile,calorieGoal:resolveCalorieGoal(profile)};
 
     try {
@@ -268,6 +284,7 @@ const App: React.FC = () => {
           <Dashboard
             dataLoading={dataLoading}
             userProfile={userProfile}
+            onEditFood={handleUpdateLog} onDeleteFood={handleDeleteFood} onRestoreFood={handleRestoreFood}
             foodLogs={foodLogs}
             appointments={appointments}
             workoutPlan={currentWorkoutPlan}
@@ -291,6 +308,7 @@ const App: React.FC = () => {
         return (
           <div className="space-y-6 md:space-y-8 animate-fade-in">
             {mealContext && <p className="meal-context">記錄日期：{mealContext.date} · {mealContext.meal || '依照片判斷餐次'}</p>}
+            <MealManager foods={foodLogs} onEdit={handleUpdateLog} onDelete={handleDeleteFood} onRestore={handleRestoreFood}/>
             <FoodGuidance profile={userProfile} onEdit={()=>{setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}}/>
             <FoodAnalyzer
               healthReport={latestHealthReport}
@@ -322,7 +340,7 @@ const App: React.FC = () => {
         );
       case 'CALENDAR':
       case 'TASKS':
-        return <TodayTasks onFood={handleFoodAnalysisComplete} onWorkout={handleAddWorkout} onVital={handleSaveVitals} date={healthCalendarDate} onDateChange={setHealthCalendarDate} profile={userProfile} vitals={vitalsRecords} workouts={workoutLogs} appointments={appointments} foods={foodLogs} onUpdate={handleUpdateProfile} onNavigate={(view,subTab)=>{if(view==='CARE')setCareSection(subTab||'stock');if(view==='HEALTH_MANAGEMENT')setActiveHealthSubTab((subTab||'PROFILE') as any);setActiveTab(view);}}/>;
+        return <TodayTasks onEditFood={handleUpdateLog} onDeleteFood={handleDeleteFood} onRestoreFood={handleRestoreFood} onFood={handleFoodAnalysisComplete} onWorkout={handleAddWorkout} onVital={handleSaveVitals} date={healthCalendarDate} onDateChange={setHealthCalendarDate} profile={userProfile} vitals={vitalsRecords} workouts={workoutLogs} appointments={appointments} foods={foodLogs} onUpdate={handleUpdateProfile} onNavigate={(view,subTab)=>{if(view==='CARE')setCareSection(subTab||'stock');if(view==='HEALTH_MANAGEMENT')setActiveHealthSubTab((subTab||'PROFILE') as any);setActiveTab(view);}}/>;
       case 'CARE':
         return <div><button className="section-back" onClick={()=>setActiveTab('TASKS')}>← 返回健康助手</button><CareTools onNavigate={(view,subTab)=>{if(view==='HEALTH_MANAGEMENT')setActiveHealthSubTab((subTab||'PROFILE') as any);setActiveTab(view);}} key={careSection} initialSection={careSection} profile={userProfile} foods={foodLogs} workouts={workoutLogs} vitals={vitalsRecords} onUpdate={handleUpdateProfile} onFood={handleFoodAnalysisComplete} onWorkout={handleAddWorkout}/></div>;
       case 'TRENDS':
@@ -420,6 +438,7 @@ const App: React.FC = () => {
   return (
     <div data-theme={theme} className="health-shell flex h-[100dvh] overflow-hidden bg-gray-50 selection:bg-teal-100 selection:text-teal-900">
 
+      <LocalBackupScheduler demo={demo}/>
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 flex-col bg-white border-r border-gray-200 flex-shrink-0 z-20">
         <div className="h-16 flex items-center gap-3 px-6 border-b border-gray-100 cursor-pointer" onClick={() => setActiveTab('DASHBOARD')}>
@@ -499,7 +518,7 @@ const App: React.FC = () => {
             </div>
           </div>
           <div className="bg-green-600/90 py-1 flex items-center justify-center gap-1 text-white text-[10px] font-medium shadow-inner">
-            <Database className="w-3 h-3"/> {demo?'示範資料 · 本機儲存':getGasUrl()?'本機儲存 · 同步詳見健康工具':'本機儲存 · 未設定雲端'}
+            <Database className="w-3 h-3"/> {demo?'示範資料 · 本機儲存':getGasUrl()?'本機儲存 · 同步詳見健康工具':'本機儲存 · 自動備份'}
           </div>
         </header>
 
@@ -527,6 +546,7 @@ const App: React.FC = () => {
         </div>
       </nav>
 
+      {duplicateMeal&&<DuplicateMealDialog name={duplicateMeal.name} onChoose={add=>{duplicateMeal.resolve(add);setDuplicateMeal(null);}}/>}
       {recordOpen && <div className="record-overlay" onClick={()=>setRecordOpen(false)}><section className="record-sheet" role="dialog" aria-modal="true" aria-label="新增紀錄" onClick={e=>e.stopPropagation()}><div><h2>想記錄什麼？</h2><button aria-label="關閉新增紀錄" onClick={()=>setRecordOpen(false)}><X/></button></div>{([{view:'FOOD',label:'拍照記飲食',Icon:Camera},{view:'VITALS',label:'血壓與血糖',Icon:HeartPulse},{view:'WORKOUT',label:'運動紀錄',Icon:Dumbbell},{view:'DASHBOARD',label:'飲水紀錄',Icon:Droplets},{view:'TASKS',label:'症狀與健康助手',Icon:HeartPulse}] as const).map(({view,label,Icon})=><button key={view} onClick={()=>{setMealContext(null);setActiveTab(view);setRecordOpen(false);}}><Icon size={22}/>{label}</button>)}</section></div>}
       {showDailySummary && (
         <DailySummaryPopup

@@ -1,0 +1,10 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';
+import {companionInsight} from '../services/companionInsights';
+import {UserProfile,VitalsRecord} from '../types';
+const p={name:'測試',height:'',weight:'',companion:{name:'日',createdAt:'2026-10-20T09:00:00',ageMode:'growth',body:'round',showHome:true}} as UserProfile;
+const now=new Date('2026-10-26T12:00:00');
+const v=(id:string,date:string,n:number,context:VitalsRecord['bloodSugarContext']='fasting'):VitalsRecord=>({id,date,time:'11:00',type:'blood_sugar',bloodSugar:n,bloodSugarContext:context});
+test('recent low glucose overrides previous high and never recommends exercise',()=>{const r=companionInsight(p,[],[],[v('a','2026-10-25',160),v('b','2026-10-26',65)],now);assert.equal(r.severity,'urgent');assert.match(r.action,/不要繼續斷食或運動/);});
+test('postmeal does not assume two hours; old low not current emergency',()=>{assert.equal(companionInsight(p,[],[],[v('a','2026-10-26',190,'postprandial')],now).severity,'info');assert.equal(companionInsight(p,[],[],[v('a','2026-10-25',65)],now).severity,'info');});
+test('trend counts distinct days; repeated ids and future data do not farm growth',()=>{const a=v('a','2026-10-25',160);const r=companionInsight(p,[],[],[a,a,v('b','2026-10-25',170),v('c','2026-10-27',350)],now);assert.match(r.observation,/有 1 天/);assert.equal(r.growth.days,1);assert.equal(r.severity,'attention');});
+test('missing glucose does not claim user is healthy',()=>{const r=companionInsight(p,[],[],[],now);assert.equal(r.growth.days,0);assert.match(r.meaning,/不是健康分數/);});

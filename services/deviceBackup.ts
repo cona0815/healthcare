@@ -1,3 +1,4 @@
+import {getStorageMode} from './storageMode';
 export const backupKeys=['hg_foodLogs','hg_reports','hg_workouts','hg_profile','hg_appointments','hg_workoutPlan','hg_recipes','hg_vitals','hg_jog_reports_v1'] as const;
 export function parseBackup(text:string){
  const file=JSON.parse(text);if(file?.format!=='healthguardian-device'||file.version!==1||!file.data||typeof file.data!=='object')throw new Error('不是支援的健康資料備份檔');
@@ -8,7 +9,7 @@ export function createBackup(storage:Storage,demo:boolean){const data:Record<str
 export function restoreBackup(storage:Storage,file:ReturnType<typeof parseBackup>,demo:boolean){
  file=parseBackup(JSON.stringify(file));
  if(file.demo!==demo)throw new Error('示範資料與正式資料不能互相還原');
- if(!demo&&(storage.getItem('hg_gas_api_url')||JSON.parse(storage.getItem('hg_sync_queue_v1')||'[]').some((r:any)=>r.destination)))throw new Error('請先完成雲端同步並中斷 GAS 連線，再還原本機資料');
+ if(!demo&&((getStorageMode(storage)==='gas'&&storage.getItem('hg_gas_api_url'))||JSON.parse(storage.getItem('hg_sync_queue_v1')||'[]').some((r:any)=>r.destination)))throw new Error('請先完成雲端同步並中斷 GAS 連線，再還原本機資料');
  const entries=backupKeys.map(key=>[key==='hg_jog_reports_v1'?(demo?'hg_demo_jog_reports_v1':key):(demo?'demo_v2_'+key:key),JSON.stringify(file.data[key])] as const);
  if(!demo)entries.push(['hg_sync_queue_v1','[]'] as any);
  const previous=entries.map(([key])=>[key,storage.getItem(key)] as const);

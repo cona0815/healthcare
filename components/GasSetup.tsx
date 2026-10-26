@@ -8,7 +8,7 @@ interface Props {
 
 // Export the GAS Code so it can be used in HealthManagement too
 export const GAS_CODE = `/**
- * HealthGuardian Backend v2.2 (Smart Read)
+ * HealthGuardian Backend v2.4 (Meal revision safety)
  * - Profile 追加模式
  * - 智慧讀取：跳過空白行，讀取最後一筆有效資料
  * - 支援 LockService 防止衝突
@@ -54,6 +54,16 @@ function doPost(e) {
         var sheet = getOrCreateSheet(ss, para.type);
         var data = para.data;
         
+        // Meals: retain stable ID, ignore older retries, preserve deletion tombstones.
+        if (para.type === 'FoodLogs') {
+          data.id = data.id || data.timestamp;
+          var currentMeals = readSheet(ss, 'FoodLogs');
+          var currentMeal = currentMeals.filter(function(row) { return String(row.id || row.timestamp) === String(data.id); }).sort(function(a,b){ return Number(b.revision || 1)-Number(a.revision || 1); })[0];
+          if (currentMeal && Number(currentMeal.revision || 1) >= Number(data.revision || 1)) return createJSONOutput({status:'success', ignoredStale:true});
+          deleteMealRows(sheet, data.id);
+          appendData(sheet, data);
+          return createJSONOutput({status:'success'});
+        }
         // Profile: 追加模式 (Append Mode)
         if (para.type === 'Profile') {
            if (sheet.getLastRow() === 0) {
@@ -212,6 +222,18 @@ function appendData(sheet, data) {
     newRow.push("'" + val); 
   });
   sheet.appendRow(newRow);
+}
+
+function deleteMealRows(sheet, id) {
+  var rows=sheet.getDataRange().getValues();
+  if(rows.length<2)return;
+  var idIndex=rows[0].indexOf('id'), timeIndex=rows[0].indexOf('timestamp');
+  for(var i=rows.length-1;i>=1;i--){
+    var key=idIndex>=0?rows[i][idIndex]:'';
+    if(!key && timeIndex>=0)key=rows[i][timeIndex];
+    key=String(key || '').replace(/^'/,'');
+    if(key===String(id))sheet.deleteRow(i+1);
+  }
 }
 
 function deleteById(sheet, id) {

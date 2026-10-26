@@ -29,9 +29,9 @@ const AnalysisResultCard: React.FC<Props> = ({ data, onUpdateLog }) => {
     }
   };
 
-  const handleMealTypeChange = (newType: MealType) => {
+  const handleMealTypeChange = async (newType: MealType) => {
     if (onUpdateLog) {
-      onUpdateLog(data.timestamp, { ...data, mealType: newType });
+      try{await onUpdateLog(data.id||data.timestamp, { ...data, mealType: newType });}catch(error){window.alert((error as Error).message);return;}
     }
     setIsEditing(false);
   };

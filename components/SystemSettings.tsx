@@ -1,3 +1,5 @@
+import StorageModeSettings from './StorageModeSettings';
+import {getStorageMode,configuredGasUrl} from '../services/storageMode';
 import DeviceBackup from './DeviceBackup';
 import {SyncCenter} from './CareTools';
 import ApiGuide from './ApiGuide';
@@ -19,6 +21,9 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
   const [generalModel,setGeneralModel]=useState(getGeminiModel());
   const [videoModel,setVideoModel]=useState(getGeminiModel('video'));
   const [settingsMessage,setSettingsMessage]=useState('');
+  const [gasMessage,setGasMessage]=useState('');
+  const [storageMode,refreshMode]=useState(getStorageMode());
+  useEffect(()=>{const update=()=>refreshMode(getStorageMode());window.addEventListener('health-storage-mode',update);return()=>window.removeEventListener('health-storage-mode',update);},[]);
   const [apiKey, setApiKey] = useState('');
   const [gasUrl, setGasUrlState] = useState('');
   const [showKey, setShowKey] = useState(false);
@@ -62,7 +67,7 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
 
   useEffect(() => {
     setApiKey(getGeminiKey() || '');
-    setGasUrlState(getGasUrl() || '');
+    setGasUrlState(configuredGasUrl() || '');
     loadCountsAndBackupTime();
   }, []);
 
@@ -109,11 +114,15 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
     }
   };
 
-  const handleSaveSystem = () => {
-    if(isDemoMode()){setSettingsMessage('示範模式不會修改正式連線設定，請離開示範再設定。');return;}
+  const handleSaveGemini = () => {
+    if(isDemoMode()){setSettingsMessage('請離開示範模式再設定。');return;}
     if(!validModel(generalModel)||!validModel(videoModel)){setSettingsMessage('模型 ID 格式錯誤，請參考 Google 官方模型清單。');return;}
-    if(gasUrl.trim()&&!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(gasUrl.trim())){setSettingsMessage('GAS 網址需為 https://script.google.com/macros/s/…/exec');return;}
-    try{saveGeminiModels(generalModel,videoModel);if(apiKey.trim())setGeminiKey(apiKey.trim());else clearGeminiKey();if(gasUrl.trim())setGasUrl(gasUrl.trim());else clearGasUrl();setSettingsMessage('設定已儲存。留空即停用；健康紀錄仍保留在本機。');window.dispatchEvent(new Event('health-sync'));}catch{setSettingsMessage('設定儲存失敗，請檢查裝置空間。');}
+    try{saveGeminiModels(generalModel,videoModel);if(apiKey.trim())setGeminiKey(apiKey.trim());else clearGeminiKey();setSettingsMessage('Gemini 設定已儲存；未變更 GAS 連線。');}catch{setSettingsMessage('儲存失敗，請檢查裝置空間。');}
+  };
+  const handleSaveGas = () => {
+    if(isDemoMode()){setGasMessage('請離開示範模式再設定。');return;}
+    if(gasUrl.trim()&&!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(gasUrl.trim())){setGasMessage('GAS 網址需為 https://script.google.com/macros/s/…/exec');return;}
+    try{if(gasUrl.trim())setGasUrl(gasUrl.trim());else clearGasUrl();setGasMessage('GAS 設定已儲存；未變更 Gemini 設定。');window.dispatchEvent(new Event('health-sync'));}catch{setGasMessage('儲存失敗，請檢查裝置空間。');}
   };
 
   const copyGasCode = () => {
@@ -132,52 +141,29 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
         </div>
         
         <div className="p-6 md:p-8 space-y-8">
-          <section className="care-panel"><h3>不設定也能使用</h3><p>預設將資料保存在此裝置。可手動記錄飲食、運動、血壓血糖、症狀、用藥與回診，使用健康日曆、計時、趨勢、手機備份及看診摘要。</p><h3>GAS：選用的 Google Sheets 同步</h3><p>填入部署網址後，可同步健康紀錄至自己的 Google 試算表、重試待同步項目及從雲端載入。GAS 不提供 AI 分析，也不會替你開啟 Gemini。</p><h3>Gemini API：選用的 AI 分析</h3><p>填入 API Key 後，可使用飲食照片分析、健檢／藥單／回診文件辨識、運動計畫與影片姿勢分析。需要網路；只有使用 AI 功能時才傳送相應內容至 Google，可能依帳戶方案產生費用。AI 無法判讀時仍會標示未知。</p><p>兩者可分別啟用；欄位留空並儲存即停用，不會刪除健康紀錄。</p></section>
-          <div className="space-y-6">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2 text-lg">
-                  <Key className="w-5 h-5 text-gray-500" /> 連線設定
-              </h3>
-              
-              <div className="space-y-4">
-                  <div>
-                      <label className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1">
-                          Gemini API Key
-                      </label>
-                      <div className="relative">
-                          <input 
-                              type={showKey ? "text" : "password"} 
-                              value={apiKey}
-                              onChange={(e) => setApiKey(e.target.value)}
-                              className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-sm font-mono focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none pr-12 transition-all"
-                              placeholder="請輸入您的 API Key"
-                          />
-                          <button 
-                              onClick={() => setShowKey(!showKey)}
-                              className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
-                          >
-                              {showKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                          </button>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2 pl-1">金鑰存於此瀏覽器；呼叫 AI 時會交給網站後端代理向 Google 驗證。請勿在共用裝置保存。留空即停用。</p>
-                  </div>
-                  
-                  <div>
-                      <label className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1">
-                          Google Apps Script URL (雲端資料同步)
-                      </label>
-                      <input 
-                          type="text" 
-                          value={gasUrl}
-                          onChange={(e) => setGasUrlState(e.target.value)}
-                          className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-sm font-mono focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                          placeholder="https://script.google.com/..."
-                      />
-                  </div>
-              </div>
-          </div>
-
-          <ApiGuide/>
-          <section className="care-panel"><h3>Gemini 模型版本</h3><label>一般分析模型<input value={generalModel} onChange={e=>setGeneralModel(e.target.value.trim())} placeholder="gemini-3.8-flash"/></label><label>影片分析模型<input value={videoModel} onChange={e=>setVideoModel(e.target.value.trim())}/></label><p>請填寫帳戶可用且支援所需輸入的模型 ID。系統不會自動切換；更換影片模型後，請先以相同片段驗證評分，舊分數不宜直接比較。</p><a href="https://ai.google.dev/gemini-api/docs/models" target="_blank" rel="noopener noreferrer">官方模型清單 ↗</a><button onClick={handleSaveSystem}>儲存連線與模型設定</button>{settingsMessage&&<p role="status">{settingsMessage}</p>}</section>
+          <StorageModeSettings/><p className="settings-intro">不設定也能手動記錄。AI 分析與雲端同步各自選用、分開儲存。</p>
+          <section className="integration-card gemini-settings" aria-labelledby="gemini-settings-heading">
+            <header><span className="integration-icon"><Key size={23}/></span><div><h3 id="gemini-settings-heading">Gemini AI 設定</h3><p>照片、文件與運動姿勢分析</p></div><span className="editable-badge">可編輯</span></header>
+            <form onSubmit={e=>{e.preventDefault();handleSaveGemini();}}>
+              <label htmlFor="gemini-api-key">API Key</label>
+              <div className="key-input-wrap"><input id="gemini-api-key" type={showKey?'text':'password'} autoComplete="off" spellCheck={false} value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder="貼上你的 Gemini API Key"/><button type="button" aria-label={showKey?'隱藏 API Key':'顯示 API Key'} aria-pressed={showKey} onClick={()=>setShowKey(!showKey)}>{showKey?<EyeOff size={20}/>:<Eye size={20}/>}</button></div>
+              <p className="field-help">金鑰只保存在此瀏覽器；使用 AI 時由網站後端代理傳給 Google。留空並儲存即停用。</p>
+              <label htmlFor="gemini-general-model">一般分析模型<span>飲食照片、文件及文字分析</span></label>
+              <input id="gemini-general-model" spellCheck={false} value={generalModel} onChange={e=>setGeneralModel(e.target.value.trim())} required/>
+              <label htmlFor="gemini-video-model">影片分析模型<span>運動姿勢分析與評分</span></label>
+              <input id="gemini-video-model" spellCheck={false} value={videoModel} onChange={e=>setVideoModel(e.target.value.trim())} required/>
+              <p className="field-help">填寫帳戶可用的模型 ID。更換影片模型後，先用相同片段驗證；舊分數不宜直接比較。</p>
+              <a className="model-doc-link" href="https://ai.google.dev/gemini-api/docs/models" target="_blank" rel="noopener noreferrer">查看官方模型清單 ↗</a>
+              <button className="integration-save" type="submit"><Save size={18}/>儲存 Gemini 設定</button>
+              {settingsMessage&&<p role="status" className="integration-notice">{settingsMessage}</p>}
+            </form>
+            <details className="integration-help"><summary>免費額度、申請教學與隱私說明</summary><ApiGuide/></details>
+          </section>
+          {storageMode==='gas'&&<section className="integration-card gas-settings" aria-labelledby="gas-settings-heading">
+            <header><span className="integration-icon"><Cloud size={23}/></span><div><h3 id="gas-settings-heading">GAS 雲端同步</h3><p>連接自己的 Google Sheets</p></div></header>
+            <form onSubmit={e=>{e.preventDefault();handleSaveGas();}}><label htmlFor="gas-deployment-url">GAS 部署網址</label><input id="gas-deployment-url" type="url" value={gasUrl} onChange={e=>setGasUrlState(e.target.value)} placeholder="https://script.google.com/macros/s/…/exec"/><p className="field-help">手機與電腦需設定同一個網址。留空並儲存即停用同步，本機紀錄仍保留。</p><button type="submit" className="integration-save"><Save size={18}/>儲存 GAS 設定</button>{gasMessage&&<p role="status" className="integration-notice">{gasMessage}</p>}</form>
+            <p className="field-help">網站更新不會自動更新 Google 帳戶裡的 GAS。若自行更換 GAS 程式，需在 Apps Script「管理部署作業」選擇新版本再部署。</p>
+          </section>}
           <hr className="border-gray-100" />
 
           <div className="space-y-6">
@@ -200,6 +186,7 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
 
           <hr className="border-gray-100" />
 
+          {storageMode==='gas'&&<>
           <div className="space-y-6">
               <h3 className="font-bold text-gray-800 flex items-center gap-2 text-lg">
                   <Cloud className="w-5 h-5 text-gray-500" /> 本機優先與雲端備份設定
@@ -264,9 +251,10 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
               </div>
           </div>
 
+          </>}
           <hr className="border-gray-100" />
 
-          <div className="bg-orange-50/50 p-6 rounded-2xl border border-orange-100 mt-8">
+          {storageMode==='gas'&&<div className="bg-orange-50/50 p-6 rounded-2xl border border-orange-100 mt-8">
               <h4 className="font-bold text-orange-800 text-lg mb-3 flex items-center gap-2">
                   <Code className="w-5 h-5" /> Apps Script 部署說明（僅雲端同步需要）
               </h4>
@@ -300,18 +288,11 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
                       </pre>
                   </div>
               )}
-          </div>
+          </div>}
 
-          <SyncCenter/>
+          {storageMode==='gas'&&<SyncCenter/>}
           <DeviceBackup/>
-          <div className="pt-4 flex justify-end">
-              <button 
-                  onClick={handleSaveSystem}
-                  className="w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 text-lg"
-              >
-                  <Save className="w-6 h-6" /> 更新系統設定
-              </button>
-          </div>
+
         </div>
       </div>
     </div>

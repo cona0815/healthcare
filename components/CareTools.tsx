@@ -1,6 +1,6 @@
 import NutritionSettings from './NutritionSettings';
 import DeviceBackup from './DeviceBackup';
-import React,{useEffect,useState} from 'react';
+import React,{useEffect,useState,useRef} from 'react';
 import {UserProfile,FoodAnalysis,WorkoutLog,VitalsRecord,SymptomEntry,MedicineStock,QuickTemplate,RiskLevel,MealType} from '../types';
 import {localDate} from '../services/healthSummary';
 import {syncQueue,getGasUrl,isDemoMode,dbService} from '../services/dbService';
@@ -19,7 +19,8 @@ export default function CareTools({onNavigate,sectionOnly=false,selectedDate,ini
  const [tab,setTab]=useState(initialSection),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
  const [symptom,setSymptom]=useState<SymptomEntry|null>(null),[stock,setStock]=useState<MedicineStock|null>(null),[template,setTemplate]=useState<QuickTemplate|null>(null);
  const [kind,setKind]=useState<'food'|'workout'>('food');const today=localDate();const start=new Date();start.setDate(start.getDate()-29);const [from,setFrom]=useState(localDate(start)),[to,setTo]=useState(today),[preview,setPreview]=useState<string[]|null>(null);
- const run=async(fn:()=>Promise<void>,success='已儲存至本機')=>{setBusy(true);setMessage('');try{await fn();setMessage(success);}catch(e){setMessage('操作失敗：'+(e as Error).message);}finally{setBusy(false);}};
+ const actionLock=useRef(false);
+ const run=async(fn:()=>Promise<void>,success='已儲存至本機')=>{if(actionLock.current)return;actionLock.current=true;setBusy(true);setMessage('');try{await fn();setMessage(success);}catch(e){setMessage('操作失敗：'+(e as Error).message);}finally{actionLock.current=false;setBusy(false);}};
  const update=async(patch:Partial<UserProfile>)=>onUpdate({...profile,...patch});
  return <div className="care-tools"><h1 hidden={sectionOnly}>健康助手</h1><nav hidden={sectionOnly} className="care-tabs">{[['nutrition','營養與16:8'],['symptoms','症狀日記'],['stock','藥品庫存'],['templates','常用範本'],['export','看診摘要']].map(([id,title])=><button key={id} aria-pressed={tab===id} onClick={()=>{setTab(id);setMessage('');}}>{title}</button>)}</nav>{message&&<p role="status" className="care-notice">{message}</p>}
  <fieldset disabled={busy}>
