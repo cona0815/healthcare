@@ -28,3 +28,17 @@
 .nutrition-glance.is-over-goal .calorie-ring-fill{stroke:#b88849}.nutrition-glance.is-over-goal .energy-total strong{color:#9b713d}
 
 .assistant-category{margin:24px 0 30px}.assistant-category-heading{margin:0 0 12px;padding:0 2px}.assistant-category-heading h2{font-size:18px;font-weight:700;color:var(--text,#26392f)}.assistant-category-heading p{font-size:12px;color:#758279;margin-top:4px}.assistant-category-links{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.assistant-category-links button{font-size:12px;min-height:40px;padding:8px 12px;border:1px solid #dce5da;border-radius:12px;background:var(--paper,#fafaf6);color:var(--green,#347956)}.assistant-category .task-grid{gap:10px}.assistant-category .task-collapsible{margin:0}.assistant-category .task-board-actions{margin:12px 0}.assistant-category .task-collapsible>summary{padding:15px}
+
+/* Use the same row size for destinations and expandable daily records. */
+.health-shell .assistant-category-links{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:10px}
+.health-shell .assistant-category-links>button{display:flex;align-items:center;gap:8px;width:100%;min-height:66px;padding:16px;border:1px solid var(--line,#e1e7de);border-radius:16px;background:var(--paper,#fff);color:var(--text,#26392f);text-align:left;font-size:15px;font-weight:600}
+.health-shell .assistant-category-links>button>svg:first-child{flex-shrink:0;background:#f0f5eb;box-sizing:content-box;padding:7px;border-radius:10px;width:18px;height:18px;stroke-width:1.7;color:var(--green,#39865c)}
+.health-shell .assistant-category-links>button>span{flex:1;min-width:0}
+.health-shell .assistant-category-links .assistant-menu-chevron{width:14px;height:14px;color:#758279;flex-shrink:0}
+.health-shell .assistant-category-heading p{display:none}
+.health-shell .assistant-category .task-grid{grid-template-columns:1fr}
+.health-shell .assistant-category-links>button:focus-visible{outline:2px solid var(--green,#347956);outline-offset:3px}
+.health-shell[data-theme=island] .assistant-category-links>button{background:#fffdf1;border-color:#e3ddba;box-shadow:0 3px 0 #e9e2c5;border-radius:23px}
+.health-shell[data-theme=colorful] .assistant-category-links>button:nth-child(3n+1){border-left:4px solid #88abc9}
+.health-shell[data-theme=colorful] .assistant-category-links>button:nth-child(3n+2){border-left:4px solid #dcaa8d}
+.health-shell[data-theme=colorful] .assistant-category-links>button:nth-child(3n){border-left:4px solid #a4bc8d}
