@@ -167,6 +167,7 @@ const App: React.FC = () => {
     }
   };
 
+  useEffect(()=>{const refresh=()=>setFoodLogs(visibleFoods(getLocal<FoodAnalysis[]>('hg_foodLogs',[])));window.addEventListener('health-food-refresh',refresh);return()=>window.removeEventListener('health-food-refresh',refresh);},[]);
   const refreshFoods=()=>setFoodLogs(visibleFoods(getLocal<FoodAnalysis[]>('hg_foodLogs',[])));
   const handleUpdateLog = async (key:string, updatedLog:FoodAnalysis) => {
     await dbService.updateFoodLog(key,updatedLog); refreshFoods();

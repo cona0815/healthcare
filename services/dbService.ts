@@ -1,3 +1,5 @@
+import {backupIfDue,snapshotStore} from './localSnapshots';
+import {createBackup,parseBackup,writeBackupData} from './deviceBackup';
 import {foodId, visibleFoods} from './foodRecords';
 import {getStorageMode,setStorageMode} from './storageMode';
 import { SyncQueue } from './syncQueue';
@@ -64,6 +66,7 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout 
 
 // Calling GAS Generic API Function
 const callGasApi = async (data: any, destination?: string) => {
+  if(data.type==='FoodLogs'&&data.action==='save')data={...data,action:'save_meal_v3',baseRevision:data.baseRevision??Math.max(0,(data.data?.revision||1)-1),operationId:data.operationId||'legacy-'+data.data?.id+'-'+data.data?.revision};
   const url = destination || getGasUrl();
   if (!url) throw new Error("API URL not set");
 
@@ -84,7 +87,7 @@ const callGasApi = async (data: any, destination?: string) => {
 
     const json = await response.json();
     if (!json || typeof json !== 'object' || json.status === 'error') {
-      throw new Error(json?.message || '雲端服務未能完成操作。');
+      throw new Error(data.action?.endsWith('_v3')&&/Unknown action/i.test(json?.message||'')?'請先部署設定內的 GAS v3 程式；本機資料與待同步紀錄均保留。':json?.message || '雲端服務未能完成操作。');
     }
     return json;
   } catch (error: any) {
@@ -134,9 +137,11 @@ export const dbService = {
     }
 
     if (syncQueue.list().length) throw new Error('還有待同步資料，請先至同步中心完成同步，再從雲端載入。');
+    const beforeDownload=JSON.stringify(createBackup(localStorage,isDemoMode()).data);
     // Otherwise, fetch from Google Sheet and update local cache
     const data = await callGasApi({ action: "read_all" });
     
+    if(!data||!['foodLogs','workouts','reports','appointments','recipes','workoutPlan','vitals'].every(k=>Array.isArray(data[k]))||!data.profile||typeof data.profile!=='object'||Array.isArray(data.profile))throw new Error('雲端回傳內容不完整，未覆蓋本機資料');
     let currentPlan: WorkoutPlanDay[] = [];
     if (data.workoutPlan && Array.isArray(data.workoutPlan) && data.workoutPlan.length > 0) {
         const lastEntry = data.workoutPlan[data.workoutPlan.length - 1];
@@ -156,7 +161,8 @@ export const dbService = {
     const rawFoodLogs = Array.isArray(data.foodLogs) ? data.foodLogs : [];
     const foodLogs = rawFoodLogs.map((log: any) => ({
         ...log,
-        thumbnail:getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs,[]).find(f=>foodId(f)===foodId(log))?.thumbnail,
+        thumbnail:log.thumbnail ?? getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs,[]).find(f=>foodId(f)===foodId(log))?.thumbnail,
+        revision:Number(log.revision)||1,
         nutrients: ensureArray(log.nutrients),
         ingredients: ensureArray(log.ingredients),
         calories: Number(log.calories) || 0
@@ -195,15 +201,13 @@ export const dbService = {
     const appointments = Array.isArray(data.appointments) ? data.appointments : [];
     const vitals = Array.isArray(data.vitals) ? data.vitals : [];
 
-    // Store in Local Cache
-    setLocal(LOCAL_STORAGE_KEYS.foodLogs, foodLogs);
-    setLocal(LOCAL_STORAGE_KEYS.reports, reports);
-    setLocal(LOCAL_STORAGE_KEYS.workouts, workouts);
-    setLocal(LOCAL_STORAGE_KEYS.profile, profile);
-    setLocal(LOCAL_STORAGE_KEYS.appointments, appointments);
-    setLocal(LOCAL_STORAGE_KEYS.workoutPlan, currentPlan);
-    setLocal(LOCAL_STORAGE_KEYS.recipes, recipes);
-    setLocal(LOCAL_STORAGE_KEYS.vitals, vitals);
+    // Validate the complete response before touching local data, then preserve a recovery snapshot.
+    const incoming=createBackup(localStorage,isDemoMode());
+    Object.assign(incoming.data,{hg_foodLogs:foodLogs,hg_reports:reports,hg_workouts:workouts,hg_profile:profile,hg_appointments:appointments,hg_workoutPlan:currentPlan,hg_recipes:recipes,hg_vitals:vitals});
+    const validated=parseBackup(JSON.stringify(incoming));
+    if(typeof indexedDB!=='undefined')await backupIfDue(localStorage,snapshotStore,isDemoMode(),0,new Date(),true);
+    if(syncQueue.list().length||JSON.stringify(createBackup(localStorage,isDemoMode()).data)!==beforeDownload)throw new Error('下載期間本機資料已變更，未覆蓋；請完成同步後重試');
+    writeBackupData(localStorage,validated,isDemoMode());
 
     return {
       foodLogs: visibleFoods(foodLogs),
@@ -321,9 +325,8 @@ export const dbService = {
     if(isDemoMode()||getStorageMode()==='local') return;
     const id = data.id || data.timestamp || data.analyzedAt;
     const singleton = type === 'Profile' || type === 'WorkoutPlan';
-    if(type==='FoodLogs'){const {thumbnail,...withoutPhoto}=data;data=withoutPhoto;}
     const stableData = singleton ? data : {...data, id: id || crypto.randomUUID()};
-    syncQueue.enqueue(getGasUrl() || '', singleton ? type : type + ':' + stableData.id, {action:'save',type,data:stableData});
+    syncQueue.enqueue(getGasUrl() || '', singleton ? type : type + ':' + stableData.id, type==='FoodLogs'?{action:'save_meal_v3',type,data:stableData,baseRevision:Math.max(0,(stableData.revision||1)-1),operationId:crypto.randomUUID()}:{action:'save',type,data:stableData});
     if (typeof navigator !== 'undefined' && navigator.onLine && localStorage.getItem('hg_auto_sync')!=='false') void syncQueue.flush(getGasUrl() || '');
   },
   queueDelete: (type: string, id: string) => {
@@ -332,31 +335,37 @@ export const dbService = {
     if(typeof navigator !== 'undefined' && navigator.onLine && localStorage.getItem('hg_auto_sync')!=='false') void syncQueue.flush(getGasUrl() || '');
   },
 
+  resolveMealConflict:async(id:string,useLocal:boolean)=>{
+    if(syncQueue.busy)throw new Error('請等同步完成再處理');
+    const row=syncQueue.list().find(r=>r.id===id);if(!row?.conflict||row.current===undefined)throw new Error('缺少雲端版本，請更新 GAS 並重試');
+    const archive=getLocal<any[]>('hg_sync_conflicts_v1',[]);
+    setLocal('hg_sync_conflicts_v1',[...archive,{savedAt:new Date().toISOString(),local:row.payload.data,cloud:row.current}]);
+    const local=getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs,[]);
+    const selected=useLocal?{...row.payload.data,revision:Number(row.current?.revision||0)+1}:row.current;
+    setLocal(LOCAL_STORAGE_KEYS.foodLogs,selected?local.map(f=>foodId(f)===foodId(selected)?selected:f):local.filter(f=>foodId(f)!==foodId(row.payload.data)));
+    if(useLocal)syncQueue.replaceConflict(id,{action:'save_meal_v3',type:'FoodLogs',data:selected,baseRevision:Number(row.current?.revision||0),operationId:crypto.randomUUID()});else syncQueue.remove(id);
+    if(typeof window!=='undefined')window.dispatchEvent(new Event('health-food-refresh'));
+  },
+  listCloudBackups:async()=>{const r=await callGasApi({action:'list_backups_v3'});if(r.protocol!==3||!Array.isArray(r.backups))throw new Error('請先部署 GAS v3 程式');return r.backups as {id:string;createdAt:string}[];},
+  downloadCloudBackup:async(id:string)=>{const r=await callGasApi({action:'read_backup_v3',backupId:id});if(r.protocol!==3)throw new Error('請先部署 GAS v3 程式');return parseBackup(JSON.stringify(r.backup));},
   // Full backup payload to Sheets
   backupAllToCloud: async () => {
     if (syncQueue.busy || syncQueue.list().length) throw new Error("請先完成同步中心的待同步資料，再進行完整備份。");
     const url = getGasUrl();
     if (!url) throw new Error("尚未設定 Google Sheets API 網址");
 
-    const payload = {
-      profile: getLocal<UserProfile>(LOCAL_STORAGE_KEYS.profile, { name: '', height: '', weight: '' }),
-      foodLogs: getLocal<FoodAnalysis[]>(LOCAL_STORAGE_KEYS.foodLogs, []).map(f=>({...f,id:foodId(f)})),
-      reports: getLocal<HealthReport[]>(LOCAL_STORAGE_KEYS.reports, []),
-      workouts: getLocal<WorkoutLog[]>(LOCAL_STORAGE_KEYS.workouts, []),
-      appointments: getLocal<SavedAppointment[]>(LOCAL_STORAGE_KEYS.appointments, []),
-      recipes: getLocal<Recipe[]>(LOCAL_STORAGE_KEYS.recipes, []),
-      workoutPlan: getLocal<WorkoutPlanDay[]>(LOCAL_STORAGE_KEYS.workoutPlan, []),
-      vitals: getLocal<VitalsRecord[]>(LOCAL_STORAGE_KEYS.vitals, [])
-    };
+    const payload = parseBackup(JSON.stringify(createBackup(localStorage,false)));
+    const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(payload)));
+    const digest=Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('');
 
     try {
       // Use the batch backup action supported by Backend v2.3+
       const res = await callGasApi({
-        action: "backup_all",
+        action: "backup_snapshot_v3",
         data: payload
       });
 
-      if (res && res.status === "success") {
+      if (res && res.status === "success" && res.protocol===3 && res.backupId && res.digest===digest) {
         localStorage.setItem(LOCAL_STORAGE_KEYS.lastBackup, new Date().toISOString());
         return true;
       }

@@ -1,3 +1,4 @@
+import CloudBackupVersions from './CloudBackupVersions';
 import StorageModeSettings from './StorageModeSettings';
 import {getStorageMode,configuredGasUrl} from '../services/storageMode';
 import DeviceBackup from './DeviceBackup';
@@ -86,7 +87,7 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
     try {
       await dbService.backupAllToCloud();
       loadCountsAndBackupTime();
-      alert("🎉 備份完成！所有本機健康數據與生理指標已安全複製到您的 Google 雲端試算表。");
+      alert("🎉 備份完成！完整備份已寫入並通過校驗。這次新增歷史版本，未覆蓋雲端同步紀錄；可在「雲端備份版本」下載。");
     } catch (e: any) {
       alert("備份發生錯誤: " + (e.message || e));
     } finally {
@@ -230,8 +231,8 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
                           {syncing ? <RefreshCw className="w-5 h-5 animate-spin" /> : <CloudUpload className="w-5 h-5" />}
                       </div>
                       <div>
-                          <h4 className="font-bold text-emerald-900">立即手動將本機資料備份至雲端</h4>
-                          <p className="text-xs text-emerald-700 mt-1">立刻將本機所有最新數據上傳儲存於 Google Sheet，保障資料不丟失。</p>
+                          <h4 className="font-bold text-emerald-900">建立完整雲端備份（保留舊版）</h4>
+                          <p className="text-xs text-emerald-700 mt-1">新增完整歷史版本，含縮圖、回收桶及影片評分；校驗成功才算完成，不覆蓋雲端同步紀錄。</p>
                       </div>
                   </button>
 
@@ -290,7 +291,7 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
               )}
           </div>}
 
-          {storageMode==='gas'&&<SyncCenter/>}
+          {storageMode==='gas'&&<><CloudBackupVersions/><SyncCenter/></>}
           <DeviceBackup/>
 
         </div>

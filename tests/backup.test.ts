@@ -18,16 +18,16 @@ beforeEach(() => {
 afterEach(() => { globalThis.fetch = originalFetch; });
 
 test('successful backup sends every collection and stores a directly readable date', async () => {
-  for (const key of ['foodLogs', 'reports', 'workouts', 'appointments', 'recipes', 'workoutPlan', 'vitals'] as const) {
-    setLocal(LOCAL_STORAGE_KEYS[key], [{ id: key }]);
-  }
-  setLocal(LOCAL_STORAGE_KEYS.profile, { name: 'Test' });
+  setLocal(LOCAL_STORAGE_KEYS.foodLogs,[{id:'food',foodName:'飯',timestamp:'2026-10-26T04:00:00Z',calories:300,thumbnail:'data:image/jpeg;base64,dGVzdA=='}]);
+  localStorage.setItem('hg_jog_reports_v1',JSON.stringify([{id:'pose',createdAt:'2026-10-26T04:00:00Z'}]));
+  setLocal(LOCAL_STORAGE_KEYS.profile,{name:'Test'});
   globalThis.fetch = async (_url, options) => {
     const payload = JSON.parse(String(options?.body));
-    assert.equal(payload.action, 'backup_all');
-    assert.equal(Object.keys(payload.data).length, 8);
-    assert.equal(payload.data.vitals[0].id, 'vitals');
-    return Response.json({ status: 'success' });
+    assert.equal(payload.action, 'backup_snapshot_v3');
+    assert.ok(payload.data.data.hg_foodLogs[0].thumbnail);
+    assert.equal(payload.data.data.hg_jog_reports_v1[0].id,'pose');
+    const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(payload.data)));
+    return Response.json({status:'success',protocol:3,backupId:'Backup_test',digest:Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,'0')).join('')});
   };
   assert.equal(await dbService.backupAllToCloud(), true);
   assert.ok(Number.isFinite(Date.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.lastBackup)!)));
@@ -54,4 +54,10 @@ test('legacy JSON-encoded backup timestamps remain readable', () => {
   setLocal(LOCAL_STORAGE_KEYS.lastBackup, '2026-01-01T00:00:00.000Z');
   const date = getLocal(LOCAL_STORAGE_KEYS.lastBackup, localStorage.getItem(LOCAL_STORAGE_KEYS.lastBackup) || '');
   assert.equal(date, '2026-01-01T00:00:00.000Z');
+});
+
+test('forged success without matching digest never marks cloud backup complete',async()=>{
+ const previous=localStorage.getItem(LOCAL_STORAGE_KEYS.lastBackup);
+ globalThis.fetch=async()=>Response.json({status:'success',protocol:3,backupId:'Backup_fake',digest:'wrong'});
+ await assert.rejects(dbService.backupAllToCloud());assert.equal(localStorage.getItem(LOCAL_STORAGE_KEYS.lastBackup),previous);
 });

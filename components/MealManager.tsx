@@ -1,3 +1,4 @@
+import {getLocal} from '../services/dbService';
 import React,{useState,useRef,useEffect} from 'react';
 import {FoodAnalysis,MealType,RiskLevel} from '../types';
 import {foodId} from '../services/foodRecords';
@@ -9,12 +10,14 @@ export interface MealActions {onEdit:(id:string,food:FoodAnalysis)=>Promise<void
 export default function MealManager({foods,date=localDate(),onEdit,onDelete,onRestore}:MealActions&{foods:FoodAnalysis[];date?:string}){
  const [editing,setEditing]=useState<FoodAnalysis|null>(null),[deleting,setDeleting]=useState<FoodAnalysis|null>(null),[undo,setUndo]=useState<string|null>(null),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[photo,setPhoto]=useState<string>();
  const locked=useRef(false);const dialog=useRef<HTMLDialogElement>(null);
+ const trash=getLocal<FoodAnalysis[]>('hg_foodLogs',[]).filter(f=>f.deletedAt).sort((a,b)=>String(b.deletedAt).localeCompare(String(a.deletedAt)));
  const meals=foods.filter(f=>localDate(f.timestamp)===date);
  useEffect(()=>{if(editing||deleting)dialog.current?.showModal();else dialog.current?.close();},[editing,deleting]);
  const run=async(action:()=>Promise<void>)=>{if(locked.current)return;locked.current=true;setBusy(true);setMessage('');try{await action();}catch(e){setMessage((e as Error).message||'儲存失敗，請重試');}finally{locked.current=false;setBusy(false);}};
  const edit=(food:FoodAnalysis)=>{setPhoto(food.thumbnail);setEditing(food);setMessage('');};
  return <details className="meal-management"><summary>管理{date===localDate()?'今日':date}餐點 <span>{meals.length} 筆 · 編輯／刪除</span></summary>
  <div className="meal-management-list">{meals.length?meals.map(f=><div className="meal-manage-row" key={foodId(f)}>{f.thumbnail&&<img className="food-thumbnail" src={f.thumbnail} alt="餐點縮圖"/>}<div><strong>{f.foodName||'未命名餐點'}</strong><small>{new Date(f.timestamp).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false})} · {f.mealType} · {f.calories} kcal</small></div><button onClick={()=>edit(f)} aria-label={`編輯 ${f.foodName}`}>編輯</button><button onClick={()=>{setDeleting(f);setMessage('');}} aria-label={`刪除 ${f.foodName}`}>刪除</button></div>):<p>當日尚無餐點。</p>}</div>
+ <details className="meal-trash"><summary>餐點回收桶（{trash.length}）</summary><p>保留所有已刪除餐點，重新開啟後仍可復原；不會自動清空。</p>{trash.map(f=><div className="meal-manage-row" key={foodId(f)}><div><strong>{f.foodName}</strong><small>{localDate(f.timestamp)} · {f.mealType} · {f.calories} kcal</small></div><button disabled={busy} onClick={()=>void run(async()=>{await onRestore(foodId(f));setUndo(null);setMessage('已復原餐點，請查看原進食日期');})}>復原餐點</button></div>)}</details>
  {undo&&<p className="meal-undo" role="status">餐點已刪除 <button disabled={busy} onClick={()=>void run(async()=>{await onRestore(undo);setUndo(null);setMessage('已復原餐點');})}>復原</button></p>}
  {message&&!editing&&!deleting&&<p role="status">{message}</p>}
  <dialog ref={dialog} className="meal-editor" onCancel={e=>{if(busy)e.preventDefault();else{setEditing(null);setDeleting(null);}}}>
