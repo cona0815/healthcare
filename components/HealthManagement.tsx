@@ -25,21 +25,6 @@ interface Props {
 
 type SubTab = 'PROFILE' | 'REPORTS' | 'APPOINTMENTS' | 'MEDICATION' | 'REMINDERS' | 'SYSTEM';
 
-const ACTIVITY_LEVELS: { value: ActivityLevel; label: string; desc: string; factor: number }[] = [
-    { value: 'sedentary', label: '久坐 / 無運動', desc: '辦公室工作，幾乎不運動', factor: 1.2 },
-    { value: 'light', label: '輕度活動', desc: '每週運動 1-3 天', factor: 1.375 },
-    { value: 'moderate', label: '中度活動', desc: '每週運動 3-5 天', factor: 1.55 },
-    { value: 'active', label: '高度活動', desc: '每週運動 6-7 天', factor: 1.725 },
-    { value: 'very_active', label: '超高度活動', desc: '勞力工作或每日兩次訓練', factor: 1.9 },
-];
-
-const DEFICIT_GOALS = [
-    { value: 0, label: '維持體重', desc: '攝取量 = TDEE' },
-    { value: 300, label: '溫和減重 (-300)', desc: '每日創造 300kcal 赤字' },
-    { value: 500, label: '積極減重 (-500)', desc: '每日創造 500kcal 赤字 (建議)' },
-    { value: 700, label: '強力減重 (-700)', desc: '需搭配運動，避免肌肉流失' },
-];
-
 const DIETARY_OPTIONS = [
     '素食 (Vegetarian)', 
     '純素 (Vegan)', 
@@ -152,7 +137,7 @@ const HealthManagement: React.FC<Props> = ({
         birthDate: tempBirthDate,
         activityLevel: tempActivity,
         targetDeficit: tempDeficit,
-        ...(tdee&&tdee-tempDeficit>0?{calorieGoal:tdee-tempDeficit,calorieGoalSource:'tdee' as const}:{}),
+        ...(userProfile.calorieGoalSource==='tdee'&&tdee&&tdee-tempDeficit>0?{calorieGoal:tdee-tempDeficit,calorieGoalSource:'tdee' as const}:{}),
         dietaryPreferences: tempDietary,
         allergies: tempAllergies,
         medicalConditions: tempMedical,
@@ -161,7 +146,7 @@ const HealthManagement: React.FC<Props> = ({
     
     try {
         await onUpdateProfile(updatedProfile);
-        setProfileNotice('個人資料已儲存；有效的 TDEE 熱量目標已同步到總覽。');
+        setProfileNotice('個人資料已儲存；連動模式的熱量目標會同步更新。');
     } catch (e) {
         setProfileNotice('儲存失敗，輸入已保留，請重試。');
     } finally {
@@ -202,7 +187,7 @@ const HealthManagement: React.FC<Props> = ({
           birthDate: tempBirthDate,
           activityLevel: tempActivity,
           targetDeficit: tempDeficit,
-        ...(tdee&&tdee-tempDeficit>0?{calorieGoal:tdee-tempDeficit,calorieGoalSource:'tdee' as const}:{}),
+        ...(userProfile.calorieGoalSource==='tdee'&&tdee&&tdee-tempDeficit>0?{calorieGoal:tdee-tempDeficit,calorieGoalSource:'tdee' as const}:{}),
           dietaryPreferences: tempDietary,
           allergies: tempAllergies,
           medicalConditions: tempMedical,
@@ -397,55 +382,7 @@ const HealthManagement: React.FC<Props> = ({
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                        <Zap className="w-4 h-4" /> 日常活動量
-                    </label>
-                    <div className="relative">
-                        <select 
-                            value={tempActivity}
-                            onChange={(e) => setTempActivity(e.target.value as ActivityLevel)}
-                            className="w-full p-3 border border-gray-200 bg-white text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none appearance-none font-medium"
-                        >
-                            {ACTIVITY_LEVELS.map(level => (
-                                <option key={level.value} value={level.value}>
-                                    {level.label}
-                                </option>
-                            ))}
-                        </select>
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                            <ChevronDown className="w-5 h-5" />
-                        </div>
-                    </div>
-                    <p className="text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">
-                        {ACTIVITY_LEVELS.find(a => a.value === tempActivity)?.desc}
-                    </p>
-                </div>
-
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                        <Target className="w-4 h-4" /> 減重目標 (熱量赤字)
-                    </label>
-                    <div className="relative">
-                        <select 
-                            value={tempDeficit}
-                            onChange={(e) => setTempDeficit(parseInt(e.target.value))}
-                            className="w-full p-3 border border-gray-200 bg-white text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none appearance-none font-medium"
-                        >
-                            {DEFICIT_GOALS.map(goal => (
-                                <option key={goal.value} value={goal.value}>
-                                    {goal.label}
-                                </option>
-                            ))}
-                        </select>
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                            <ChevronDown className="w-5 h-5" />
-                        </div>
-                    </div>
-                     <p className="text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">
-                        {DEFICIT_GOALS.find(g => g.value === tempDeficit)?.desc}
-                    </p>
-                </div>
+                <p className="text-sm text-gray-500">日常活動量與減重目標已整合至健康助手的「營養目標與輕斷食」。</p>
 
                 <div className="space-y-6 pt-6 border-t border-gray-100">
                     <div className="bg-emerald-50/30 p-5 rounded-2xl border border-emerald-100">
@@ -711,7 +648,7 @@ const HealthManagement: React.FC<Props> = ({
                                                     birthDate: tempBirthDate,
                                                     activityLevel: tempActivity,
                                                     targetDeficit: tempDeficit,
-        ...(tdee&&tdee-tempDeficit>0?{calorieGoal:tdee-tempDeficit,calorieGoalSource:'tdee' as const}:{}),
+        ...(userProfile.calorieGoalSource==='tdee'&&tdee&&tdee-tempDeficit>0?{calorieGoal:tdee-tempDeficit,calorieGoalSource:'tdee' as const}:{}),
                                                     dietaryPreferences: tempDietary,
                                                     allergies: tempAllergies,
                                                     medicalConditions: tempMedical,

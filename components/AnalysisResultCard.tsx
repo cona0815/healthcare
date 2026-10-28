@@ -1,3 +1,4 @@
+import {foodAdviceLanguage} from '../services/foodLanguage';
 import React, { useState } from 'react';
 import { FoodAnalysis, RiskLevel, MealType } from '../types';
 import { Edit2, ShieldAlert, Scale, Flame, Droplets, Wheat, Beef, ChevronDown, ChevronUp } from 'lucide-react';
@@ -174,7 +175,7 @@ const AnalysisResultCard: React.FC<Props> = ({ data, onUpdateLog }) => {
                     </span>
                 </div>
                 <p className={`text-base font-medium leading-relaxed text-justify whitespace-pre-line ${data.riskLevel === RiskLevel.DANGEROUS ? 'text-red-800' : 'text-indigo-800'}`}>
-                    {data.healthAdvice}
+                    {foodAdviceLanguage(data.healthAdvice)}
                 </p>
              </div>
           </div>

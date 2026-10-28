@@ -28,3 +28,14 @@ export function eatingDayRanges(start:string,end?:string):Array<[number,number]>
  const [h,m]=start.split(':').map(Number),from=(h*60+m)/1440,to=(h*60+m+eatingMinutes(start,end))/1440;
  return to<=1?[[from,to]]:[[0,to-1],[from,1]];
 }
+
+// Reconstruct cycles from saved meal times, so edits/deletions are reflected automatically.
+export function firstMealWindow(now:Date,foods:Array<{timestamp:string;deletedAt?:string}>,eatingHours:number,fastingHours:number){
+ if(!Number.isFinite(eatingHours)||!Number.isFinite(fastingHours)||eatingHours<=0||fastingHours<=0||eatingHours>24||fastingHours>24)throw new Error('請設定 0–24 小時之間的有效時數');
+ const eatingMs=eatingHours*3600000,cycleMs=(eatingHours+fastingHours)*3600000;
+ const times=foods.filter(f=>!f.deletedAt).map(f=>Date.parse(f.timestamp)).filter(t=>Number.isFinite(t)&&t<=now.getTime()).sort((a,b)=>a-b);
+ let anchor:number|undefined;for(const t of times)if(anchor===undefined||t>=anchor+cycleMs)anchor=t;
+ if(anchor===undefined||now.getTime()>=anchor+cycleMs)return null;
+ const end=new Date(anchor+eatingMs),next=new Date(now.getTime()<end.getTime()?end.getTime():anchor+cycleMs);
+ return {phase:now.getTime()<end.getTime()?'eating' as const:'fasting' as const,start:new Date(anchor),end,next,seconds:Math.max(0,Math.ceil((next.getTime()-now.getTime())/1000))};
+}
