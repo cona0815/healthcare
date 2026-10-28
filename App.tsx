@@ -57,7 +57,7 @@ const App: React.FC = () => {
   const returnToWorkouts=()=>{setWorkoutCategory(activeTab==='SLOW_JOG'?'aerobic':activeTab==='WALL_SIT'||activeTab==='SEATED_ANKLE'?'legs':'back');setActiveTab('WORKOUT');};
   const mainScroll=useRef<HTMLElement>(null);
   useEffect(()=>{mainScroll.current?.scrollTo({top:0,behavior:'auto'});},[activeTab,careSection]);
-  const [activeHealthSubTab, setActiveHealthSubTab] = useState<'PROFILE' | 'REPORTS' | 'APPOINTMENTS' | 'MEDICATION' | 'SYSTEM'>('PROFILE');
+  const [activeHealthSubTab, setActiveHealthSubTab] = useState<'PROFILE' | 'REPORTS' | 'APPOINTMENTS' | 'MEDICATION' | 'REMINDERS' | 'SYSTEM'>('PROFILE');
   const [dataLoading, setDataLoading] = useState(false);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
 
@@ -309,8 +309,6 @@ const App: React.FC = () => {
         return (
           <div className="space-y-6 md:space-y-8 animate-fade-in">
             {mealContext && <p className="meal-context">記錄日期：{mealContext.date} · {mealContext.meal || '依照片判斷餐次'}</p>}
-            <MealManager foods={foodLogs} onEdit={handleUpdateLog} onDelete={handleDeleteFood} onRestore={handleRestoreFood}/>
-            <FoodGuidance profile={userProfile} onEdit={()=>{setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}}/>
             <FoodAnalyzer
               healthReport={latestHealthReport}
               userProfile={userProfile}
@@ -327,6 +325,8 @@ const App: React.FC = () => {
               appointments={appointments}
               workoutPlan={currentWorkoutPlan}
             />
+            <MealManager foods={foodLogs} onEdit={handleUpdateLog} onDelete={handleDeleteFood} onRestore={handleRestoreFood}/>
+            <FoodGuidance profile={userProfile} onEdit={()=>{setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}}/>
             {foodLogs.length > 0 && (
               <div>
                 <h3 className="text-lg font-bold text-gray-800 mb-3 px-1">最近分析記錄</h3>

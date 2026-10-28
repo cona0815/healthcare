@@ -42,3 +42,5 @@
 .health-shell[data-theme=colorful] .assistant-category-links>button:nth-child(3n+1){border-left:4px solid #88abc9}
 .health-shell[data-theme=colorful] .assistant-category-links>button:nth-child(3n+2){border-left:4px solid #dcaa8d}
 .health-shell[data-theme=colorful] .assistant-category-links>button:nth-child(3n){border-left:4px solid #a4bc8d}
+
+.reminder-settings h2{font-size:18px;font-weight:700;margin-bottom:8px}.reminder-settings fieldset{display:grid;gap:16px;margin-top:20px}.reminder-settings label{display:grid;gap:8px;font-size:14px;font-weight:600}.reminder-settings input{width:100%;min-width:0;border:1px solid var(--line,#dce5da);background:var(--paper,#fff);padding:12px;border-radius:10px;min-height:46px}.reminder-settings button[type=submit]{background:var(--green,#347956);color:white;border-radius:10px;padding:12px}.reminder-settings .task-sort-row{margin-top:12px}

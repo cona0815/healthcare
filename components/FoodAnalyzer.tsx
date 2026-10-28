@@ -46,9 +46,13 @@ const FoodAnalyzer: React.FC<Props> = ({
 
   // --- Handlers ---
 
+  const analysisPanel=useRef<HTMLDivElement>(null);
+  React.useEffect(()=>{if(preview)analysisPanel.current?.scrollIntoView({block:'start'});},[preview]);
   const fileBusy=useRef(false);
   const processFile = async (file: File) => {
     if(fileBusy.current)return; fileBusy.current=true;
+    setViewMode('MEAL');
+    setThumbnail(undefined);
     setError(null);
     setCurrentResult(null);
     setSuggestions([]);
@@ -160,7 +164,7 @@ const FoodAnalyzer: React.FC<Props> = ({
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in pb-20">
-      <ManualFoodEntry key={`${selectedDate||'today'}-${selectedMeal||'all'}`} date={selectedDate} meal={selectedMeal} initialThumbnail={thumbnail} onSave={onAnalysisComplete}/>
+
       {/* View Toggle */}
       <div className="flex p-1.5 bg-gray-100 rounded-2xl mb-6 shadow-inner">
         <button
@@ -187,11 +191,11 @@ const FoodAnalyzer: React.FC<Props> = ({
         />
       ) : (
         <>
-          <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
+          <div ref={analysisPanel} className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100" style={{scrollMarginTop:80}} aria-busy={loading}>
             <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-teal-50 hover:border-teal-200 rounded-2xl p-8 transition-colors cursor-pointer active:scale-95 duration-200"
-                onClick={() => fileInputRef.current?.click()}>
+                onClick={() => {if(!loading)fileInputRef.current?.click();}}>
               {preview ? (
-                <img src={preview} alt="Food Preview" className="max-h-64 object-contain mb-4 shadow rounded-xl" />
+                <img src={preview} alt="本次辨識的飲食照片" className="max-h-64 object-contain mb-4 shadow rounded-xl" />
               ) : (
                 <div className="w-16 h-16 bg-white shadow-sm text-teal-600 rounded-2xl flex items-center justify-center mb-4 border border-gray-100 transform -rotate-3 transition-transform group-hover:rotate-0">
                   <Camera className="w-8 h-8" />
@@ -203,9 +207,9 @@ const FoodAnalyzer: React.FC<Props> = ({
             </div>
 
             {loading && (
-              <div className="mt-8 flex flex-col items-center text-teal-600">
+              <div role="status" className="mt-8 flex flex-col items-center text-teal-600">
                 <Loader2 className="w-8 h-8 animate-spin mb-3" />
-                <p className="text-sm font-bold">AI 正在計算熱量並評估您的個人風險...</p>
+                <p className="text-sm font-bold">正在辨識飲食，分析餐點與營養…</p>
               </div>
             )}
             {error && <div className="mt-6 p-4 bg-red-50 text-red-700 rounded-2xl font-medium border border-red-100">{error}</div>}
@@ -228,6 +232,7 @@ const FoodAnalyzer: React.FC<Props> = ({
             )}
           </div>
 
+          {!loading && (<ManualFoodEntry key={`${selectedDate||'today'}-${selectedMeal||'all'}`} date={selectedDate} meal={selectedMeal} initialThumbnail={thumbnail} onSave={onAnalysisComplete}/>)}
           {suggestions.length > 0 && !preview && (
             <div className="space-y-4 animate-fade-in-up">
                <div className="flex items-center justify-between px-2">

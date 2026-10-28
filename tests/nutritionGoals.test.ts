@@ -6,3 +6,11 @@ test('16:8 schedule changes exactly at start/end and survives cross-midnight',()
 test('TDEE-linked goal recalculates stale saved target while manual target is preserved',()=>{const profile={weight:'65',height:'170',birthDate:'1978-08-15',gender:'male' as const,activityLevel:'sedentary' as const,calorieGoal:1953,targetDeficit:0};const now=new Date(2026,9,25,12);assert.equal(resolveCalorieGoal({...profile,calorieGoalSource:'tdee'},now),1773);assert.equal(resolveCalorieGoal({...profile,calorieGoalSource:'manual'},now),1953);});
 
 test('daily eating graphic splits midnight windows and retains minute precision',()=>{assert.deepEqual(eatingDayRanges('12:00'),[[0.5,5/6]]);const spans=eatingDayRanges('22:30');assert.equal(spans.length,2);assert.ok(Math.abs(spans.reduce((sum,[a,b])=>sum+b-a,0)-1/3)<1e-9);assert.deepEqual(eatingDayRanges('invalid'),[]);});
+
+test('custom eating windows support boundaries, midnight and minute precision',()=>{
+ assert.equal(fastingWindow(new Date(2026,9,27,18),'08:00','18:00').phase,'fasting');
+ assert.equal(fastingWindow(new Date(2026,9,27,8),'08:00','18:00').phase,'eating');
+ const night=fastingWindow(new Date(2026,9,27,1),'22:30','04:15');assert.equal(night.next.getHours(),4);assert.equal(night.next.getMinutes(),15);assert.equal(night.seconds,11700);
+ const ranges=eatingDayRanges('22:30','04:15');assert.equal(ranges.length,2);assert.ok(Math.abs(ranges[0][1]-255/1440)<1e-10);assert.deepEqual(ranges[1],[1350/1440,1]);
+ assert.throws(()=>fastingWindow(new Date(),'12:00','12:00'));assert.throws(()=>fastingWindow(new Date(),'12:00','25:00'));
+});

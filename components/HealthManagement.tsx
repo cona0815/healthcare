@@ -1,3 +1,4 @@
+import MedicationReminders from './MedicationReminders';
 import {localDate} from '../services/healthSummary';
 import {estimateTDEE} from '../services/nutritionGoals';
 import React, { useState, useEffect } from 'react';
@@ -22,7 +23,7 @@ interface Props {
   onSubTabChange?: (tab: SubTab) => void;
 }
 
-type SubTab = 'PROFILE' | 'REPORTS' | 'APPOINTMENTS' | 'MEDICATION' | 'SYSTEM';
+type SubTab = 'PROFILE' | 'REPORTS' | 'APPOINTMENTS' | 'MEDICATION' | 'REMINDERS' | 'SYSTEM';
 
 const ACTIVITY_LEVELS: { value: ActivityLevel; label: string; desc: string; factor: number }[] = [
     { value: 'sedentary', label: '久坐 / 無運動', desc: '辦公室工作，幾乎不運動', factor: 1.2 },
@@ -313,6 +314,7 @@ const HealthManagement: React.FC<Props> = ({
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
 
         <div className="p-4 sm:p-6">
+          {activeSubTab === 'REMINDERS' && <MedicationReminders profile={userProfile} onUpdate={onUpdateProfile}/>}
           {activeSubTab === 'PROFILE' && (
             <div className="space-y-6 animate-fade-in">
               <div className="text-center mb-6">

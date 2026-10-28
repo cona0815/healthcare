@@ -50,7 +50,7 @@ export interface UserProfile {
   calorieGoal?: number;
   calorieDisplayMode?: 'consumed' | 'remaining';
   calorieGoalSource?: 'manual' | 'tdee';
-  fastingSchedule?: {enabled:boolean; eatingStart:string};
+  fastingSchedule?: {enabled:boolean; eatingStart:string; eatingEnd?:string};
   waterGoal?: number;
   name?: string; 
   height: string; // cm
