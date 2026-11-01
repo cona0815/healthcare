@@ -146,6 +146,9 @@ export interface Medication {
 }
 
 export interface WorkoutPlanDay {
+  id?: string;
+  sets?: TrainingSet[];
+  restSeconds?: number;
   day: string;
   activity: string;
   duration: string;
@@ -154,12 +157,16 @@ export interface WorkoutPlanDay {
 }
 
 export interface WorkoutLog {
+  sets?: TrainingSet[];
+  restSeconds?: number;
   id: string;
   activity: string;
   duration: string;
   timestamp: string; 
   caloriesBurned?: number; 
 }
+
+export interface TrainingSet { reps: number; weightKg: number; }
 
 export interface Recipe {
   id: string;

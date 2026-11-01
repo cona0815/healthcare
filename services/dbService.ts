@@ -275,6 +275,7 @@ export const dbService = {
 
   addWorkoutLog: async (log: WorkoutLog) => {
     const workouts = getLocal<WorkoutLog[]>(LOCAL_STORAGE_KEYS.workouts, []);
+    if(workouts.some(w=>w.id===log.id)){dbService.queueSync('Workouts',log);return;}
     setLocal(LOCAL_STORAGE_KEYS.workouts, [log, ...workouts]);
     dbService.queueSync('Workouts', log);
   },

@@ -229,12 +229,8 @@ const App: React.FC = () => {
   };
 
   const handleSaveWorkoutPlan = async (plan: WorkoutPlanDay[]) => {
+    await dbService.saveWorkoutPlan(plan);
     setCurrentWorkoutPlan(plan);
-    try {
-        await dbService.saveWorkoutPlan(plan);
-    } catch (e) {
-        alert("運動計畫儲存失敗");
-    }
   };
 
   // Handle Save/Update Recipe

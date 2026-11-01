@@ -1,3 +1,5 @@
+import StrengthTraining from './StrengthTraining';
+import {localDate} from '../services/healthSummary';
 import TeachingVideos from './TeachingVideos';
 import ExerciseHub from './ExerciseHub';
 import ExerciseOptions from './ExerciseOptions';
@@ -16,9 +18,9 @@ interface Props {
   onUpdateProfile: (profile: UserProfile) => Promise<void>;
   healthReport: HealthReport | null;
   workoutLogs: WorkoutLog[];
-  onAddWorkout: (log: WorkoutLog) => void;
+  onAddWorkout: (log: WorkoutLog) => Promise<void>;
   currentPlan: WorkoutPlanDay[];
-  onSavePlan: (plan: WorkoutPlanDay[]) => void;
+  onSavePlan: (plan: WorkoutPlanDay[]) => Promise<void>;
 }
 
 const COMMON_EXERCISES = [
@@ -44,14 +46,14 @@ const WorkoutPlanner: React.FC<Props> = ({ workoutCategory,onCategoryChange,onAs
   const [loggingIndex, setLoggingIndex] = useState<number | null>(null);
 
   // Filter logs for today
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todayLogs = workoutLogs.filter(log => log.timestamp && log.timestamp.startsWith(todayStr));
+  const todayStr = localDate();
+  const todayLogs = workoutLogs.filter(log => log.timestamp && localDate(log.timestamp)===todayStr);
 
   const handleGenerate = async () => {
     setLoading(true);
     try {
       const data = await generateWorkoutPlan(userProfile, healthReport || undefined);
-      onSavePlan(data);
+      await onSavePlan(data);
     } catch (e: any) {
       alert(e.message || "生成失敗");
     } finally {
@@ -72,7 +74,7 @@ const WorkoutPlanner: React.FC<Props> = ({ workoutCategory,onCategoryChange,onAs
           timestamp: new Date().toISOString(),
           caloriesBurned: calories
         };
-        onAddWorkout(newLog);
+        await onAddWorkout(newLog);
         alert(`已完成運動！AI 估算消耗: ${calories} kcal`);
     } catch (e) {
         console.error(e);
@@ -84,7 +86,7 @@ const WorkoutPlanner: React.FC<Props> = ({ workoutCategory,onCategoryChange,onAs
           timestamp: new Date().toISOString(),
           caloriesBurned: 0
         };
-        onAddWorkout(newLog);
+        await onAddWorkout(newLog);
     } finally {
         setLoggingIndex(null);
     }
@@ -110,7 +112,7 @@ const WorkoutPlanner: React.FC<Props> = ({ workoutCategory,onCategoryChange,onAs
               caloriesBurned: calories
           };
 
-          onAddWorkout(newLog);
+          await onAddWorkout(newLog);
 
           // Reset
           setManualActivity("");
@@ -130,13 +132,15 @@ const WorkoutPlanner: React.FC<Props> = ({ workoutCategory,onCategoryChange,onAs
       setEditForm({ ...plan });
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
       if (editForm && editingIndex !== null) {
           const newPlan = [...currentPlan];
           newPlan[editingIndex] = editForm;
-          onSavePlan(newPlan);
-          setEditingIndex(null);
-          setEditForm(null);
+          try {
+            await onSavePlan(newPlan);
+            setEditingIndex(null);
+            setEditForm(null);
+          } catch { alert('課表儲存失敗，修改仍保留，請重試。'); }
       }
   };
 
@@ -146,8 +150,12 @@ const WorkoutPlanner: React.FC<Props> = ({ workoutCategory,onCategoryChange,onAs
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in pb-20">
+      <StrengthTraining logs={workoutLogs} plan={currentPlan} options={exercises} onLog={onAddWorkout} onPlan={onSavePlan}/>
+      <details className="strength-legacy"><summary>運動練習與姿勢教學</summary>
       <ExerciseHub profile={userProfile} onUpdate={onUpdateProfile} onLog={onAddWorkout} category={workoutCategory} onCategoryChange={onCategoryChange} onSlowJog={onSlowJog} onWallSit={onWallSit} onAssistedExercise={onAssistedExercise}/>
 
+      </details>
+      <details className="strength-legacy"><summary>其他運動記錄與 AI 課表</summary>
       <div className="bg-gradient-to-r from-orange-400 to-red-500 p-5 md:p-6 rounded-2xl text-white shadow-lg">
         <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
           <Dumbbell className="w-5 h-5 md:w-6 md:h-6" />
@@ -393,6 +401,7 @@ const WorkoutPlanner: React.FC<Props> = ({ workoutCategory,onCategoryChange,onAs
           })}
         </div>
       )}
+      </details>
       <details className="exercise-video-library"><summary>影片教學 <span>展開參考影片 ⌄</span></summary><TeachingVideos videos={[['每天20下讓你強心臟！75歲婦人爬梯不再喘！｜聚焦2.0 第432集','https://www.youtube.com/watch?v=v4lAuh4V7bk']]}/></details>
     </div>
   );

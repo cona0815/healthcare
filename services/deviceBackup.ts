@@ -1,3 +1,4 @@
+import {validTrainingSets} from './strengthTraining';
 import {getStorageMode} from './storageMode';
 export const backupKeys=['hg_foodLogs','hg_reports','hg_workouts','hg_profile','hg_appointments','hg_workoutPlan','hg_recipes','hg_vitals','hg_jog_reports_v1'] as const;
 export function parseBackup(text:string){
@@ -28,6 +29,7 @@ export function parseBackup(text:string){
  for(const r of file.data.hg_recipes)for(const k of ['tags','ingredients','steps','checkedIngredients'])arrayField(r,k,'食譜 '+k,true);
  for(const r of file.data.hg_reports){arrayField(r,'metrics','健檢指標');arrayField(r,'dietaryRestrictions','健檢飲食建議',true);}
  for(const r of file.data.hg_jog_reports_v1)arrayField(r,'items','影片評分');
+ for(const r of [...file.data.hg_workouts,...file.data.hg_workoutPlan]){if(r.sets!==undefined&&!validTrainingSets(r.sets))fail('逐組訓練資料');if(r.restSeconds!==undefined&&(!Number.isFinite(Number(r.restSeconds))||Number(r.restSeconds)<5||Number(r.restSeconds)>900))fail('組間休息秒數');if(r.restSeconds!==undefined)r.restSeconds=Number(r.restSeconds);}
  for(const r of file.data.hg_workoutPlan)if(typeof r.day!=='string'||typeof r.activity!=='string')fail('運動計畫');
  for(const r of file.data.hg_profile.dailyHealthLogs||[]){if(!date(r.date))fail('每日紀錄日期');for(const k of ['medicationsTaken','appointmentsCompleted','customTasksCompleted'])arrayField(r,k,'每日勾選紀錄',true);}
  for(const r of file.data.hg_profile.weightHistory||[])if(!date(r.date)||!Number.isFinite(Number(r.weight))||Number(r.weight)<=0)fail('體重紀錄');
