@@ -38,6 +38,7 @@ export interface QuickTemplate { id: string; kind: 'food' | 'workout'; name: str
 export interface CustomTask {id:string;title:string;notes:string;time:string;repeat:'once'|'daily';date:string;}
 export interface CompanionSettings { name:string; createdAt:string; ageMode:"growth"|"young"|"adult"|"senior"; body:"small"|"round"|"sturdy"; bodyMode?:"auto"|"manual"; motionEnabled?:boolean; showHome:boolean; greetingDate?:string; }
 export interface UserProfile {
+  rewardDietRule?: 'calorie' | 'traffic';
   companion?: CompanionSettings;
   practiceCards?: {id:string;title:string;detail:string;category:string;hidden?:boolean;custom?:boolean}[];
   customTasks?: CustomTask[];

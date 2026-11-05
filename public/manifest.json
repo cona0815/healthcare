@@ -1,21 +1,29 @@
 {
-  "short_name": "HealthAI",
-  "name": "HealthGuardian AI",
+  "short_name": "健康日常",
+  "name": "健康日常 · 個人健康管理",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3063/3063822.png",
+      "src": "/brand/icon-192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3063/3063822.png",
+      "src": "/brand/icon-512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/icon-maskable-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "theme_color": "#0d9488",
-  "background_color": "#ffffff"
+  "theme_color": "#2f7459",
+  "background_color": "#f6f7f1"
 }

@@ -1,3 +1,4 @@
+import HealthRewards from './HealthRewards';
 import MealManager from './MealManager';
 import AppIcon, {FoodIcon} from './AppIcon';
 import FastingCard from './FastingCard';
@@ -34,6 +35,7 @@ export default function Dashboard({onEditFood,onDeleteFood,onRestoreFood,userPro
  <section className="nutrition-card health-checkin" aria-labelledby="health-checkin-title"><div className="diary-title"><h3 id="health-checkin-title"><ClipboardCheck/> 健康打卡</h3><button onClick={()=>onNavigate('HEALTH_MANAGEMENT','REMINDERS')}>設定提醒 <ChevronRight size={15}/></button></div>
  {reminders.length>0?<><p className="checkin-count">今日用藥 · {reminders.filter(m=>taken.includes(m.id)).length} / {reminders.length} 已完成</p><div className="checkin-list">{[...reminders].sort((a,b)=>a.time.localeCompare(b.time)).map(m=><label key={m.id} className={taken.includes(m.id)?'is-complete':''}><input type="checkbox" disabled={busy} checked={taken.includes(m.id)} onChange={()=>void saveDaily({medicationsTaken:taken.includes(m.id)?taken.filter(id=>id!==m.id):[...taken,m.id]})}/><span>{m.name}</span><time>{m.time}</time></label>)}</div></>:<p className="checkin-count">新增用藥提醒後，就能在這裡勾選完成。</p>}
  </section>
+ <HealthRewards profile={userProfile} foods={foodLogs} workouts={workoutLogs} now={now} onUpdate={onUpdateProfile} onNutrition={()=>onNavigate('CARE','nutrition')}/>
  {error&&<p role="alert" className="diary-error">{error}</p>}
  </div>;
 }
