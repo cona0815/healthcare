@@ -14,6 +14,7 @@
 8. 飲食控制獎勵條件已確認為「三餐完整＋熱量在個人目標 ±10%」。運動至少 30 分鐘。不能獎勵不吃飯或把缺資料當成功。
 9. 不要從照片推斷疾病或直接宣稱診斷。以測量與記錄為依據，用一般健康管理語句。保留現有必要的就醫提示。
 10. 不要讀出、寫死或上傳使用者 API 金鑰；不要在日誌記錄個人健康內容。`.env.example` 只有空值。
+11. 資安（2026-11-11 稽核後）：伺服器代理只用使用者自己的金鑰，不可加回伺服器金鑰備援或 /api/debug；CORS 只允許本站與本機；netlify.toml 有強制 CSP，新增外部連線、字型或嵌入前要先改 CSP 並實測；GAS 只允許 8 種資料表並支援選用存取密碼（setupAccessToken），改 GAS_CODE 後要重新產生 gas/Code.gs；不可用 dangerouslySetInnerHTML 或原生 alert 顯示結果。
 
 ## 開發與驗證
 
@@ -21,7 +22,7 @@
 
 修改資料、同步、餐點、備份、計時邏輯後需執行相關測試及 `npm test`。發布前執行型別檢查（README 有完整指令）、`npm run build`、`node scripts/check-offline.mjs`。有 Git 時再跑 `git diff --check`。
 
-目前沒有 tsconfig.json，請不要直接把 `npx tsc --noEmit` 當成已完成型別檢查。本次驗證基準 124 項測試（2026-11-10 起含儲存模式與 Gemini 自動換模型測試）。
+目前沒有 tsconfig.json，請不要直接把 `npx tsc --noEmit` 當成已完成型別檢查。本次驗證基準 131 項測試（2026-11-11 起含 GAS 存取密碼、主畫面教學等測試）。
 
 `server.ts` 是 Express + Gemini API 代理，開發時掛 Vite middleware。 代理會原樣轉送 Google 的狀態碼（400 金鑰錯、404 模型停用、429 額度用完），並提供 `/api/gemini/models` 查目前可用模型；前端呼叫 Gemini 一律走 `services/aiSettings.ts` 的 `runWithModelFallback`，不可寫死單一模型名稱。`netlify/functions/api.ts` 是 serverless 包裝；不能僅把靜態頁搬走就期待 AI API 正常。環境版本宣告不一致，詳見 README。
 

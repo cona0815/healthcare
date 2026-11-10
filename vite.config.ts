@@ -26,7 +26,6 @@ if(url.pathname.includes('/assets/'))event.respondWith(caches.match(event.reques
     server: {
       host: true,
       port: 5173,
-      allowedHosts: true,
     },
 
   };

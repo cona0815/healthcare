@@ -17,3 +17,11 @@
 ```sh
 node --import tsx --input-type=module -e "import {GAS_CODE} from './components/GasSetup.tsx'; import fs from 'node:fs'; fs.writeFileSync('gas/Code.gs', GAS_CODE, 'utf8');"
 ```
+
+## v3.1 資安更新（2026-11-11）
+
+- 只允許 8 種資料表（Profile、FoodLogs、Workouts、Appointments、Recipes、Vitals、Reports、WorkoutPlan）寫入或刪除。
+- 欄位名稱以 = + - @ 開頭時直接略過，避免試算表公式注入。
+- 選用的存取密碼：更新程式並重新部署後，在 Apps Script 編輯器選 `setupAccessToken` 執行，到「執行記錄」複製密碼，貼到 App 設定「GAS 雲端同步」的「存取密碼」欄位並儲存。每台裝置都要填。之後沒有密碼的請求一律拒絕。執行 `clearAccessToken` 可取消。
+- 沒有設定密碼時行為和 v3.0 相同，所以舊部署不會因為網站更新而壞掉。
+- 重新部署請用「部署 → 管理部署作業 → 編輯 → 版本：新版本」，網址才不會改變。

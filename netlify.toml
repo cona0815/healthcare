@@ -27,3 +27,13 @@
   for = "/sw.js"
   [headers.values]
     Cache-Control = "no-cache, must-revalidate"
+
+# 全站安全標頭。完整 CSP 已在正式建置版逐頁實測（含 MediaPipe 姿勢模型、GAS、說明頁），只會擋掉 MediaPipe 回傳使用紀錄給 Google 的連線。
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "DENY"
+    Permissions-Policy = "camera=(self), geolocation=(self), microphone=(), payment=(), usb=()"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"

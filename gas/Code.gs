@@ -1,5 +1,5 @@
 /**
- * HealthGuardian Backend v3.0 (Verified snapshots and conflict safety)
+ * HealthGuardian Backend v3.1 (Verified snapshots, conflict safety, optional access token)
  * - Profile 追加模式
  * - 智慧讀取：跳過空白行，讀取最後一筆有效資料
  * - 支援 LockService 防止衝突
@@ -12,6 +12,9 @@ function doPost(e) {
       para = JSON.parse(e.postData.contents);
     } catch(e) {
       return createJSONOutput({status: "error", message: "Invalid JSON format"});
+    }
+    if (accessDenied(para)) {
+      return createJSONOutput({status: "error", code: "UNAUTHORIZED", message: "GAS 存取密碼不正確，請到 App 設定的「GAS 雲端同步」填入存取密碼。"});
     }
     
     var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -45,6 +48,7 @@ function doPost(e) {
     try {
       // Save Action
       if (action == 'save') {
+        if (!ALLOWED_TYPES[para.type]) return createJSONOutput({status: "error", message: "資料類型錯誤"});
         var sheet = getOrCreateSheet(ss, para.type);
         var data = para.data;
         
@@ -53,7 +57,7 @@ function doPost(e) {
         // Profile: 追加模式 (Append Mode)
         if (para.type === 'Profile') {
            if (sheet.getLastRow() === 0) {
-               var initialHeaders = Object.keys(data);
+               var initialHeaders = safeHeaderKeys(Object.keys(data));
                sheet.appendRow(initialHeaders);
            }
            updateHeaders(sheet, data);
@@ -107,6 +111,7 @@ function doPost(e) {
 
       // Delete Action
       if (action == 'delete') {
+        if (!ALLOWED_TYPES[para.type]) return createJSONOutput({status: "error", message: "資料類型錯誤"});
         var sheet = ss.getSheetByName(para.type);
         if (sheet) {
           deleteById(sheet, para.id);
@@ -167,6 +172,30 @@ function createJSONOutput(data) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+// --- Security (v3.1) ---
+// 只允許本系統會用到的資料表，避免被拿來建立或刪除任意分頁。
+var ALLOWED_TYPES = {Profile:1, FoodLogs:1, Workouts:1, Appointments:1, Recipes:1, Vitals:1, Reports:1, WorkoutPlan:1};
+// 欄位名稱若以 = + - @ 開頭會被試算表當成公式，直接略過。
+function safeHeaderKeys(keys) {
+  return keys.filter(function(k){ return typeof k === 'string' && k.length > 0 && k.length <= 64 && '=+-@'.indexOf(k.charAt(0)) === -1 && k.charCodeAt(0) > 32; });
+}
+// 選用的存取密碼：在編輯器執行一次 setupAccessToken，把執行記錄裡的密碼填到 App 的「存取密碼」。
+// 設定後，沒有密碼的請求一律拒絕；沒設定時維持舊行為（只靠網址保密）。
+function setupAccessToken() {
+  var token = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
+  PropertiesService.getScriptProperties().setProperty('HG_TOKEN', token);
+  Logger.log('健康日常 GAS 存取密碼（請複製到 App 設定）：' + token);
+  return token;
+}
+function clearAccessToken() {
+  PropertiesService.getScriptProperties().deleteProperty('HG_TOKEN');
+  Logger.log('已移除存取密碼，任何知道網址的人都能讀寫資料。');
+}
+function accessDenied(para) {
+  var expected = PropertiesService.getScriptProperties().getProperty('HG_TOKEN');
+  return !!expected && String((para && para.token) || '') !== expected;
+}
+
 function getOrCreateSheet(ss, name) {
   var sheet = ss.getSheetByName(name);
   if (!sheet) {
@@ -182,7 +211,7 @@ function getHeaders(sheet) {
 
 function updateHeaders(sheet, data) {
   var headers = getHeaders(sheet);
-  var keys = Object.keys(data);
+  var keys = safeHeaderKeys(Object.keys(data));
   var newHeaders = headers.slice();
   var headerChanged = false;
   

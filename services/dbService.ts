@@ -11,6 +11,10 @@ export const getGasUrl = () => isDemoMode() || getStorageMode()==='local' ? null
 const storageKey = (key: string) => isDemoMode() ? 'demo_v2_' + key : key;
 export const setGasUrl = (url: string) => {localStorage.setItem(GAS_URL_KEY,url.trim());setStorageMode(url.trim()?'gas':'local');};
 export const clearGasUrl = () => {localStorage.removeItem(GAS_URL_KEY);setStorageMode('local');};
+// 選用的 GAS 存取密碼（GAS v3.1 setupAccessToken 產生）；和網址一樣不會進備份檔。
+const GAS_TOKEN_KEY='hg_gas_token';
+export const getGasToken = (): string|null => { try { return isDemoMode() ? null : localStorage.getItem(GAS_TOKEN_KEY)?.trim()||null; } catch { return null; } };
+export const setGasToken = (token: string) => {const t=token.trim();if(t)localStorage.setItem(GAS_TOKEN_KEY,t);else localStorage.removeItem(GAS_TOKEN_KEY);};
 
 // Define local storage keys
 export const LOCAL_STORAGE_KEYS = {
@@ -65,7 +69,7 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout 
 };
 
 // Calling GAS Generic API Function
-const callGasApi = async (data: any, destination?: string) => {
+const callGasApi = async (data: any, destination?: string, tokenOverride?: string|null) => {
   if(data.type==='FoodLogs'&&data.action==='save')data={...data,action:'save_meal_v3',baseRevision:data.baseRevision??Math.max(0,(data.data?.revision||1)-1),operationId:data.operationId||'legacy-'+data.data?.id+'-'+data.data?.revision};
   const url = destination || getGasUrl();
   if (!url) throw new Error("API URL not set");
@@ -73,7 +77,8 @@ const callGasApi = async (data: any, destination?: string) => {
   try {
     const response = await fetchWithTimeout(url, {
       method: 'POST',
-      body: JSON.stringify(data),
+      // 存取密碼只在送出時附上，不會寫進待同步佇列。
+      body: JSON.stringify((tokenOverride!==undefined?tokenOverride:getGasToken())?{...data,token:tokenOverride!==undefined?tokenOverride:getGasToken()}:data),
       headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
     });
     if (!response.ok) {
@@ -110,9 +115,9 @@ const ensureArray = (item: any): any[] => {
 
 export const dbService = {
   // Test connection to Google Sheet Link
-  testConnection: async (url: string) => {
+  testConnection: async (url: string, token?: string|null) => {
     if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url.trim())) throw new Error('請填入完整的 GAS 網頁應用程式網址（/exec 結尾）。');
-    const data=await callGasApi({action:'read_all'},url.trim());
+    const data=await callGasApi({action:'read_all'},url.trim(),token===undefined?undefined:(token?.trim()||null));
     if(!Array.isArray(data.foodLogs)||!Array.isArray(data.workouts)||!('profile' in data)) throw new Error('GAS 回傳的資料格式不符，請確認部署的是本系統的 GAS 程式及最新版本。');
     return true;
   },

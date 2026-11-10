@@ -20,7 +20,29 @@ const VitalsTracker: React.FC<Props> = ({ vitalsRecords, onSaveRecord }) => {
   const [bsContext, setBsContext] = useState<'fasting' | 'postprandial' | 'random'>('fasting');
 
   const [saving,setSaving]=useState(false);
+  const [notice,setNotice]=useState<{ok:boolean;text:string}|null>(null);
+  React.useEffect(()=>{setNotice(null);},[activeTab]);
+  // 合理範圍檢查：擋下打錯字（例如收縮壓與舒張壓填反、多打一個 0），不做醫療判斷。
+  const checkInputs=():string|null=>{
+    const n=(v:string)=>Number(v);
+    if (activeTab === 'blood_pressure') {
+      if (!systolic || !diastolic) return '請輸入收縮壓與舒張壓。';
+      const s=n(systolic),d=n(diastolic),p=pulse?n(pulse):null;
+      if (!Number.isInteger(s)||s<50||s>260) return '收縮壓（高）請填 50～260 之間的整數。';
+      if (!Number.isInteger(d)||d<30||d>160) return '舒張壓（低）請填 30～160 之間的整數。';
+      if (s<=d) return '收縮壓（高）應該比舒張壓（低）大，請確認是不是填反了。';
+      if (p!==null&&(!Number.isInteger(p)||p<30||p>220)) return '心跳請填 30～220 之間的整數，或留空。';
+      return null;
+    }
+    if (!bloodSugar) return '請輸入血糖數值。';
+    const g=n(bloodSugar);
+    if (!Number.isInteger(g)||g<20||g>600) return '血糖請填 20～600 mg/dL 之間的整數。';
+    return null;
+  };
   const handleSave = async () => {
+    if (saving) return;
+    const problem=checkInputs();
+    if (problem) { setNotice({ok:false,text:problem}); return; }
     const now = new Date();
     const newRecord: VitalsRecord = {
       id: Date.now().toString(),
@@ -30,25 +52,23 @@ const VitalsTracker: React.FC<Props> = ({ vitalsRecords, onSaveRecord }) => {
     };
 
     if (activeTab === 'blood_pressure') {
-      if (!systolic || !diastolic) return alert("請輸入收縮壓與舒張壓");
       newRecord.systolic = parseInt(systolic);
       newRecord.diastolic = parseInt(diastolic);
       if (pulse) newRecord.pulse = parseInt(pulse);
     } else {
-      if (!bloodSugar) return alert("請輸入血糖數值");
       newRecord.bloodSugar = parseInt(bloodSugar);
       newRecord.bloodSugarContext = bsContext;
     }
 
-    setSaving(true);
-    try{await onSaveRecord(newRecord);}catch{alert('儲存失敗，輸入已保留，請重試。');return;}finally{setSaving(false);}
+    setSaving(true);setNotice(null);
+    try{await onSaveRecord(newRecord);}catch{setNotice({ok:false,text:'儲存失敗，輸入已保留，請重試。'});return;}finally{setSaving(false);}
 
     // Reset forms
     setSystolic('');
     setDiastolic('');
     setPulse('');
     setBloodSugar('');
-    alert("紀錄成功！");
+    setNotice({ok:true,text:activeTab==='blood_pressure'?`已記錄血壓 ${newRecord.systolic}/${newRecord.diastolic}。`:`已記錄血糖 ${newRecord.bloodSugar} mg/dL。`});
   };
 
   const getBPStatus = (sys?: number, dia?: number) => {
@@ -206,6 +226,7 @@ const VitalsTracker: React.FC<Props> = ({ vitalsRecords, onSaveRecord }) => {
             >
                <Plus className="w-6 h-6" /> 儲存今日紀錄
             </button>
+            {notice&&<p role={notice.ok?'status':'alert'} className={`mt-3 rounded-xl px-4 py-3 text-sm font-bold ${notice.ok?'bg-emerald-50 text-emerald-800':'bg-red-50 text-red-700'}`}>{notice.text}</p>}
           </div>
         ) : (
           <div className="p-6 md:p-8 space-y-4 bg-gray-50 min-h-[400px] animate-fade-in">

@@ -9,17 +9,35 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.disable("x-powered-by");
+const FULL_CSP = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
 
-app.use(cors());
-app.use(express.json({ limit: "50mb" }));
+// 只允許本站（含 Netlify 預覽網址）與本機開發跨來源呼叫；同源請求不受影響。
+const ALLOWED_ORIGIN = /^(https:\/\/([a-z0-9-]+--)?healthcona\.netlify\.app|http:\/\/(localhost|127\.0\.0\.1)(:\d+)?)$/;
+app.use(cors({ origin: (origin, cb) => cb(null, !origin || ALLOWED_ORIGIN.test(origin)) }));
+// 影片上限 3 MB，base64 後約 4 MB；保留餘裕但不再接受 50 MB。
+app.use(express.json({ limit: "8mb" }));
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  if (!req.path.startsWith("/api/")) {
+    res.setHeader("X-Frame-Options", "DENY");
+    // 正式版用和 netlify.toml 相同的完整 CSP；開發模式 Vite 需要內嵌程式，只套不影響開發的部分。
+    res.setHeader("Content-Security-Policy", process.env.NODE_ENV === "production" ? FULL_CSP : "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'");
+  }
+  next();
+});
 
 const GEMINI_REST = "https://generativelanguage.googleapis.com/v1beta";
 
+// 只使用使用者自己在設定頁填的金鑰。不再退回伺服器環境變數的金鑰，避免網站變成任何人都能免費使用的開放代理。
 const resolveGeminiKey = (req: express.Request): string | null => {
-  const clientKey = req.headers['authorization']?.replace('Bearer ', '');
-  if (clientKey && clientKey.length > 5 && clientKey !== "null") return clientKey;
-  return process.env.GEMINI_API_KEY || process.env.API_KEY || null;
+  const clientKey = String(req.headers['authorization'] || '').replace(/^Bearer\s+/i, '').trim();
+  return clientKey.length >= 20 && clientKey.length <= 200 && clientKey !== "null" ? clientKey : null;
 };
+const VALID_MODEL = /^[a-z0-9][a-z0-9.\-]{1,63}$/;
+const missingKey = (res: express.Response) => res.status(401).json({ error: "請先在設定填寫 Gemini API Key", code: 401, status: "UNAUTHENTICATED" });
+const invalidModel = (res: express.Response) => res.status(400).json({ error: "模型名稱格式錯誤", code: 400, status: "INVALID_ARGUMENT" });
 
 // 把 @google/genai 丟出的錯誤還原成 Google 的 HTTP 狀態碼與 status 字串，讓前端能分辨金鑰錯、額度用完、模型停用。
 const describeGeminiError = (error: any) => {
@@ -47,38 +65,17 @@ const describeGeminiError = (error: any) => {
   return { code, status, message };
 };
 
-const getGeminiClient = (req: express.Request) => {
-  const httpOptions = { headers: { 'User-Agent': 'aistudio-build' } };
-  
-  // Prefer client-provided key first (since the app has a Settings input for it)
-  const clientKey = req.headers['authorization']?.replace('Bearer ', '');
-  if (clientKey && clientKey.length > 5 && clientKey !== "null") {
-     return new GoogleGenAI({ apiKey: clientKey });
-  }
-
-  // Option to use the server's environment variable (Secure)
-  const serverKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-  console.log("SERVER KEY USED length:", serverKey ? serverKey.length : 0);
-  if (serverKey) {
-    return new GoogleGenAI({ apiKey: serverKey });
-  }
-  
-  throw new Error("Missing Gemini API Key in server environment");
-};
-
-app.get("/api/debug", (req, res) => {
-  const clientKey = req.headers['authorization']?.replace('Bearer ', '') || '';
-  const serverKey = process.env.GEMINI_API_KEY || process.env.API_KEY || '';
-  res.json({ hasClientKey: Boolean(clientKey), hasServerKey: Boolean(serverKey) });
-});
+const getGeminiClient = (key: string) => new GoogleGenAI({ apiKey: key });
 
 // Generic endpoint for generateContent
 app.post("/api/gemini/generateContent", async (req, res) => {
+  const key = resolveGeminiKey(req);
+  if (!key) return missingKey(res);
+  const { model, contents, config } = req.body || {};
+  if (typeof model !== "string" || !VALID_MODEL.test(model)) return invalidModel(res);
   try {
-    const ai = getGeminiClient(req);
-    const { model, contents, config } = req.body;
-    
-    // We expect the frontend to send the exact payload format GoogleGenAI wants
+    const ai = getGeminiClient(key);
+
     const response = await ai.models.generateContent({
       model,
       contents,
@@ -101,7 +98,7 @@ app.get("/api/gemini/models", async (req, res) => {
   try {
     const key = resolveGeminiKey(req);
     if (!key) {
-      res.status(401).json({ error: "Missing Gemini API Key", code: 401, status: "UNAUTHENTICATED" });
+      missingKey(res);
       return;
     }
     const upstream = await fetch(`${GEMINI_REST}/models?pageSize=200`, { headers: { "x-goog-api-key": key } });
@@ -124,10 +121,12 @@ app.get("/api/gemini/models", async (req, res) => {
 
 // Generic endpoint for streaming (useful for chat)
 app.post("/api/gemini/generateContentStream", async (req, res) => {
+  const key = resolveGeminiKey(req);
+  if (!key) return missingKey(res);
+  const { model, contents, config } = req.body || {};
+  if (typeof model !== "string" || !VALID_MODEL.test(model)) return invalidModel(res);
   try {
-    const ai = getGeminiClient(req);
-    const { model, contents, config } = req.body;
-    
+    const ai = getGeminiClient(key);
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
@@ -152,6 +151,17 @@ app.post("/api/gemini/generateContentStream", async (req, res) => {
   }
 });
 
+// 不存在的 API 路徑回 JSON 404，不要掉到網頁本體。
+app.use("/api", (_req, res) => { res.status(404).json({ error: "Not found", code: 404 }); });
+
+// 最後一道錯誤處理：不回傳堆疊、檔案路徑等內部資訊。
+app.use("/api", (err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  const code = Number(err?.status || err?.statusCode) || 500;
+  const message = err?.type === "entity.parse.failed" ? "Invalid JSON" : err?.type === "entity.too.large" ? "內容太大" : "Server error";
+  if (code >= 500) console.error("API error:", err?.type || err?.name || "unknown");
+  res.status(code >= 400 && code < 600 ? code : 500).json({ error: message, code });
+});
+
 // Export app for Netlify Serverless/Lambda (using serverless-http later)
 export default app;
 
@@ -174,8 +184,10 @@ if (process.env.NETLIFY !== 'true' && process.env.LAMBDA_TASK_ROOT === undefined
       });
     }
 
-    app.listen(PORT, () => {
-      console.log(`Server running on http://0.0.0.0:${PORT}`);
+    // 開發模式預設只聽本機，避免同網段的人連到開發伺服器；要給手機測試可設 HOST=0.0.0.0。
+    const host = process.env.HOST || (process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1");
+    app.listen(Number(PORT), host, () => {
+      console.log(`Server running on http://${host}:${PORT}`);
     });
   }
 

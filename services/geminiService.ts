@@ -25,6 +25,9 @@ const proxyGenerate = async (model: string, body: Record<string, unknown>, signa
   return res.json();
 };
 
+// AI 回傳的連結只接受 http／https，避免 javascript: 之類的網址被做成可點連結。
+const safeHttpUrl = (value: unknown) => { try { const u = new URL(String(value || '')); return u.protocol === 'https:' || u.protocol === 'http:' ? u.toString() : '#'; } catch { return '#'; } };
+
 const friendlyGeminiError = (err: unknown): Error => {
   if (err instanceof GeminiError) {
     const kind = classifyGeminiError(err);
@@ -301,7 +304,7 @@ export const findNearbyRestaurants = async (foodName: string, lat: number, lng: 
              const uri = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}&query_place_id=${mapData.placeId || ''}`;
              places.push({ name, uri });
         } else if (c.web) {
-             places.push({ name: c.web.title || "搜尋結果", uri: c.web.uri || "#" }); 
+             places.push({ name: c.web.title || "搜尋結果", uri: safeHttpUrl(c.web.uri) });
         }
     });
 

@@ -623,15 +623,6 @@ dialog.zoom button{position:fixed;top:12px;right:12px;width:44px;height:44px;bor
 
 <a class="top-link" href="#" aria-label="回到頂端">↑</a>
 <dialog class="zoom" id="zoom"><img alt=""><button type="button" aria-label="關閉">✕</button></dialog>
-<script>
-(()=>{
- const dlg=document.getElementById('zoom'),img=dlg.querySelector('img');
- document.querySelectorAll('button.phone, button.wide').forEach(btn=>btn.addEventListener('click',()=>{
-  const src=btn.querySelector('img');img.src=src.currentSrc||src.src;img.alt=src.alt;
-  if(typeof dlg.showModal==='function')dlg.showModal();else window.open(img.src,'_blank');
- }));
- dlg.addEventListener('click',()=>dlg.close());
-})();
-</script>
+<script src="guide.js" defer></script>
 </body>
 </html>
