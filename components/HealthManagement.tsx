@@ -15,10 +15,10 @@ interface Props {
   userProfile: UserProfile;
   onUpdateProfile: (profile: UserProfile) => Promise<void>;
   healthReports: HealthReport[];
-  onReportAnalyzed: (report: HealthReport) => void;
+  onReportAnalyzed: (report: HealthReport) => Promise<void>;
   appointments: SavedAppointment[];
-  onSaveAppointment: (appointment: SavedAppointment) => void;
-  onDeleteAppointment: (id: string) => void;
+  onSaveAppointment: (appointment: SavedAppointment) => Promise<void>;
+  onDeleteAppointment: (id: string) => Promise<void>;
   activeSubTab?: SubTab;
   onSubTabChange?: (tab: SubTab) => void;
 }
@@ -294,7 +294,7 @@ const HealthManagement: React.FC<Props> = ({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="health-management space-y-6">
       {profileNotice&&<p role="status" className="care-notice">{profileNotice}</p>}
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
 

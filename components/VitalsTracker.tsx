@@ -74,9 +74,9 @@ const VitalsTracker: React.FC<Props> = ({ vitalsRecords, onSaveRecord }) => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="vitals-workspace max-w-3xl mx-auto space-y-6">
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 md:p-8 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+        <div className="vitals-heading p-6 md:p-8 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
           <h2 className="text-3xl font-black text-gray-800 flex items-center gap-3 tracking-tight">
             <Activity className="w-10 h-10 text-rose-500" /> 生理數據紀錄
           </h2>
@@ -116,8 +116,9 @@ const VitalsTracker: React.FC<Props> = ({ vitalsRecords, onSaveRecord }) => {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3 md:gap-4">
                   <div className="bg-rose-50/50 p-4 rounded-xl border-2 border-rose-100 flex flex-col justify-between">
-                    <label className="block text-sm sm:text-base font-black text-rose-900 mb-2">收縮壓 (高)</label>
+                    <label htmlFor="vital-systolic" className="block text-sm sm:text-base font-black text-rose-900 mb-2">收縮壓 (高)</label>
                     <input 
+                      id="vital-systolic"
                       type="number" 
                       inputMode="decimal"
                       pattern="[0-9]*"
@@ -128,8 +129,9 @@ const VitalsTracker: React.FC<Props> = ({ vitalsRecords, onSaveRecord }) => {
                     />
                   </div>
                   <div className="bg-sky-50/50 p-4 rounded-xl border-2 border-sky-100 flex flex-col justify-between">
-                    <label className="block text-sm sm:text-base font-black text-sky-900 mb-2">舒張壓 (低)</label>
+                    <label htmlFor="vital-diastolic" className="block text-sm sm:text-base font-black text-sky-900 mb-2">舒張壓 (低)</label>
                     <input 
+                      id="vital-diastolic"
                       type="number" 
                       inputMode="decimal"
                       pattern="[0-9]*"
@@ -140,8 +142,9 @@ const VitalsTracker: React.FC<Props> = ({ vitalsRecords, onSaveRecord }) => {
                     />
                   </div>
                   <div className="col-span-2 bg-gray-50 p-4 rounded-xl border-2 border-gray-200 flex items-center gap-4">
-                    <label className="text-sm sm:text-base font-black text-gray-700 whitespace-nowrap">心跳/脈搏 (選填)</label>
+                    <label htmlFor="vital-pulse" className="text-sm sm:text-base font-black text-gray-700 whitespace-nowrap">心跳/脈搏 (選填)</label>
                     <input 
+                      id="vital-pulse"
                       type="number" 
                       inputMode="decimal"
                       pattern="[0-9]*"
@@ -179,9 +182,10 @@ const VitalsTracker: React.FC<Props> = ({ vitalsRecords, onSaveRecord }) => {
                 </div>
 
                 <div className="bg-blue-50/30 p-4 rounded-xl border-2 border-blue-100">
-                  <label className="block text-base font-black text-blue-900 mb-2">血糖數值</label>
+                  <label htmlFor="vital-sugar" className="block text-base font-black text-blue-900 mb-2">血糖數值</label>
                   <div className="relative">
                     <input 
+                      id="vital-sugar"
                       type="number" 
                       inputMode="decimal"
                       pattern="[0-9]*"

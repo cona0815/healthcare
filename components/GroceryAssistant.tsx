@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ChefHat, ListPlus, Loader2, Check, ExternalLink, Heart, Bookmark, Utensils, Video, Flame, PenLine, Trash2 } from 'lucide-react';
 import { generateHealthyRecipes } from '../services/geminiService';
 import { HealthReport, UserProfile, Recipe } from '../types';
@@ -7,8 +7,8 @@ interface Props {
   userProfile: UserProfile;
   healthReport: HealthReport | null;
   savedRecipes: Recipe[];
-  onSaveRecipe: (recipe: Recipe) => void;
-  onDeleteRecipe: (id: string) => void;
+  onSaveRecipe: (recipe: Recipe) => Promise<void>;
+  onDeleteRecipe: (id: string) => Promise<void>;
 }
 
 interface RecipeCardProps {
@@ -16,22 +16,30 @@ interface RecipeCardProps {
   isSavedView?: boolean;
   isExpanded: boolean;
   onToggle: (id: string) => void;
-  onSave: (recipe: Recipe) => void;
-  onDelete: (id: string) => void;
+  onSave: (recipe: Recipe) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
   isSaved: boolean;
 }
 
 const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, isSavedView = false, isExpanded, onToggle, onSave, onDelete, isSaved }) => {
   const [localNote, setLocalNote] = useState(recipe.notes || '');
+  const busy = useRef(false);
+  const [saving,setSaving] = useState(false),[error,setError] = useState('');
+  const save = async(action:()=>Promise<void>)=>{
+    if(busy.current)return;
+    busy.current=true;setSaving(true);setError('');
+    try{await action();}catch(err){setError('變更未完成，請重試：'+((err as Error).message||''));}
+    finally{busy.current=false;setSaving(false);}
+  };
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
       e.stopPropagation(); // 防止觸發卡片展開
       
       if (isSaved) {
           // 直接刪除，不需確認，操作更流暢
-          onDelete(recipe.id);
+          void save(()=>onDelete(recipe.id));
       } else {
-          onSave({ ...recipe, notes: localNote });
+          void save(()=>onSave({ ...recipe, notes: localNote }));
       }
   };
 
@@ -44,10 +52,10 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, isSavedView = false, is
       const updatedRecipe = { ...recipe, checkedIngredients: newChecked };
       
       if (isSaved) {
-          onSave(updatedRecipe);
+          void save(()=>onSave(updatedRecipe));
       } else {
           if (confirm("要儲存採買進度，請先收藏此食譜。是否收藏？")) {
-              onSave(updatedRecipe);
+              void save(()=>onSave(updatedRecipe));
           }
       }
   };
@@ -58,7 +66,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, isSavedView = false, is
 
   const handleNoteBlur = () => {
       if (localNote !== recipe.notes) {
-          onSave({ ...recipe, notes: localNote });
+          void save(()=>onSave({ ...recipe, notes: localNote }));
       }
   };
 
@@ -74,6 +82,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, isSavedView = false, is
                     <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">綠燈料理</span>
                 </h4>
                 <button 
+                    disabled={saving}
                     onClick={handleFavoriteClick}
                     className="p-2 -mr-2 transition-transform active:scale-95 hover:bg-gray-50 rounded-full"
                     title={isSaved ? "取消收藏" : "加入最愛"}
@@ -100,6 +109,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, isSavedView = false, is
             </div>
         </div>
 
+        {error&&<p role="alert" className="px-4 pb-3 text-sm text-red-600">{error}</p>}
         {isExpanded && (
             <div className="px-4 pb-4 pt-0 border-t border-gray-50 bg-gray-50/50 animate-fade-in">
                 
@@ -110,6 +120,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, isSavedView = false, is
                             <PenLine className="w-3 h-3"/> 我的料理筆記
                         </label>
                         <textarea
+                            disabled={saving}
                             value={localNote}
                             onChange={handleNoteChange}
                             onBlur={handleNoteBlur}
@@ -129,6 +140,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, isSavedView = false, is
                             return (
                                 <label key={i} className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer hover:bg-gray-100 p-1.5 rounded transition-colors" onClick={(e) => e.stopPropagation()}>
                                     <input 
+                                        disabled={saving}
                                         type="checkbox" 
                                         checked={isChecked}
                                         onChange={() => handleIngredientCheck(ing)}

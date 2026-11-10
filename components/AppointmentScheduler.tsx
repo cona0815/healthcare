@@ -5,8 +5,8 @@ import { AppointmentDetails, SavedAppointment } from '../types';
 
 interface Props {
   appointments?: SavedAppointment[];
-  onSaveAppointment?: (appointment: SavedAppointment) => void;
-  onDeleteAppointment?: (id: string) => void;
+  onSaveAppointment?: (appointment: SavedAppointment) => Promise<void>;
+  onDeleteAppointment?: (id: string) => Promise<void>;
 }
 
 const AppointmentScheduler: React.FC<Props> = ({ appointments = [], onSaveAppointment, onDeleteAppointment }) => {
@@ -18,10 +18,16 @@ const AppointmentScheduler: React.FC<Props> = ({ appointments = [], onSaveAppoin
   const [formData, setFormData] = useState<AppointmentDetails | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const savingRef = useRef(false);
+  const draftId = useRef<string|null>(null);
+  const [saving,setSaving] = useState(false);
+  const [message,setMessage] = useState('');
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    e.target.value='';
+    if (!file || loading || savingRef.current) return;
+    draftId.current=null;setMessage('');
 
     setLoading(true);
     setFormData(null);
@@ -41,6 +47,8 @@ const AppointmentScheduler: React.FC<Props> = ({ appointments = [], onSaveAppoin
   };
 
   const handleStartEdit = (apt: SavedAppointment) => {
+      if(savingRef.current)return;
+      draftId.current=apt.id;setMessage('');
       setEditingId(apt.id);
       setIsNew(false);
       setFormData({ ...apt });
@@ -48,6 +56,8 @@ const AppointmentScheduler: React.FC<Props> = ({ appointments = [], onSaveAppoin
   };
 
   const handleCancelEdit = () => {
+      if(savingRef.current)return;
+      draftId.current=null;
       setFormData(null);
       setEditingId(null);
       setIsNew(false);
@@ -59,30 +69,34 @@ const AppointmentScheduler: React.FC<Props> = ({ appointments = [], onSaveAppoin
       }
   };
 
-  const handleSave = () => {
-    if (!formData || !onSaveAppointment) return;
+  const handleSave = async () => {
+    if (!formData || !onSaveAppointment || savingRef.current) return;
+    if(!formData.title.trim()||!formData.date||!Number.isFinite(Date.parse(formData.date))){setMessage('請填寫醫院／診所名稱及有效日期。');return;}
+    savingRef.current=true;setSaving(true);setMessage('');
+    draftId.current ||= editingId || crypto.randomUUID();
     
     const newAppointment: SavedAppointment = {
         ...formData,
-        id: isNew ? Date.now().toString() : (editingId || Date.now().toString()),
+        id: draftId.current,
         createdAt: isNew ? new Date().toISOString() : (appointments.find(a => a.id === editingId)?.createdAt || new Date().toISOString())
     };
     
-    if (!isNew && editingId) {
-        onDeleteAppointment?.(editingId);
-    }
-
-    onSaveAppointment(newAppointment);
-    alert(isNew ? "預約已新增！" : "預約已更新！");
-    setFormData(null);
-    setEditingId(null);
-    setIsNew(false);
+    try {
+      // Replace the same ID in one local write; never delete the original before an edit.
+      await onSaveAppointment(newAppointment);
+      setMessage(isNew?'預約已新增至本機。':'預約已更新。');
+      setFormData(null);setEditingId(null);setIsNew(false);draftId.current=null;
+    } catch(err) {
+      setMessage('預約未完成儲存，輸入仍保留：'+((err as Error).message||'請重試'));
+    } finally {savingRef.current=false;setSaving(false);}
   };
 
-  const handleDelete = (id: string) => {
-      if (confirm("確定要刪除此預約記錄嗎？")) {
-          onDeleteAppointment?.(id);
-      }
+  const handleDelete = async (id: string) => {
+      if(savingRef.current||!onDeleteAppointment||!confirm('確定要刪除此預約記錄嗎？'))return;
+      savingRef.current=true;setSaving(true);setMessage('');
+      try{await onDeleteAppointment(id);setMessage('預約已刪除。');if(editingId===id){setFormData(null);setEditingId(null);draftId.current=null;}}
+      catch(err){setMessage('刪除未完成：'+((err as Error).message||'請重試'));}
+      finally{savingRef.current=false;setSaving(false);}
   };
 
   // Helper to safely format time display (removes 1899-12-30 etc)
@@ -263,7 +277,7 @@ const AppointmentScheduler: React.FC<Props> = ({ appointments = [], onSaveAppoin
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-6 rounded-2xl text-white shadow-lg">
+      <div className="feature-banner bg-gradient-to-r from-purple-500 to-pink-600 p-6 rounded-2xl text-white shadow-lg">
         <h2 className="text-2xl font-bold flex items-center gap-2"><Calendar className="w-6 h-6" /> 預約管理中心</h2>
         <p className="opacity-90 mt-2">上傳預約單，AI 自動規劃行程，您也可以手動編輯。</p>
       </div>
@@ -332,8 +346,8 @@ const AppointmentScheduler: React.FC<Props> = ({ appointments = [], onSaveAppoin
                 </div>
 
                 <div className="mt-6 flex gap-3">
-                   <button onClick={handleSave} className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all">
-                      <Save className="w-4 h-4" /> {isNew ? "確認並新增" : "儲存變更"}
+                   <button disabled={saving} onClick={()=>void handleSave()} className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all">
+                      <Save className="w-4 h-4" /> {saving?'儲存中…':isNew ? "確認並新增" : "儲存變更"}
                    </button>
                    {editingId && (
                        <button onClick={() => { if(confirm("取消編輯將不會儲存變更，確定嗎？")) handleCancelEdit(); }} className="px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-xl transition-colors">
@@ -346,6 +360,7 @@ const AppointmentScheduler: React.FC<Props> = ({ appointments = [], onSaveAppoin
       </div>
 
       {/* Appointment Cards List */}
+      {message&&<p role="status" className="p-3 rounded-xl bg-gray-50 text-gray-700 text-sm">{message}</p>}
       <div className="space-y-4">
          <div className="flex items-center justify-between px-1">
             <h3 className="font-bold text-gray-700 flex items-center gap-2 text-lg">
@@ -434,10 +449,10 @@ const AppointmentScheduler: React.FC<Props> = ({ appointments = [], onSaveAppoin
 
                             {/* Footer Actions */}
                             <div className="flex items-center gap-4 mt-2 pt-4 border-t border-gray-50">
-                                <button onClick={() => handleStartEdit(apt)} className="flex items-center gap-1.5 text-sm font-bold text-gray-400 hover:text-purple-600 transition-colors">
+                                <button disabled={saving} onClick={() => handleStartEdit(apt)} className="flex items-center gap-1.5 text-sm font-bold text-gray-400 hover:text-purple-600 transition-colors">
                                     <Edit3 className="w-4 h-4" /> 編輯
                                 </button>
-                                <button onClick={() => handleDelete(apt.id)} className="flex items-center gap-1.5 text-sm font-bold text-gray-400 hover:text-red-500 transition-colors ml-auto">
+                                <button disabled={saving} onClick={() => void handleDelete(apt.id)} className="flex items-center gap-1.5 text-sm font-bold text-gray-400 hover:text-red-500 transition-colors ml-auto">
                                     <Trash2 className="w-4 h-4" /> 刪除
                                 </button>
                             </div>

@@ -1,55 +1,72 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# 健康日常 — Claude 完整接手專案
 
-# Run and deploy your AI Studio app
+匯出日期：2026-11-10（Asia/Taipei）。這是目前本機工作目錄的完整原始碼快照，包含尚未發布的修改，並非只匯出上一個 Git commit。
 
-This contains everything you need to run your app locally.
+## 先啟動
 
-View your app in AI Studio: https://ai.studio/apps/494bda51-c65b-4fbb-9f83-89047a5bbc66
+請在解壓後的 `healthcare` 資料夾開啟終端機：
 
-## Run Locally
+```sh
+npm ci
+npm run dev
+```
 
-**Prerequisites:**  Node.js
+- 手機示範：<http://localhost:3000/preview-mobile.html?demo=1>
+- 示範全頁：<http://localhost:3000/?demo=1>
+- 正常入口：<http://localhost:3000/>
+- 示範資料為虛構資料，不需要 GAS 或 AI 金鑰。
+- 第一次安裝需要網路。`node_modules` 沒有打包，請依 `package-lock.json` 安裝。
+- 目前匯出驗證環境：Node 24.14.1、npm 11.11.0。`.nvmrc` 與 Netlify 設定為 20，但 `package.json` 的 engines 還標 18.x；這是既有版本宣告不一致。匯出沒有擅自改版本，請 Claude 後續統一並跑完測試。npm 可能顯示 engines 警告。
 
+若 3000 已被占用，PowerShell：
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```powershell
+$env:PORT = '3003'
+npm run dev
+```
 
-## Backup validation
+此時網址改成 `http://localhost:3003/preview-mobile.html?demo=1`。
 
-## Local feature preview
+## 交給 Claude
 
-Open `http://localhost:3000/?demo=1` after `npm run dev` to try the demo without credentials. Demo records use isolated `demo_v2_` browser storage keys; no AI or cloud requests are made. The demo supports medication checkoffs, manual measurements, walking records, sample appointments, and 7/30-day trends. Reset restores fictional sample data only.
+先讀 `CLAUDE.md`，再讀 `docs/HANDOFF.md`。可直接貼上 `給Claude的接手指令.txt`。若使用能讀本機專案的 Claude 工具，開啟解壓後的 `healthcare` 資料夾。
 
-The regular dashboard now includes today's medication, measurement, exercise and appointment tasks plus trends for blood pressure, fasting glucose and weight. Missing readings remain gaps; daily readings are averaged and post-meal glucose is excluded from fasting trends.
+## AI 與 GAS（選用）
 
-## Backup validation
+- 不設定 GAS：資料只存在目前瀏覽器，仍可手動記錄與本機備份。
+- AI 辨識需要 Gemini 金鑰及網路，可在應用程式設定輸入。也可複製 `.env.example` 為 `.env`，填 `GEMINI_API_KEY` 作為伺服器端金鑰；目前 `server.ts` 讀取 `.env`，不是原始舊 README 提到的 `.env.local`。
+- GAS 完整程式在 `gas/Code.gs`；前端的權威來源是 `components/GasSetup.tsx` 的 `GAS_CODE`。
+- 更新既有 GAS 請沿用原試算表、原 Apps Script 專案與部署，操作說明見 `gas/README.md`。
+- 套件內沒有任何實際 API 金鑰、GAS 連線網址或部署憑證。
 
-Run `npm test` for the cloud-backup regression tests and `npm run build` for the production build.
+## 資料與驗證
 
-Backups require the Apps Script code supplied in System Settings with `backup_all` support. A backup is marked successful only after the server confirms the full operation. Network errors, outdated deployments, and failed responses preserve the previous successful-backup time; no partial fallback is reported as a full backup. Initial loading must finish before the automatic backup starts. Cloud restore failures are propagated to Settings so they cannot display a success message.
+專案原始碼不等於健康資料備份。健康資料在原瀏覽器的 localStorage 與 IndexedDB，換電腦、連接埠或網站不會自動帶過去。請先從原應用程式「設定」下載備份，確認檔案留存，再在新環境使用應用程式還原；不要直接覆蓋、清空舊資料。API 金鑰與 GAS 設定需要另行輸入。
 
-## 健康工具（手機與桌面）
+```sh
+npm test
+npx tsc --noEmit --jsx react-jsx --moduleResolution bundler --module esnext --target es2022 --esModuleInterop --skipLibCheck App.tsx
+npm run build
+node scripts/check-offline.mjs
+```
 
-- 首頁「今日待辦」：服藥與回診可勾選；量測／運動依實際紀錄顯示完成。
-- 「趨勢」：7／30 天血壓、空腹血糖與體重；展開完成率可查看每日缺漏。
-- 「健康工具」：症狀日記、當日飲食與用藥對照、藥品庫存、常用飲食／運動範本、日期區間看診 PDF、同步中心。
-- 藥品庫存是使用者管理的剩餘數量，可手動扣除一天用量或編輯補藥；提醒顯示於應用程式內，未提供背景推播。
-- PDF 在瀏覽器本機產生，中文以影像嵌入，支援 A4 多頁；文字不可選取。
-- `/?demo=1` 使用完整介面與隔離的 `demo_v2_` 本機資料，不使用正式金鑰或同步。
-- 首次設定頁可選「本機手動紀錄」，不需要 Gemini 或 Sheets。AI 分析仍須連網與設定金鑰。
-- 所有儲存／刪除使用持久化同步佇列；錯誤顯示於同步中心，重新連線或每 30 秒重試。系統設定可關閉自動同步。
-- 未指定資料庫的變更須於設定 Sheets 後按「重試同步」；其他資料庫的待處理項目不會送往目前連線。這不是跨裝置衝突合併系統。
-- 原本每週全量覆寫備份改為逐筆背景同步；手動全量備份仍保留，待同步未完成時會擋下。新設定 `hg_auto_sync` 控制自動同步。
-- 離線重新開啟需使用 `npm run build` 的正式檔案（HTTPS 或 localhost），且至少成功載入一次以快取。Vite 開發模式不註冊 Service Worker。AI 與雲端請求不快取。
-- 驗證：`npm test`、`npm run build`、`node scripts/check-offline.mjs`。手動驗證請使用示範資料，避免修改真實健康紀錄。
+本次檢查：113/113 測試通過、型別檢查與建置通過、離線 app shell 檢查通過。建置仍有主要 JS bundle 超過 500 kB 的既有警告。
 
-## 運動圖解與姿勢評分
+若要本機執行正式建置（PowerShell）：
 
-六種運動提供專業線稿圖解、左右滑動的三階段教學、返回運動分類及獨立影片教學卡。影片分析限 30 秒／3 MB，需使用者確認後經本機代理傳送 Google Gemini。部分項目無法判讀時不顯示綜合百分制分數，上方集中顯示原因與補拍建議。文字報告只保存在目前瀏覽器，各運動與評分版本分開比較。
+```powershell
+npm run build
+Copy-Item -LiteralPath preview-mobile.html -Destination dist/preview-mobile.html
+$env:NODE_ENV = 'production'
+npm start
+```
 
-部署使用 netlify.toml；必要的伺服器金鑰應設定在部署平台環境變數，不會嵌入前端。測試影片、截圖、tmp 及本機環境設定不納入發佈。
+`npm run preview` 僅提供 Vite 靜態預覽，不包含 Express 的 AI API。要回到開發模式，先清除目前終端機的 `NODE_ENV` 再執行 `npm run dev`。
+
+## 匯出內容
+
+完整應用原始碼、相依套件 lock、所有 public 素材（含 MediaPipe 模型與 WASM）、測試、GAS、Netlify 設定、手機預覽及接手文件。保留舊人物模式的原始碼與素材供歷史參考，但人物模式已取消，不應重新啟用。
+
+排除：可重新產生的 node_modules／dist、Git 資料庫、暫存截圖／影片／日誌、私人設定及歷史對話匯入檔。原始 README 保留於 `docs/README-original.md`，其中部分說明已過時，請以本文件與實際程式為準。
+
+`EXPORT_MANIFEST.json` 記錄每個匯出檔案的 SHA-256；`docs/SOURCE_SNAPSHOT.json` 記錄來源版本、未提交修改及來源檔案雜湊。正式網站尚未更新。

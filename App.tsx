@@ -32,6 +32,8 @@ import { getGeminiKey, clearGeminiKey } from './services/geminiService';
 import './components/product.css';
 import ThemePicker, {readTheme, ThemeName} from './components/ThemePicker';
 import './components/themes.css';
+import './components/presentation.css';
+import './components/themeVariants.css';
 
 const App: React.FC = () => {
   const demo=isDemoMode();
@@ -51,6 +53,23 @@ const App: React.FC = () => {
   const [careSection,setCareSection]=useState('symptoms');
   const [healthCalendarDate,setHealthCalendarDate]=useState(localDate());
   const [recordOpen, setRecordOpen] = useState(false);
+  const recordSheet=useRef<HTMLElement>(null);
+  useEffect(()=>{
+    if(!recordOpen)return;
+    const previous=document.activeElement as HTMLElement|null;
+    recordSheet.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    const onKey=(event:KeyboardEvent)=>{
+      if(event.key==='Escape'){event.preventDefault();setRecordOpen(false);return;}
+      if(event.key!=='Tab')return;
+      const buttons=recordSheet.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)');
+      if(!buttons?.length)return;
+      const first=buttons[0],last=buttons[buttons.length-1];
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+    };
+    document.addEventListener('keydown',onKey);
+    return()=>{document.removeEventListener('keydown',onKey);if(previous?.isConnected)previous.focus({preventScroll:true});};
+  },[recordOpen]);
   const [mealContext, setMealContext] = useState<{meal: MealType | null; date: string} | null>(null);
   const [activeTab, setActiveTab] = useState<ViewState>(()=>new URLSearchParams(window.location.search).get('view')==='settings'?'SYSTEM_SETTINGS':'DASHBOARD');
   const [workoutCategory,setWorkoutCategory]=useState('aerobic');
@@ -186,13 +205,8 @@ const App: React.FC = () => {
   };
 
   const handleReportAnalyzed = async (report: HealthReport) => {
-    setHealthReports(prev => [report, ...prev]);
-    try {
-        await dbService.addHealthReport(report);
-        alert("健檢報告已上傳並儲存至 Google Sheets！");
-    } catch (e) {
-        alert("健檢報告儲存失敗，請檢查連線");
-    }
+    await dbService.addHealthReport(report);
+    setHealthReports(getLocal<HealthReport[]>('hg_reports',[]));
   };
 
   const handleUpdateProfile = async (profile: UserProfile) => {
@@ -211,21 +225,13 @@ const App: React.FC = () => {
   };
 
   const handleSaveAppointment = async (appointment: SavedAppointment) => {
-    setAppointments(prev => [appointment, ...prev]);
-    try {
-        await dbService.saveAppointment(appointment);
-    } catch (e) {
-        alert("預約儲存失敗");
-    }
+    await dbService.saveAppointment(appointment);
+    setAppointments(getLocal<SavedAppointment[]>('hg_appointments',[]));
   };
 
   const handleDeleteAppointment = async (id: string) => {
-    setAppointments(prev => prev.filter(a => a.id !== id));
-    try {
-        await dbService.deleteAppointment(id);
-    } catch (e) {
-        console.error(e);
-    }
+    await dbService.deleteAppointment(id);
+    setAppointments(getLocal<SavedAppointment[]>('hg_appointments',[]));
   };
 
   const handleSaveWorkoutPlan = async (plan: WorkoutPlanDay[]) => {
@@ -235,25 +241,13 @@ const App: React.FC = () => {
 
   // Handle Save/Update Recipe
   const handleSaveRecipe = async (recipe: Recipe) => {
-    setSavedRecipes(prev => {
-      const exists = prev.find(r => r.id === recipe.id);
-      if (exists) {
-        return prev.map(r => r.id === recipe.id ? recipe : r);
-      }
-      return [recipe, ...prev];
-    });
-    try {
-        await dbService.saveRecipe(recipe);
-    } catch (e) {
-        alert("食譜儲存失敗");
-    }
+    await dbService.saveRecipe(recipe);
+    setSavedRecipes(getLocal<Recipe[]>('hg_recipes',[]));
   };
 
   const handleDeleteRecipe = async (id: string) => {
-    setSavedRecipes(prev => prev.filter(r => r.id !== id));
-    try {
-        await dbService.deleteRecipe(id);
-    } catch (e) { console.error(e); }
+    await dbService.deleteRecipe(id);
+    setSavedRecipes(getLocal<Recipe[]>('hg_recipes',[]));
   };
 
   const handleSaveVitals = async (record: VitalsRecord) => {
@@ -398,7 +392,7 @@ const App: React.FC = () => {
     }
   };
 
-  const isNavActive=(id:ViewState)=>activeTab===id||(id==='TASKS'&&['CARE','CALENDAR','TRENDS','VITALS','HEALTH_MANAGEMENT'].includes(activeTab));
+  const isNavActive=(id:ViewState)=>activeTab===id||(id==='TASKS'&&['CARE','CALENDAR','TRENDS','VITALS','HEALTH_MANAGEMENT'].includes(activeTab))||(id==='WORKOUT'&&['SLOW_JOG','WALL_SIT','SEATED_ANKLE','WALL_ANGEL','SNOW_ANGEL','BAND_WALL_SLIDE'].includes(activeTab));
   const NavButton = ({ id, label, icon: Icon }: { id: ViewState, label: string, icon: any }) => (
     <button
       onClick={() => {setMealContext(null);setActiveTab(id);}}
@@ -416,6 +410,7 @@ const App: React.FC = () => {
   const DesktopNavButton = ({ id, label, icon: Icon, colorClass }: { id: ViewState, label: string, icon: any, colorClass: string }) => (
      <button
         onClick={() => setActiveTab(id)}
+        aria-current={isNavActive(id) ? 'page' : undefined}
         className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 font-bold transition-all ${activeTab === id ? `${colorClass} shadow-md translate-x-1` : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}`}
       >
         <Icon className="w-5 h-5" /> {label}
@@ -438,24 +433,22 @@ const App: React.FC = () => {
       <LocalBackupScheduler demo={demo}/>
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 flex-col bg-white border-r border-gray-200 flex-shrink-0 z-20">
-        <div className="h-16 flex items-center gap-3 px-6 border-b border-gray-100 cursor-pointer" onClick={() => setActiveTab('DASHBOARD')}>
+        <button className="app-brand h-16 flex items-center gap-3 px-6 border-b border-gray-100" aria-label="健康日常，返回總覽" onClick={() => setActiveTab('DASHBOARD')}>
           <div className="bg-gradient-to-br from-teal-500 to-emerald-600 text-white p-2 rounded-xl shadow-sm">
             <AppIcon className="w-5 h-5" />
           </div>
           <h1 className="text-xl font-heading font-bold tracking-tight text-gray-900">
             {brandTitle}
           </h1>
-        </div>
+        </button>
 
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-          <p className="px-3 text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">選單</p>
-          <DesktopNavButton id="DASHBOARD" label="總覽儀表板" icon={LayoutDashboard} colorClass="bg-gray-100 text-gray-900" />
+          <p className="sidebar-caption">我的日常</p>
+          <DesktopNavButton id="DASHBOARD" label="今日總覽" icon={HomeIcon} colorClass="bg-gray-100 text-gray-900" />
+          <DesktopNavButton id="FOOD" label="飲食紀錄" icon={FoodIcon} colorClass="bg-teal-50 text-teal-700" />
+          <DesktopNavButton id="WORKOUT" label="運動訓練" icon={ExerciseIcon} colorClass="bg-orange-50 text-orange-700" />
           <DesktopNavButton id="TASKS" label="健康助手" icon={AssistantIcon} colorClass="bg-teal-50 text-teal-700" />
-          <DesktopNavButton id="TRENDS" label="健康趨勢週報" icon={BarChart3} colorClass="bg-teal-50 text-teal-700" />
-          <DesktopNavButton id="VITALS" label="每日生理量測" icon={HeartPulse} colorClass="bg-rose-50 text-rose-700" />
-          <DesktopNavButton id="FOOD" label="飲食分析與購物" icon={Utensils} colorClass="bg-teal-50 text-teal-700" />
-          <DesktopNavButton id="WORKOUT" label="運動建議" icon={Dumbbell} colorClass="bg-orange-50 text-orange-700" />
-          <DesktopNavButton id="HEALTH_MANAGEMENT" label="健康管理中心" icon={UserCog} colorClass="bg-blue-50 text-blue-700" />
+          <button className="sidebar-record" onClick={()=>setRecordOpen(true)}><Plus size={19}/>新增紀錄</button>
           <div className="mt-8">
             <DesktopNavButton id="SYSTEM_SETTINGS" label="系統設定" icon={Settings} colorClass="bg-gray-100 text-gray-700" />
           </div>
@@ -468,9 +461,7 @@ const App: React.FC = () => {
                </div>
                <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-gray-900 truncate">{userProfile.name || '使用者'}</p>
-                  <p className="text-xs text-green-600 font-medium truncate flex items-center gap-1">
-                     <Database className="w-3 h-3"/> 本機儲存
-                  </p>
+                  <p className="sidebar-caption">你的健康日常</p>
                </div>
                <button
                  onClick={handleDisconnect}
@@ -489,14 +480,14 @@ const App: React.FC = () => {
         {/* Mobile App Header */}
         <header className="md:hidden bg-white/80 backdrop-blur-md border-b border-gray-200 z-20 flex-shrink-0">
           <div className="px-4 h-14 flex items-center justify-between">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('DASHBOARD')}>
+            <button className="app-brand flex items-center gap-2" aria-label="健康日常，返回總覽" onClick={() => setActiveTab('DASHBOARD')}>
               <div className="bg-gradient-to-br from-teal-500 to-emerald-600 text-white p-1.5 rounded-lg shadow-sm">
                   <AppIcon className="w-5 h-5" />
               </div>
               <h1 className="text-lg font-heading font-bold tracking-tight text-gray-900">
                 {brandTitle}
               </h1>
-            </div>
+            </button>
             <div className="flex items-center gap-1">
                <button
                  onClick={() => setActiveTab('SYSTEM_SETTINGS')}
@@ -514,17 +505,15 @@ const App: React.FC = () => {
                </button>
             </div>
           </div>
-          <div className="bg-green-600/90 py-1 flex items-center justify-center gap-1 text-white text-[10px] font-medium shadow-inner">
-            <Database className="w-3 h-3"/> {demo?'示範資料 · 本機儲存':getGasUrl()?'本機儲存 · 同步詳見健康工具':'本機儲存 · 自動備份'}
-          </div>
         </header>
 
         {/* Scrollable Main Area */}
         <main data-view={activeTab} ref={mainScroll} className="flex-1 overflow-y-auto overflow-x-hidden relative pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-8">
            <div className="max-w-4xl mx-auto w-full p-4 md:p-8">
-              {(demo||localOnly)&&<div className="mode-banner">{demo?'示範模式 · 虛構資料，僅存在本機':'本機模式 · 手動紀錄免金鑰'} <a href={demo?'/':'/?demo=1'}>{demo?'離開示範':'體驗示範'}</a></div>}
+              {(demo||(localOnly&&activeTab==='SYSTEM_SETTINGS'))&&<div className="mode-banner">{demo?'示範體驗 · 虛構資料':'本機模式 · 手動紀錄免金鑰'} <a href={demo?'/':'/?demo=1'}>{demo?'離開示範':'體驗示範'}</a></div>}
+              {activeTab==='SYSTEM_SETTINGS'&&<header className="page-heading"><p>依照你的習慣</p><h2>設定</h2><span>個人資料、外觀與資料管理</span></header>}
 
-              <div hidden={activeTab!=='SYSTEM_SETTINGS'}><StorageStatus/></div>{['TRENDS','VITALS','HEALTH_MANAGEMENT'].includes(activeTab)&&<button className="section-back" onClick={()=>setActiveTab('TASKS')}>← 返回健康助手</button>}{activeTab==='FOOD'&&<button className="section-back" onClick={()=>setActiveTab('DASHBOARD')}>← 返回總覽</button>}{activeTab==='SYSTEM_SETTINGS'&&<button className="section-back" onClick={()=>setActiveTab('DASHBOARD')}>← 返回總覽</button>}{activeTab==='SYSTEM_SETTINGS'&&<nav className="assistant-category-links" aria-label="個人設定"><button onClick={()=>{setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}}><User aria-hidden="true"/><span>個人健康資料</span><span aria-hidden="true">›</span></button></nav>}{activeTab==='SYSTEM_SETTINGS'&&<ThemePicker title={brandTitle} onTitle={saveTitle} value={theme} onChange={changeTheme} notice={themeNotice}/>} {renderContent()}
+              <div hidden={activeTab!=='SYSTEM_SETTINGS'}><StorageStatus/></div>{['TRENDS','VITALS','HEALTH_MANAGEMENT'].includes(activeTab)&&<button className="section-back" onClick={()=>setActiveTab('TASKS')}>← 返回健康助手</button>}{activeTab==='SYSTEM_SETTINGS'&&<button className="section-back" onClick={()=>setActiveTab('DASHBOARD')}>← 返回總覽</button>}{activeTab==='SYSTEM_SETTINGS'&&<nav className="assistant-category-links" aria-label="個人設定"><button onClick={()=>{setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}}><User aria-hidden="true"/><span>個人健康資料</span><span aria-hidden="true">›</span></button></nav>}{activeTab==='SYSTEM_SETTINGS'&&<ThemePicker title={brandTitle} onTitle={saveTitle} value={theme} onChange={changeTheme} notice={themeNotice}/>} {renderContent()}
            </div>
         </main>
       </div>
@@ -544,7 +533,7 @@ const App: React.FC = () => {
       </nav>
 
       {duplicateMeal&&<DuplicateMealDialog name={duplicateMeal.name} onChoose={add=>{duplicateMeal.resolve(add);setDuplicateMeal(null);}}/>}
-      {recordOpen && <div className="record-overlay" onClick={()=>setRecordOpen(false)}><section className="record-sheet" role="dialog" aria-modal="true" aria-label="新增紀錄" onClick={e=>e.stopPropagation()}><div><h2>想記錄什麼？</h2><button aria-label="關閉新增紀錄" onClick={()=>setRecordOpen(false)}><X/></button></div>{([{view:'FOOD',label:'拍照記飲食',Icon:Camera},{view:'VITALS',label:'血壓與血糖',Icon:HeartPulse},{view:'WORKOUT',label:'運動紀錄',Icon:Dumbbell},{view:'DASHBOARD',label:'飲水紀錄',Icon:Droplets},{view:'TASKS',label:'症狀與健康助手',Icon:HeartPulse}] as const).map(({view,label,Icon})=><button key={view} onClick={()=>{setMealContext(null);setActiveTab(view);setRecordOpen(false);}}><Icon size={22}/>{label}</button>)}</section></div>}
+      {recordOpen && <div className="record-overlay" onClick={()=>setRecordOpen(false)}><section ref={recordSheet} className="record-sheet" role="dialog" aria-modal="true" aria-label="新增紀錄" onClick={e=>e.stopPropagation()}><div><h2>想記錄什麼？</h2><button aria-label="關閉新增紀錄" onClick={()=>setRecordOpen(false)}><X/></button></div>{([{view:'FOOD',label:'拍照記飲食',Icon:Camera},{view:'VITALS',label:'血壓與血糖',Icon:HeartPulse},{view:'WORKOUT',label:'運動紀錄',Icon:Dumbbell},{view:'DASHBOARD',label:'飲水紀錄',Icon:Droplets},{view:'TASKS',label:'症狀與健康助手',Icon:HeartPulse}] as const).map(({view,label,Icon})=><button key={view} onClick={()=>{setMealContext(null);setActiveTab(view);setRecordOpen(false);}}><Icon size={22}/>{label}</button>)}</section></div>}
       {showDailySummary && (
         <DailySummaryPopup
           userProfile={userProfile}

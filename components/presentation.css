@@ -1,0 +1,336 @@
+/* Product presentation. Loaded after feature styles; data and status colors stay semantic. */
+.health-shell[data-theme] {
+  --ink: #203c34;
+  --muted: #64746d;
+  --forest: #27664f;
+  --canvas: #f5f6f2;
+  --paper: #fff;
+  --text: var(--ink);
+  --green: var(--forest);
+  --line: #dfe6df;
+  --sage: #eaf1e9;
+  --hero: #214e40;
+  --hero-ink: #f6faf2;
+  --hero-muted: #d0e1d5;
+  --hero-accent: #cce4a7;
+  --control-line: #b9c8be;
+  --radius-card: 18px;
+  --shadow-card: 0 2px 8px #183b2903;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+.health-shell[data-theme=colorful] {
+  --ink: #293b52; --muted: #62718a; --forest: #3b5f93;
+  --canvas: #f5f6fa; --line: #dfe4ed; --sage: #eaf0f9;
+  --hero: #2f486d; --hero-ink: #f9fbff; --hero-muted: #d4e1f2;
+  --hero-accent: #c2dcf5; --control-line: #b6c3d5;
+}
+.health-shell[data-theme=island] {
+  --ink: #404d34; --muted: #6a705b; --forest: #586f3e;
+  --canvas: #f6f3e8; --paper: #fffef8; --line: #e4e0cd; --sage: #eeefdd;
+  --hero: #485b36; --hero-ink: #fffcef; --hero-muted: #e0e4cd;
+  --hero-accent: #eddb9d; --control-line: #bcc3a8;
+}
+.health-shell[data-theme] h1,.health-shell[data-theme] h2,.health-shell[data-theme] h3,.health-shell[data-theme] h4 {
+  letter-spacing: -.025em;
+  text-wrap: pretty;
+}
+.health-shell[data-theme] button,.health-shell[data-theme] summary { -webkit-tap-highlight-color: transparent; }
+.health-shell[data-theme] button:disabled { opacity: .45; }
+.health-shell[data-theme] :is(button,a,input,select,textarea,summary):focus-visible {
+  outline: 3px solid var(--forest); outline-offset: 3px;
+}
+.health-shell[data-theme] :where(input,select,textarea):not(:where([type=checkbox],[type=range],[type=file],[type=radio],[type=hidden])) {
+  min-height: 46px; border-color: var(--control-line); border-radius: 10px;
+  font-size: 16px; color: var(--ink); background: var(--paper); max-width: 100%;
+}
+.health-shell[data-theme] input[type=checkbox] { accent-color: var(--forest); }
+.health-shell[data-theme] > aside+div { background: var(--canvas); background-image: none; }
+.health-shell[data-theme] main { scrollbar-color: #bdc9bf transparent; scrollbar-gutter: stable; }
+.health-shell[data-theme] main>div { max-width: 820px; padding: 28px 32px 36px; }
+.health-shell[data-theme] .nutrition-home,.health-shell[data-theme] .task-page,.health-shell[data-theme] .care-tools {
+  --text: var(--ink); --green: var(--forest); --paper: #fff;
+  width: 100%; max-width: none; color: var(--ink); font-family: inherit;
+}
+.health-shell[data-theme=island] .nutrition-home,.health-shell[data-theme=island] .care-tools { --paper: #fffef8; }
+
+/* App chrome: a quiet wordmark and a single, stable navigation system. */
+.health-shell[data-theme] >aside { width: 224px; background: var(--paper); border-color: var(--line); }
+.health-shell[data-theme] .app-brand { text-align: left; border-color: var(--line); min-width: 0; gap: 10px; }
+.health-shell[data-theme] .app-brand h1 { color: var(--ink); font-size: 18px; letter-spacing: .01em; font-weight: 700; }
+.health-shell[data-theme] .app-brand .bg-gradient-to-br { background: var(--forest); border-radius: 12px; box-shadow: none; color: #fff; }
+.health-shell[data-theme] >aside .app-brand { padding: 0 22px; height: 78px; }
+.health-shell[data-theme] .sidebar-caption { color: var(--muted); font-size: 11px; font-weight: 400; letter-spacing: .04em; }
+.health-shell[data-theme] >aside nav>.sidebar-caption { margin: 0 12px 14px; }
+.health-shell[data-theme] >aside nav button { font-size: 14px; font-weight: 500; color: var(--muted); transform: none; box-shadow: none; min-height: 48px; }
+.health-shell[data-theme] >aside nav button[aria-current=page] { color: var(--forest); background: var(--sage); font-weight: 650; }
+.health-shell[data-theme] >aside nav .sidebar-record { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: var(--forest); color: #fff; border-radius: 12px; margin-top: 24px; }
+.health-shell[data-theme] >aside+div>header { background: var(--canvas); border-bottom: 1px solid var(--line); }
+.health-shell[data-theme] >aside+div>header>div:first-child { height: 60px; padding: 0 18px; }
+.health-shell[data-theme] >aside+div>header button { color: var(--muted); }
+.health-shell[data-theme] >aside+div>header .app-brand { min-height: 44px; }
+.health-shell[data-theme] >aside+div>header .app-brand>div { padding: 8px; }
+.health-shell[data-theme] >aside+div>header .app-brand h1 { max-width: 176px; }
+.health-shell[data-theme] .mode-banner { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 4px; min-height: 32px; margin: 0 0 12px; background: transparent; color: var(--muted); border: 0; font-size: 11px; text-align: left; }
+.health-shell[data-theme] .mode-banner a { min-height: 32px; padding: 7px 0 7px 12px; white-space: nowrap; color: var(--forest); }
+.health-shell[data-theme] >nav { background: var(--paper); border-top: 1px solid var(--line); box-shadow: 0 -3px 16px #183b2905; }
+.health-shell[data-theme] .mobile-shortcuts { height: 68px; padding: 4px 10px; gap: 4px; }
+.health-shell[data-theme] .mobile-shortcuts>button { height: 58px; min-height: 58px; border-radius: 14px; color: var(--muted); font-size: 11px; grid-template-rows: 30px 16px; row-gap: 1px; }
+.health-shell[data-theme] .mobile-shortcuts>button[aria-current=page] { color: var(--forest); background: var(--sage); }
+.health-shell[data-theme] .mobile-shortcuts>button>svg { width: 24px; height: 24px; stroke-width: 1.7; }
+.health-shell[data-theme] .mobile-shortcuts>button>span:last-child,.health-shell[data-theme] .record-nav small { font-size: 11px; line-height: 16px; }
+.health-shell[data-theme] .mobile-shortcuts .record-nav { grid-template-rows: 36px 16px; }
+.health-shell[data-theme] .record-nav>span { width: 36px; height: 36px; border-radius: 12px; background: var(--forest); box-shadow: none; }
+
+/* Page rhythm and shared surfaces. */
+.health-shell[data-theme] .page-heading,.health-shell[data-theme] .diary-date,.health-shell[data-theme] .task-heading { margin: 2px 0 18px; }
+.health-shell[data-theme] .page-heading>p,.health-shell[data-theme] .page-eyebrow,.health-shell[data-theme] .task-heading>p:first-child { color: var(--muted); font-size: 12px; letter-spacing: .06em; margin: 0 0 3px; }
+.health-shell[data-theme] .page-heading>h2,.health-shell[data-theme] .diary-date h2,.health-shell[data-theme] .task-heading h1 { color: var(--ink); font-size: 27px; font-weight: 700; line-height: 1.4; letter-spacing: -.04em; margin: 0; }
+.health-shell[data-theme] .page-heading>span,.health-shell[data-theme] .task-heading>p:last-child { display: block; color: var(--muted); font-size: 12px; margin: 4px 0 0; }
+.health-shell[data-theme] .diary-date { align-items: center; gap: 10px; }
+.health-shell[data-theme] .diary-date time { font-size: 12px; color: var(--muted); padding: 0; border: 0; background: none; }
+.health-shell[data-theme] .overview-clock { color: var(--forest); font-size: 12px; font-weight: 500; margin-top: 2px; letter-spacing: .04em; }
+.health-shell[data-theme] .section-back { display: inline-flex; align-items: center; min-height: 40px; font-size: 12px; margin: 0 0 8px; }
+.health-shell[data-theme] :is(.nutrition-card,.care-panel,.task-calendar,.health-rewards,.theme-picker,.demo-settings,.storage-mode-settings,.exercise-hub,.food-guidance,.integration-card) { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+.health-shell[data-theme] .nutrition-card { padding: 16px; margin-bottom: 12px; }
+.health-shell[data-theme] .diary-title h3 { font-size: 15px; font-weight: 650; color: var(--ink); gap: 7px; }
+.health-shell[data-theme] .diary-title h3 svg { width: 19px; height: 19px; color: var(--forest); }
+.health-shell[data-theme] .today-appointments { gap: 6px; margin-bottom: 12px; }
+.health-shell[data-theme] .today-appointments button { background: var(--paper); padding: 10px 13px; border-radius: 12px; }
+
+/* Daily energy has one strong visual anchor; fasting remains inside the same card. */
+.health-shell[data-theme] .nutrition-home .nutrition-glance { color: var(--hero-ink); background: var(--hero); border: 0; border-radius: 22px; padding: 22px 20px 16px; box-shadow: 0 6px 16px #183b2910; }
+.health-shell[data-theme] .nutrition-glance-main { gap: 20px; }
+.health-shell[data-theme] .calorie-ring { width: 80px; height: 80px; color: var(--hero-accent); background: transparent; }
+.health-shell[data-theme] .calorie-ring-base { stroke: #ffffff25; }
+.health-shell[data-theme] .calorie-ring-fill { stroke: var(--hero-accent); }
+.health-shell[data-theme] .nutrition-glance-copy h3 { font-size: 12px; font-weight: 500; color: var(--hero-muted); }
+.health-shell[data-theme] .nutrition-glance-copy .energy-total { margin: 3px 0 5px; gap: 6px; }
+.health-shell[data-theme] .nutrition-glance-copy .energy-total strong { color: var(--hero-ink); font-size: 42px; font-weight: 650; line-height: 1.15; letter-spacing: -1.8px; }
+.health-shell[data-theme] .nutrition-glance-copy .energy-total>span { color: var(--hero-muted); font-size: 12px; }
+.health-shell[data-theme] .nutrition-glance-copy .tdee-consumed { font-size: 11px; color: var(--hero-muted); }
+.health-shell[data-theme] .nutrition-assistant-link { width: 44px; height: 44px; top: -16px; right: -14px; color: var(--hero-muted); }
+.health-shell[data-theme] .nutrition-assistant-link:hover { background: #ffffff15; }
+.health-shell[data-theme] .nutrition-glance :is(button,a):focus-visible { outline-color: var(--hero-accent); }
+.health-shell[data-theme] .nutrition-glance.is-over-goal .energy-total strong { color: #ffdfa5; }
+.health-shell[data-theme] .nutrition-glance.is-over-goal .calorie-ring-fill { stroke: #ffdfa5; }
+.health-shell[data-theme] .fasting-glance.fasting-compact { background: transparent; border: 0; border-top: 1px solid #ffffff25; border-radius: 0; margin: 16px 0 0; padding: 12px 0 0; }
+.health-shell[data-theme] .fasting-glance-heading { align-items: center; gap: 8px; }
+.health-shell[data-theme] .fasting-glance-heading>span { color: var(--hero-muted); font-size: 12px; }
+.health-shell[data-theme] .fasting-glance-heading strong { color: var(--hero-ink); font-size: 21px; font-weight: 600; letter-spacing: .04em; }
+.health-shell[data-theme] .fasting-day-track { height: 4px; border-radius: 3px; }
+.health-shell[data-theme] .fasting-day-track>i { background: var(--hero-ink); box-shadow: 0 0 0 2px var(--hero); }
+.health-shell[data-theme] .fasting-off-caption,.health-shell[data-theme] .compact-eating-range { color: var(--hero-muted); font-size: 11px; }
+
+/* Compact macros: one visual row, without repeating tall feature cards. */
+.health-shell[data-theme] .daily-macros { padding: 14px 16px; }
+.health-shell[data-theme] .macro-caption { color: var(--muted); font-size: 11px; }
+.health-shell[data-theme] .daily-macro-grid { gap: 0; margin-top: 12px; }
+.health-shell[data-theme] .daily-macro { display: grid; grid-template-columns: 18px 1fr; align-items: center; column-gap: 4px; background: transparent; border-radius: 0; padding: 0 12px; border-left: 1px solid var(--line); text-align: left; }
+.health-shell[data-theme] .daily-macro:first-child { border-left: 0; padding-left: 0; }
+.health-shell[data-theme] .daily-macro:last-child { padding-right: 0; }
+.health-shell[data-theme] .macro-icon { height: 20px; margin: 0; }
+.health-shell[data-theme] .macro-icon svg { width: 17px; height: 17px; }
+.health-shell[data-theme] .daily-macro h4 { color: var(--muted); font-size: 12px; font-weight: 500; white-space: nowrap; }
+.health-shell[data-theme] .macro-protein .macro-icon { color: #a47240; }
+.health-shell[data-theme] .macro-carbs .macro-icon { color: #7b8447; }
+.health-shell[data-theme] .macro-fat .macro-icon { color: #7b7c9b; }
+.health-shell[data-theme] .macro-value { grid-column: 1/-1; justify-content: flex-start; margin: 5px 0 2px; }
+.health-shell[data-theme] .macro-value strong { font-size: 23px; line-height: 1.1; color: var(--ink); }
+.health-shell[data-theme] .daily-macro>small { grid-column: 1/-1; font-size: 10px; line-height: 1.5; color: var(--muted); }
+
+/* Everyday records share sizing, readable secondary text and real tap targets. */
+.health-shell[data-theme] .meal-diary { border-top: 1px solid var(--line); padding-bottom: 2px; }
+.health-shell[data-theme] .meal-diary .diary-title h3 { background: transparent; padding: 0; transform: none; }
+.health-shell[data-theme] .camera-action { min-height: 44px; background: var(--sage)!important; color: var(--forest)!important; border: 0; font-size: 12px; border-radius: 10px; }
+.health-shell[data-theme] .meal-diary-row { min-height: 72px; padding: 12px 0; gap: 12px; border-color: var(--line); }
+.health-shell[data-theme] .meal-symbol { width: 40px; height: 40px; border-radius: 12px; }
+.health-shell[data-theme] .meal-symbol svg { width: 21px; height: 21px; }
+.health-shell[data-theme] .meal-info h4 { color: var(--ink); font-size: 14px; }
+.health-shell[data-theme] .meal-info p { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.health-shell[data-theme] .meal-info strong { color: var(--forest); }
+.health-shell[data-theme] .meal-add { width: 44px; height: 44px; min-height: 44px; border: 1px solid var(--line); border-radius: 12px; color: var(--forest); }
+.health-shell[data-theme] .snack-row .meal-symbol { height: 40px; }
+.health-shell[data-theme] .water-card { background: var(--paper); border-color: var(--line); }
+.health-shell[data-theme] .water-card .diary-title h3 svg { color: #507d8a; }
+.health-shell[data-theme] .water-card strong { color: var(--ink); font-size: 20px; }
+.health-shell[data-theme] .water-card .diary-title>button { min-height: 44px; color: #365e6c; background: #edf4f5; border: 0; font-size: 12px; }
+.health-shell[data-theme] .water-card progress { height: 6px; margin: 12px 0 0; }
+.health-shell[data-theme] .water-card progress::-webkit-progress-value { background: #6e9ba5; }
+.health-shell[data-theme] .water-card progress::-moz-progress-bar { background: #6e9ba5; }
+.health-shell[data-theme] .water-options { font-size: 11px; color: var(--muted); }
+.health-shell[data-theme] .checkin-count { font-size: 12px; color: var(--muted); margin: 3px 0 8px; }
+.health-shell[data-theme] .checkin-list label { min-height: 52px; }
+.health-shell[data-theme] .checkin-list label>span { font-size: 14px; font-weight: 500; }
+.health-shell[data-theme] .checkin-list input { width: 21px; height: 21px; }
+.health-shell[data-theme] .health-checkin .diary-title>button { font-size: 12px; color: var(--forest); }
+.health-shell[data-theme] .health-rewards { padding: 16px; }
+.health-shell[data-theme] .health-reward-grid { gap: 6px; }
+.health-shell[data-theme] .health-reward-grid>div { border-radius: 12px; background: var(--canvas); }
+.health-shell[data-theme] .health-reward-grid strong { color: var(--forest); }
+.health-shell[data-theme] .health-reward-grid small { color: var(--muted); }
+.health-shell[data-theme] .health-rewards>details>summary { min-height: 44px; }
+.health-shell[data-theme] :is(.health-rewards>header>span,.health-reward-grid p>span,.reward-note,.reward-rules,.reward-badges h4 small,.health-rewards>details>summary,.health-rewards>details>summary>span,.macro-value>span,.water-card .diary-title>span,.checkin-list time) { color: var(--muted); }
+.health-shell[data-theme] .reward-badges span:not(.earned) { color: #6b7267; }
+.health-shell[data-theme] .meal-management { border-color: var(--line); border-radius: 10px; background: var(--canvas); }
+.health-shell[data-theme] .meal-management>summary { min-height: 44px; padding: 10px; align-items: center; font-size: 12px; }
+.health-shell[data-theme] .meal-management>summary span { color: var(--muted); font-size: 11px; }
+
+/* Assistant categories read as grouped lists, with the same size for every row. */
+.health-shell[data-theme] .task-calendar { padding: 12px; margin-bottom: 14px; }
+.health-shell[data-theme] .task-calendar h2 { font-size: 15px; }
+.health-shell[data-theme] .calendar-expand { background: var(--sage); min-height: 40px; margin-top: 10px; }
+.health-shell[data-theme] .calendar-help { font-size: 11px; }
+.health-shell[data-theme] .selected-task-date { font-size: 12px; color: var(--muted); margin: 18px 2px 10px; font-weight: 500; }
+.health-shell[data-theme] .assistant-category { margin: 0 0 16px; padding: 0 14px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-card); overflow: hidden; }
+.health-shell[data-theme] .assistant-category-heading { margin: 0; padding: 14px 0 10px; border-bottom: 1px solid var(--line); }
+.health-shell[data-theme] .assistant-category-heading h2 { font-size: 13px; font-weight: 650; color: var(--forest); letter-spacing: .02em; }
+.health-shell[data-theme] .assistant-category-heading p { font-size: 11px; margin-top: 2px; color: var(--muted); }
+.health-shell[data-theme] .assistant-category-links { display: grid; gap: 0; margin: 0; }
+.health-shell[data-theme] .assistant-category-links>button { display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 10px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; box-shadow: none; background: transparent; color: var(--ink); font-size: 14px; }
+.health-shell[data-theme] .assistant-category-links>button>svg:first-child,.health-shell[data-theme] .task-collapsible h2 svg { box-sizing: content-box; width: 18px; height: 18px; padding: 7px; border-radius: 10px; color: var(--forest); background: var(--sage); stroke-width: 1.7; }
+.health-shell[data-theme] .assistant-category-links>button>span { font-size: 14px; font-weight: 550; }
+.health-shell[data-theme] .assistant-menu-chevron { width: 16px; height: 16px; color: var(--muted); }
+.health-shell[data-theme] .task-grid { display: grid; grid-template-columns: 1fr; gap: 0; margin: 0; }
+.health-shell[data-theme] .task-collapsible { background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; box-shadow: none; margin: 0; }
+.health-shell[data-theme] .task-collapsible:nth-child(n) { border-left: 0; }
+.health-shell[data-theme] .task-collapsible:last-child { border-bottom: 0; }
+.health-shell[data-theme] .task-collapsible>summary { padding: 10px 0; min-height: 60px; gap: 8px; }
+.health-shell[data-theme] .task-collapsible h2 { font-size: 14px; font-weight: 550; gap: 10px; }
+.health-shell[data-theme] .task-collapsible>summary>span { font-size: 11px; color: var(--muted); }
+.health-shell[data-theme] .task-collapsible .task-block { background: var(--canvas); border: 0; border-radius: 12px; padding: 12px; margin: 0 0 12px; }
+.health-shell[data-theme] .task-board-actions { margin: 12px 0; }
+.health-shell[data-theme] main[data-view=SYSTEM_SETTINGS] .assistant-category-links { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 0 14px; margin: 0 0 14px; }
+.health-shell[data-theme] main[data-view=SYSTEM_SETTINGS] .assistant-category-links>button { border: 0; }
+
+/* Workout and food tools use the same tabs, form spacing and primary action. */
+.health-shell[data-theme] .strength-studio { background: transparent; border: 0; padding: 0; color: var(--ink); }
+.health-shell[data-theme] .strength-studio>header { display: block; margin: 2px 0 18px; }
+.health-shell[data-theme] .strength-studio>header h2 { font-size: 27px; font-weight: 700; line-height: 1.4; margin: 0 0 4px; }
+.health-shell[data-theme] .strength-studio>header>span { color: var(--muted); font-size: 12px; display: block; }
+.health-shell[data-theme] :is(.strength-tabs,.food-mode-tabs) { background: var(--sage); border-radius: 12px; padding: 4px; gap: 4px; margin: 0 0 16px; box-shadow: none; }
+.health-shell[data-theme] :is(.strength-tabs,.food-mode-tabs)>button { min-height: 44px; padding: 7px 2px; border: 0; border-radius: 9px; font-size: 12px; font-weight: 500; color: var(--muted); background: transparent; white-space: nowrap; }
+.health-shell[data-theme] .strength-tabs>button[aria-selected=true],.health-shell[data-theme] .food-mode-tabs>button[aria-pressed=true] { color: var(--forest); background: var(--paper); box-shadow: 0 1px 4px #183b2910; font-weight: 650; }
+.health-shell[data-theme] .workout-record-modes { gap: 8px; margin-bottom: 16px; }
+.health-shell[data-theme] .workout-record-modes>button { min-height: 44px; padding: 8px; background: var(--paper); border-color: var(--line); color: var(--muted); border-radius: 12px; }
+.health-shell[data-theme] .workout-record-modes>button[aria-pressed=true] { background: var(--sage); border-color: var(--forest); color: var(--forest); }
+.health-shell[data-theme] .manual-workout { background: var(--paper); padding: 18px; border: 1px solid var(--line); border-radius: var(--radius-card); }
+.health-shell[data-theme] .strength-studio label { color: var(--ink); font-size: 13px; gap: 7px; margin-bottom: 16px; }
+.health-shell[data-theme] .strength-studio button { color: var(--forest); border-color: var(--line); }
+.health-shell[data-theme] .strength-studio .strength-primary { background: var(--forest); color: #fff; border-color: var(--forest); border-radius: 11px; min-height: 46px; font-size: 14px; font-weight: 600; }
+.health-shell[data-theme] .strength-muted,.health-shell[data-theme] .strength-studio small { color: var(--muted); font-size: 12px; }
+.health-shell[data-theme] .strength-studio details>summary { min-height: 44px; font-size: 12px; }
+.health-shell[data-theme] .strength-plan-row,.health-shell[data-theme] .strength-plan-editor { background: var(--paper); padding: 14px; border: 1px solid var(--line); border-radius: 14px; }
+.health-shell[data-theme] .strength-timer { background: var(--sage); }
+.health-shell[data-theme] .strength-week button[aria-pressed=true] { color: var(--forest); background: var(--sage); border-color: var(--forest); }
+.health-shell[data-theme] .food-workspace>.page-heading { margin-top: 0; }
+.health-shell[data-theme] .food-capture-card { padding: 16px; background: var(--paper); border-color: var(--line); border-radius: var(--radius-card); }
+.health-shell[data-theme] main[data-view=FOOD] .food-upload { width: 100%; border: 1px dashed var(--control-line); background: var(--canvas); border-radius: 14px; padding: 24px 12px; gap: 5px; }
+.health-shell[data-theme] .capture-icon { width: 48px; height: 48px; background: var(--sage); color: var(--forest); border-radius: 14px; margin-bottom: 4px; }
+.health-shell[data-theme] .capture-icon svg { width: 25px; height: 25px; stroke-width: 1.6; }
+.health-shell[data-theme] .capture-title { color: var(--ink); font-size: 16px; font-weight: 600; }
+.health-shell[data-theme] .capture-hint { color: var(--muted); font-size: 12px; }
+.health-shell[data-theme] .food-upload img { max-height: 220px; }
+.health-shell[data-theme] .food-suggestions { margin-top: 12px; padding-top: 0; border-color: var(--line); }
+.health-shell[data-theme] .food-suggestions>summary { list-style: none; display: flex; align-items: center; gap: 8px; min-height: 46px; padding-top: 5px; color: var(--forest); font-size: 13px; cursor: pointer; }
+.health-shell[data-theme] .food-suggestions>summary::-webkit-details-marker { display: none; }
+.health-shell[data-theme] .food-suggestions>summary>span { flex: 1; }
+.health-shell[data-theme] .food-suggestions[open]>summary svg:last-child { transform: rotate(90deg); }
+.health-shell[data-theme] .food-suggestions>div { padding-top: 12px; }
+.health-shell[data-theme] .food-suggestions>button { background: var(--forest); box-shadow: none; border-radius: 10px; min-height: 46px; font-size: 13px; padding: 10px; }
+.health-shell[data-theme] main[data-view=FOOD] .care-panel { padding: 16px; }
+.health-shell[data-theme] .food-guidance>summary { min-height: 60px; padding: 12px 14px; }
+.health-shell[data-theme] .food-guidance>summary>span:first-of-type { font-size: 14px; }
+
+/* Settings and sheets follow the same surface language, without decoration competing with actions. */
+.health-shell[data-theme] :is(.theme-picker,.demo-settings,.storage-mode-settings,.integration-card) { padding: 16px; margin-bottom: 14px; }
+.health-shell[data-theme] :is(.theme-picker,.demo-settings,.storage-mode-settings,.integration-card) h2,.health-shell[data-theme] .storage-mode-settings h3 { font-size: 18px; }
+.health-shell[data-theme] .integration-card { border-top: 1px solid var(--line); }
+.health-shell[data-theme] .integration-icon { color: var(--forest); background: var(--sage); }
+.health-shell[data-theme] .theme-option { background: var(--canvas); }
+.health-shell[data-theme] .record-overlay { background: #142d2466; backdrop-filter: blur(3px); }
+.health-shell[data-theme] .record-sheet { padding: 20px 22px calc(20px + env(safe-area-inset-bottom)); border-radius: 24px 24px 0 0; background: var(--paper); max-height: calc(100dvh - 16px); overflow-y: auto; overscroll-behavior: contain; }
+.health-shell[data-theme] .record-sheet::before { content: ""; display: block; width: 32px; height: 4px; background: var(--line); border-radius: 4px; margin: -8px auto 16px; }
+.health-shell[data-theme] .record-sheet>button { min-height: 58px; color: var(--ink); font-size: 14px; padding: 12px 0; border-color: var(--line); }
+.health-shell[data-theme] .record-sheet>button>svg { color: var(--forest); background: var(--sage); padding: 8px; box-sizing: content-box; border-radius: 10px; width: 19px; height: 19px; }
+.health-shell[data-theme] .record-sheet>div>button { display: grid; place-items: center; width: 44px; height: 44px; color: var(--muted); }
+
+/* Secondary health screens keep alerts in their original red/amber/green semantics. */
+.health-shell[data-theme] .feature-banner { background: var(--sage); color: var(--ink); padding: 18px; border: 1px solid var(--line); box-shadow: none; border-radius: 14px; }
+.health-shell[data-theme] .feature-banner h2 { font-size: 20px; line-height: 1.45; }
+.health-shell[data-theme] .feature-banner h2 svg { width: 22px; height: 22px; color: var(--forest); }
+.health-shell[data-theme] .feature-banner p { color: var(--muted); font-size: 13px; line-height: 1.7; opacity: 1; }
+.health-shell[data-theme] :is(.health-management,.vitals-workspace) .bg-white.rounded-3xl { border-radius: var(--radius-card); border-color: var(--line); box-shadow: var(--shadow-card); }
+.health-shell[data-theme] :is(.health-management,.vitals-workspace) button:is(.bg-blue-600,.bg-purple-600,.bg-emerald-500) { background: var(--forest); color: #fff; box-shadow: none; }
+.health-shell[data-theme] .health-management .bg-gradient-to-br { background: var(--hero); box-shadow: none; }
+.health-shell[data-theme] .health-management .border-dashed { background: var(--canvas); border: 1px dashed var(--control-line); padding: 24px 12px; }
+.health-shell[data-theme] .health-management .border-dashed>.w-16 { width: 48px; height: 48px; border: 0; background: var(--sage); color: var(--forest); transform: none; box-shadow: none; margin-bottom: 12px; }
+.health-shell[data-theme] .health-management .border-dashed>.w-16 svg { width: 24px; height: 24px; }
+.health-shell[data-theme] .health-management .reminder-settings { border: 0; padding: 0; margin: 0; box-shadow: none; }
+.health-shell[data-theme] .reminder-settings h2 { font-size: 18px; }
+.health-shell[data-theme] .reminder-settings label { display: grid; gap: 7px; font-size: 13px; margin: 14px 0; }
+.health-shell[data-theme] .reminder-settings input { width: 100%; padding: 10px; border: 1px solid var(--control-line); }
+.health-shell[data-theme] .reminder-settings button[type=submit],.health-shell[data-theme] .history-entry form fieldset>button:last-child { background: var(--forest); color: #fff; min-height: 46px; border-radius: 10px; padding: 10px 16px; }
+.health-shell[data-theme] .history-entry>summary { min-height: 44px; display: flex; align-items: center; font-size: 14px; }
+.health-shell[data-theme] .history-entry>summary::after { content: '⌄'; color: var(--muted); margin-left: auto; }
+.health-shell[data-theme] .history-entry[open]>summary::after { transform: rotate(180deg); }
+.health-shell[data-theme] .vitals-heading { gap: 10px; background: var(--paper); flex-wrap: wrap; padding: 18px; }
+.health-shell[data-theme] .vitals-heading h2 { font-size: 20px; font-weight: 650; gap: 8px; }
+.health-shell[data-theme] .vitals-heading h2 svg { width: 24px; height: 24px; color: var(--forest); }
+.health-shell[data-theme] .vitals-heading>button { min-height: 44px; padding: 8px 10px; font-size: 12px; border-width: 1px; }
+.health-shell[data-theme] .vitals-workspace input[type=number] { font-size: 26px; }
+.health-shell[data-theme] .vitals-workspace button { transform: none; }
+.health-shell[data-theme] .vitals-workspace .text-lg { font-size: 14px; }
+.health-shell[data-theme] .vitals-workspace .text-xl { font-size: 16px; }
+.health-shell[data-theme] .meal-analysis { box-shadow: var(--shadow-card); margin-bottom: 14px; border-color: var(--line); }
+.health-shell[data-theme] .meal-analysis h2 { font-size: 20px; font-weight: 650; }
+.health-shell[data-theme] .meal-analysis .text-yellow-600 { color: #806016; }
+.health-shell[data-theme] .meal-analysis .text-emerald-600 { color: #28664c; }
+.health-shell[data-theme] .meal-analysis .grid .rounded-2xl { padding: 10px 6px; border-radius: 12px; }
+.health-shell[data-theme] .meal-analysis .grid .w-8 { width: 24px; height: 24px; }
+
+@media(max-width:767px) {
+  .health-shell[data-theme] main>div { padding: 12px 16px 24px; }
+  .health-shell[data-theme] main { padding-bottom: calc(76px + env(safe-area-inset-bottom)); scrollbar-gutter: auto; }
+  .health-shell[data-theme] .page-heading,.health-shell[data-theme] .diary-date,.health-shell[data-theme] .task-heading { margin-bottom: 16px; }
+  .health-shell[data-theme] .nutrition-home .nutrition-glance { padding: 20px 18px 14px; }
+  .health-shell[data-theme] .nutrition-glance-main { gap: 16px; }
+  .health-shell[data-theme] :is(.health-management,.vitals-workspace) .p-6 { padding: 16px; }
+  .health-shell[data-theme] .meal-analysis .p-6 { padding: 16px; }
+}
+@media(max-width:350px) {
+  .health-shell[data-theme] main>div { padding: 10px 12px 20px; }
+  .health-shell[data-theme] >aside+div>header>div:first-child { padding: 0 12px; }
+  .health-shell[data-theme] >aside+div>header .app-brand h1 { font-size: 17px; max-width: 130px; }
+  .health-shell[data-theme] .diary-date { flex-direction: row; align-items: center; }
+  .health-shell[data-theme] .diary-date h2 { font-size: 24px; }
+  .health-shell[data-theme] .diary-date time { font-size: 11px; }
+  .health-shell[data-theme] .calorie-ring { width: 66px; height: 66px; }
+  .health-shell[data-theme] .nutrition-glance-copy .energy-total strong { font-size: 36px; }
+  .health-shell[data-theme] .nutrition-glance-main { gap: 12px; }
+  .health-shell[data-theme] .daily-macro { padding: 0 8px; }
+  .health-shell[data-theme] .daily-macro h4 { font-size: 11px; }
+  .health-shell[data-theme] .daily-macro>small { font-size: 10px; }
+  .health-shell[data-theme] .nutrition-card { padding: 14px; }
+  .health-shell[data-theme] .assistant-category { padding: 0 12px; }
+  .health-shell[data-theme] .assistant-category-links>button>span,.health-shell[data-theme] .task-collapsible h2 { font-size: 13px; }
+  .health-shell[data-theme] .manual-workout { padding: 14px; }
+  .health-shell[data-theme] .water-card .diary-title { flex-wrap: nowrap; }
+  .health-shell[data-theme] .water-card .diary-title>span { font-size: 10px; }
+  .health-shell[data-theme] .water-card .diary-title>button { padding: 0 7px; }
+  .health-shell[data-theme] .mobile-shortcuts { padding-inline: 5px; gap: 2px; }
+  .health-shell[data-theme] .vitals-heading h2 { font-size: 18px; gap: 6px; }
+  .health-shell[data-theme] .vitals-heading h2 svg { width: 20px; height: 20px; }
+  .health-shell[data-theme] .vitals-heading>button { padding: 6px 8px; gap: 4px; font-size: 11px; }
+}
+@media(hover:hover) {
+  .health-shell[data-theme] .assistant-category-links>button:hover,.health-shell[data-theme] .task-collapsible>summary:hover { background: var(--canvas); }
+  .health-shell[data-theme] .meal-add:hover { background: var(--sage); border-color: var(--control-line); }
+  .health-shell[data-theme] .food-upload:hover { background: var(--sage); border-color: var(--forest); }
+}
+@media(prefers-reduced-motion:reduce) {
+  .health-shell[data-theme] *, .health-shell[data-theme] *::before, .health-shell[data-theme] *::after { animation-duration: .01ms!important; transition-duration: .01ms!important; scroll-behavior: auto!important; }
+}

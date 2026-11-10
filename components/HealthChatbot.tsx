@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { preferredModel } from '../services/aiSettings';
 import { Send, Bot, User, Sparkles, Loader2 } from 'lucide-react';
 import { createChatSession, getGeminiKey } from '../services/geminiService';
 import { UserProfile, HealthReport, FoodAnalysis, ChatMessage } from '../types';
@@ -52,7 +53,7 @@ const HealthChatbot: React.FC<Props> = ({ userProfile, healthReports, foodLogs }
           method: 'POST',
           headers,
           body: JSON.stringify({
-              model: 'gemini-2.5-flash',
+              model: preferredModel('general'),
               contents,
               config: { systemInstruction }
           })

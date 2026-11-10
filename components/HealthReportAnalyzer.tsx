@@ -6,7 +6,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 interface Props {
   reports: HealthReport[];
-  onReportAnalyzed: (report: HealthReport) => void;
+  onReportAnalyzed: (report: HealthReport) => Promise<void>;
 }
 
 const HealthReportAnalyzer: React.FC<Props> = ({ reports, onReportAnalyzed }) => {
@@ -16,21 +16,44 @@ const HealthReportAnalyzer: React.FC<Props> = ({ reports, onReportAnalyzed }) =>
   const [showTrend, setShowTrend] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const busy = useRef(false);
+  const [pendingReport,setPendingReport] = useState<HealthReport|null>(null);
+  const [notice,setNotice] = useState('');
+
+  const persistReport = async (report:HealthReport) => {
+    setPendingReport(report);
+    try {
+      await onReportAnalyzed(report);
+      setPendingReport(null);
+      setNotice('健檢報告已儲存至本機。');
+    } catch(err) {
+      setError('報告尚未完成儲存，辨識結果仍保留在本頁，可重試儲存。'+((err as Error).message||''));
+    }
+  };
+  const retrySave = async () => {
+    if(busy.current||!pendingReport)return;
+    busy.current=true;setLoading(true);setError(null);
+    try{await persistReport(pendingReport);}finally{busy.current=false;setLoading(false);}
+  };
 
   const currentReport = reports.length > 0 ? reports[0] : null;
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    e.target.value='';
+    if (!file || busy.current || pendingReport) return;
+    busy.current=true;
+    setNotice('');
     setError(null);
     setLoading(true);
     try {
       const base64 = await fileToGenerativePart(file);
       const report = await analyzeHealthReport(base64, file.type);
-      onReportAnalyzed(report);
+      await persistReport(report);
     } catch (err) {
       setError("無法辨識健檢報告，請確認圖片清晰度。");
     } finally {
+      busy.current=false;
       setLoading(false);
     }
   };
@@ -123,7 +146,7 @@ const HealthReportAnalyzer: React.FC<Props> = ({ reports, onReportAnalyzed }) =>
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 rounded-2xl text-white shadow-lg">
+      <div className="feature-banner bg-gradient-to-r from-blue-500 to-indigo-600 p-6 rounded-2xl text-white shadow-lg">
         <h2 className="text-2xl font-bold flex items-center gap-2"><FileText className="w-6 h-6" /> 健檢報告檔案庫</h2>
         <p className="opacity-90 mt-2">上傳健檢報告，AI 自動追蹤健康趨勢並提供飲食禁忌建議。</p>
       </div>
@@ -140,13 +163,15 @@ const HealthReportAnalyzer: React.FC<Props> = ({ reports, onReportAnalyzed }) =>
 
       <>
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-          <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-blue-50 hover:border-blue-200 rounded-2xl p-8 transition-colors cursor-pointer active:scale-95 duration-200" onClick={() => fileInputRef.current?.click()}>
+          <button type="button" disabled={loading||!!pendingReport} className="w-full flex flex-col items-center justify-center border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-blue-50 hover:border-blue-200 rounded-2xl p-8 transition-colors cursor-pointer active:scale-95 duration-200" onClick={() => fileInputRef.current?.click()}>
             <div className="w-16 h-16 bg-white shadow-sm text-blue-600 border border-gray-100 rounded-2xl flex items-center justify-center mb-4 transform -rotate-3 transition-transform hover:rotate-0"><Upload className="w-8 h-8" /></div>
             <p className="text-gray-600 font-bold">上傳新的健檢報告</p>
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-          </div>
+          </button>
+          <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} aria-label="選擇健檢報告照片" />
           {loading && <div className="mt-6 flex flex-col items-center text-blue-600"><Loader2 className="w-8 h-8 animate-spin mb-2" /><p className="text-sm font-medium">AI 正在解讀報告數據並建檔...</p></div>}
           {error && <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-lg flex items-center gap-2"><AlertCircle className="w-5 h-5" />{error}</div>}
+          {pendingReport&&<button disabled={loading} onClick={()=>void retrySave()} className="mt-3 px-4 py-3 rounded-xl bg-blue-600 text-white">重試儲存辨識結果</button>}
+          {notice&&<p role="status" className="mt-3 text-sm text-gray-600">{notice}</p>}
         </div>
 
         {currentReport && (

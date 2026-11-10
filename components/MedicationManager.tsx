@@ -30,7 +30,7 @@ const MedicationManager: React.FC<Props> = ({ healthReport }) => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="bg-gradient-to-r from-red-400 to-pink-500 p-6 rounded-2xl text-white shadow-lg">
+      <div className="feature-banner bg-gradient-to-r from-red-400 to-pink-500 p-6 rounded-2xl text-white shadow-lg">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Pill className="w-6 h-6" />
           智慧藥師

@@ -1,0 +1,178 @@
+/* Optional visual skins. These never change health data, risk levels or layout density. */
+.health-shell[data-theme] .theme-options { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; }
+.health-shell[data-theme] .theme-preview { height: 70px; gap: 8px; overflow: hidden; }
+.health-shell[data-theme] .theme-option { padding: 6px 6px 10px; border-radius: 14px; color: var(--ink); }
+.health-shell[data-theme] .theme-option strong { margin-top: 8px; }
+.health-shell[data-theme] .theme-option small { color: var(--muted); }
+.health-shell[data-theme] .theme-option[aria-pressed=true] { border-color: var(--forest); background: var(--sage); }
+.health-shell[data-theme] main[data-view=FOOD] .food-mode-tabs { background: var(--sage); }
+.health-shell[data-theme] .history-entry summary { color: var(--forest); }
+.health-shell[data-theme] .storage-status { color: var(--muted); }
+.theme-sample-cute .theme-preview { color: #a73564; background: radial-gradient(circle at 25% 15%,#fff6dc 0 18%,transparent 19%),#fbe1ea; border-radius: 16px 16px 24px 16px; }
+.theme-sample-cute .theme-preview>svg:first-child { fill: #f4aac5; stroke-width: 1.8; }
+.theme-sample-cute .theme-swatches i { background: #d46d95; }
+.theme-sample-cute .theme-swatches i:nth-child(2) { background: #f1d99d; }
+.theme-sample-cute .theme-swatches i:nth-child(3) { background: #b7c9b0; }
+.theme-sample-tech .theme-preview { color: #80e5f5; background: linear-gradient(#55cde711 1px,transparent 1px),linear-gradient(90deg,#55cde711 1px,transparent 1px),#0b1c2c; background-size: 14px 14px; border: 1px solid #346278; }
+.theme-sample-tech .theme-swatches i { background: #73e1f4; }
+.theme-sample-tech .theme-swatches i:nth-child(2) { background: #7597e6; }
+.theme-sample-tech .theme-swatches i:nth-child(3) { background: #b6a5ec; }
+
+/* Sweet, soft shapes and a warm strawberry palette. */
+.health-shell[data-theme=cute] {
+  --ink: #573344; --muted: #836174; --forest: #a73564;
+  --canvas: #fff6f4; --paper: #fffdfb; --line: #efdce3; --sage: #fce6ee;
+  --hero: #fbe3eb; --hero-ink: #7a284b; --hero-muted: #84536a; --hero-accent: #b33d6e;
+  --control-line: #cfa5b6; --radius-card: 24px; --shadow-card: 0 3px 0 #efdce355;
+  font-family: ui-rounded, "Hiragino Maru Gothic ProN", -apple-system, BlinkMacSystemFont, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+}
+.health-shell[data-theme=cute] :is(.nutrition-home,.task-page,.care-tools) { --paper: #fffdfb; }
+.health-shell[data-theme=cute]>aside+div { background: radial-gradient(circle at 95% 0,#ffe5d966,transparent 35%),var(--canvas); }
+.health-shell[data-theme=cute] .app-brand .bg-gradient-to-br { background: #bc4c77; border-radius: 14px 14px 18px 14px; }
+.health-shell[data-theme=cute] .nutrition-home .nutrition-glance {
+  background: radial-gradient(circle at 93% -10%,#fff3d9 0 20%,transparent 20.5%),radial-gradient(circle at 2% 110%,#f6cddd 0 25%,transparent 25.5%),var(--hero);
+  border: 1px solid #f3cedc; border-radius: 28px; box-shadow: 0 4px 0 #efcedb66;
+}
+.health-shell[data-theme=cute] .calorie-ring { background: #fff9f8; border-radius: 50%; box-shadow: 0 3px 0 #edbfd366; }
+.health-shell[data-theme=cute] .calorie-ring-base { stroke: #f2d0dd; }
+.health-shell[data-theme=cute] .calorie-ring .app-icon .icon-tint { fill-opacity: .21; }
+.health-shell[data-theme=cute] .fasting-glance.fasting-compact { border-color: #d9a2b655; }
+.health-shell[data-theme=cute] .fasting-day-track { background: #e8cbd6; }
+.health-shell[data-theme=cute] .fasting-day-track>i { background: #7a284b; }
+.health-shell[data-theme=cute] .nutrition-glance.is-over-goal .energy-total strong { color: #8d4c14; }
+.health-shell[data-theme=cute] .nutrition-glance.is-over-goal .calorie-ring-fill { stroke: #8d4c14; }
+.health-shell[data-theme=cute] :is(.meal-symbol,.capture-icon,.assistant-category-links>button>svg:first-child,.task-collapsible h2 svg) { border-radius: 13px 13px 18px 13px; }
+.health-shell[data-theme=cute] .meal-symbol { background: #fceace; color: #986134; }
+.health-shell[data-theme=cute] .meal-1 { background: #edf0df; color: #667b45; }
+.health-shell[data-theme=cute] .meal-2 { background: #eeebf8; color: #7c65a3; }
+.health-shell[data-theme=cute] .meal-3 { background: #fce6ee; color: #a73564; }
+.health-shell[data-theme=cute] .mobile-shortcuts>button[aria-current=page] { border-radius: 19px; }
+.health-shell[data-theme=cute] .record-nav>span { border-radius: 14px 14px 18px 14px; background: #b84070; box-shadow: 0 3px 0 #eab8cb; }
+.health-shell[data-theme=cute] .health-reward-grid>div { background: #fff2f5; border: 1px solid #f4dfe7; }
+.health-shell[data-theme=cute] .reward-badges span.earned { color: #87501c; background: #fff1d7; border-color: #ebd4a6; }
+
+/* Midnight surfaces, instrument-like numbers and a restrained luminous grid. */
+.health-shell[data-theme=tech] {
+  color-scheme: dark; color: #e0ecf5;
+  --ink: #e0ecf5; --muted: #9cb3c7; --forest: #7bdfef;
+  --canvas: #09131f; --paper: #111f30; --line: #2b4055; --sage: #193549;
+  --hero: #102c40; --hero-ink: #edfcff; --hero-muted: #b1d0de; --hero-accent: #83e7f7;
+  --control-line: #526b82; --radius-card: 15px; --shadow-card: 0 3px 16px #00000014;
+}
+.health-shell[data-theme=tech] :is(.nutrition-home,.task-page,.care-tools) { --paper: #111f30; }
+.health-shell[data-theme=tech]>aside+div {
+  background: linear-gradient(#80d7f205 1px,transparent 1px),linear-gradient(90deg,#80d7f205 1px,transparent 1px),var(--canvas);
+  background-size: 24px 24px;
+}
+.health-shell[data-theme=tech] main { scrollbar-color: #3a5368 transparent; }
+.health-shell[data-theme=tech] .app-brand .bg-gradient-to-br { color: #89e8f6; background: #173b50; border: 1px solid #467487; border-radius: 10px; }
+.health-shell[data-theme=tech] >aside+div>header { background: #0c1825; }
+.health-shell[data-theme=tech] >nav { background: #0c1825; box-shadow: 0 -1px 18px #5edcfd0b; }
+.health-shell[data-theme=tech] .mobile-shortcuts>button[aria-current=page] { background: #183347; box-shadow: inset 0 2px 0 #7bdfef; border-radius: 10px; }
+.health-shell[data-theme=tech] .record-nav>span { color: #08202e; background: #83e7f7; border-radius: 10px; box-shadow: 0 0 14px #65dcf02e; }
+.health-shell[data-theme=tech] .nutrition-home .nutrition-glance {
+  background: radial-gradient(ellipse at 100% 0,#21708755,transparent 70%),linear-gradient(#7be2ef0a 1px,transparent 1px),linear-gradient(90deg,#7be2ef0a 1px,transparent 1px),var(--hero);
+  background-size: auto,20px 20px,20px 20px,auto;
+  border: 1px solid #44768c; border-radius: 17px; box-shadow: inset 0 1px 0 #9ceeff20,0 0 22px #26c6da0a;
+}
+.health-shell[data-theme=tech] .calorie-ring { filter: drop-shadow(0 0 5px #71e8ef33); }
+.health-shell[data-theme=tech] :is(.energy-total strong,.fasting-glance-heading strong,.overview-clock,.macro-value strong,.strength-timer strong) { font-family: ui-monospace,SFMono-Regular,Consolas,monospace; font-variant-numeric: tabular-nums; }
+.health-shell[data-theme=tech] .nutrition-glance-copy .energy-total strong { letter-spacing: -2px; }
+.health-shell[data-theme=tech] .fasting-day-track { background: #335266; }
+.health-shell[data-theme=tech] .meal-symbol { background: #3b3226; color: #f4c989; }
+.health-shell[data-theme=tech] .meal-1 { background: #243d33; color: #aedab0; }
+.health-shell[data-theme=tech] .meal-2 { background: #302c48; color: #c4b7f5; }
+.health-shell[data-theme=tech] .meal-3 { background: #3f2b36; color: #f3b0c8; }
+.health-shell[data-theme=tech] .macro-protein .macro-icon { color: #e3b783; }
+.health-shell[data-theme=tech] .macro-carbs .macro-icon { color: #b5cd8c; }
+.health-shell[data-theme=tech] .macro-fat .macro-icon { color: #beb0ec; }
+.health-shell[data-theme=tech] .water-card .diary-title>button { background: #193b4d; color: #a4e5f4; }
+.health-shell[data-theme=tech] .water-card .diary-title h3 svg { color: #97d5e5; }
+.health-shell[data-theme=tech] .water-card progress { background: #23374a; }
+.health-shell[data-theme=tech] .water-card progress::-webkit-progress-bar { background: #23374a; }
+
+/* Legacy feature utilities are mapped to the same dark surfaces and readable text. */
+.health-shell[data-theme=tech] :is(.bg-white,.bg-gray-50,.bg-slate-50,.bg-gray-100,.bg-slate-100) { background-color: var(--paper); color: var(--ink); }
+.health-shell[data-theme=tech] :is(.text-gray-900,.text-gray-800,.text-gray-700,.text-slate-900,.text-slate-800,.text-slate-700) { color: var(--ink); }
+.health-shell[data-theme=tech] :is(.text-gray-600,.text-gray-500,.text-gray-400,.text-slate-600,.text-slate-500,.text-slate-400) { color: var(--muted); }
+.health-shell[data-theme=tech] :is(.border-gray-100,.border-gray-200,.border-gray-300,.border-slate-100,.border-slate-200,.border-slate-300) { border-color: var(--line); }
+.health-shell[data-theme=tech] :is(.bg-blue-50,.bg-blue-100,.bg-indigo-50,.bg-indigo-100,.bg-purple-50,.bg-purple-100,.bg-teal-50) { background-color: #1c3149; }
+.health-shell[data-theme=tech] :is(.text-blue-500,.text-blue-600,.text-blue-700,.text-blue-800,.text-blue-900,.text-indigo-500,.text-indigo-600,.text-indigo-700,.text-indigo-800,.text-indigo-900,.text-purple-500,.text-purple-600,.text-purple-700,.text-purple-800,.text-purple-900,.text-teal-600) { color: #a2d7fa; }
+.health-shell[data-theme=tech] :is(.bg-emerald-50,.bg-green-50,.bg-green-100) { background-color: #19382e; }
+.health-shell[data-theme=tech] :is(.text-emerald-600,.text-emerald-700,.text-emerald-800,.text-green-600,.text-green-700,.text-green-800) { color: #9eddb4; }
+.health-shell[data-theme=tech] :is(.bg-yellow-50,.bg-amber-50,.bg-orange-50,.bg-yellow-100,.bg-amber-100) { background-color: #3b3020; }
+.health-shell[data-theme=tech] :is(.text-yellow-600,.text-yellow-700,.text-yellow-800,.text-amber-600,.text-amber-700,.text-amber-800,.text-orange-700,.text-orange-800) { color: #f2cf89; }
+.health-shell[data-theme=tech] :is(.bg-red-50,.bg-red-100,.bg-rose-50) { background-color: #402832; }
+.health-shell[data-theme=tech] :is(.text-red-500,.text-red-600,.text-red-700,.text-red-800,.text-rose-600,.text-rose-700) { color: #ffb5bd; }
+.health-shell[data-theme=tech] :is(.strength-studio .strength-primary,.brand-editor button,.food-suggestions>button,.reminder-settings button[type=submit],.history-entry form fieldset>button:last-child,aside nav .sidebar-record) { background: #83e7f7; color: #092536; border-color: #83e7f7; }
+.health-shell[data-theme=tech] :is(.health-management,.vitals-workspace) button:is(.bg-blue-600,.bg-purple-600,.bg-emerald-500) { background: #83e7f7; color: #092536; }
+.health-shell[data-theme=tech] :is(.strength-studio button,.practice-editor-row,.practice-editor button,.practice-custom button,.exercise-hub-row,.exercise-hub-links button,.food-guidance,.meal-editor,.recipe-card,.task-row,.care-item) { background-color: var(--paper); }
+.health-shell[data-theme=tech] .strength-studio .strength-primary { background-color: #83e7f7; }
+.health-shell[data-theme=tech] :is(.care-tools button,.care-panel button,.today-tasks button,.task-board-actions button,.task-editor button,.task-sort-row button,.calendar-actions button,.tools-category button,.assistant-health-sections button) { color: var(--forest); background: var(--paper); border-color: var(--line); }
+.health-shell[data-theme=tech] .care-panel button.care-primary { color: #092536; background: #83e7f7; }
+.health-shell[data-theme=tech] .meal-editor { color: var(--ink); border-color: var(--line); }
+.health-shell[data-theme=tech] :is(.meal-form-grid input,.meal-editor input,.meal-editor select) { background: var(--canvas); }
+.health-shell[data-theme=tech] .reward-badges span { background: var(--canvas); border-color: var(--line); color: var(--muted); }
+.health-shell[data-theme=tech] .reward-badges span.earned { background: #363322; color: #f1d896; border-color: #77633d; }
+.health-shell[data-theme=tech] .theme-option small { color: var(--muted); }
+.health-shell[data-theme=tech] :is(.calendar-expand,.exercise-categories) { background: var(--sage); }
+.health-shell[data-theme=tech] :is(.task-calendar-grid button[aria-pressed=true],.exercise-categories button[aria-selected=true]) { color: #092536; background: #83e7f7; }
+.health-shell[data-theme=tech] .meal-analysis .text-yellow-600 { color: #f2cf89; }
+.health-shell[data-theme=tech] .meal-analysis .text-emerald-600 { color: #9eddb4; }
+.health-shell[data-theme=tech] .recharts-cartesian-axis-tick-value { fill: var(--muted); }
+.health-shell[data-theme=tech] .recharts-default-tooltip { background-color: var(--paper)!important; border-color: var(--line)!important; color: var(--ink); }
+.health-shell[data-theme=tech] :is(input,select,textarea):not([type=checkbox]):not([type=range]):not([type=file]):not([type=radio]) { color: var(--ink); background: var(--paper); border-color: var(--control-line); }
+.health-shell[data-theme=tech] ::placeholder { color: #92a9bc; opacity: 1; }
+.health-shell[data-theme=tech] .strength-tabs>button { color: var(--muted); background: transparent; }
+.health-shell[data-theme=tech] .strength-tabs>button[aria-selected=true] { color: var(--forest); background: #234359; box-shadow: inset 0 -2px 0 var(--forest); }
+.health-shell[data-theme=tech] :is(.assistant-nutrition-settings .fasting-card,.today-tasks,.exercise-video-library,.assistant-directory,.jog-finding,.jog-known>span,.tdee-card .fasting-embedded form,.tdee-card .goal-form) { background: var(--paper); color: var(--ink); border-color: var(--line); }
+.health-shell[data-theme=tech] :is(.care-muted,.fasting-card small,.task-block small,.calendar-help,.task-calendar-grid>span,.food-guidance p) { color: var(--muted); }
+.health-shell[data-theme=tech] :is(.fasting-card .fasting-clock,.fasting-card summary,.fasting-card a,.assistant-nutrition-settings details summary,.food-guidance>summary,.calendar-expand,.task-calendar header button,.task-calendar-grid button,.reward-settings-link) { color: var(--forest); }
+.health-shell[data-theme=tech] .task-calendar-grid button[aria-pressed=true] { color: #092536; }
+.health-shell[data-theme=tech] .task-calendar header button { background: var(--sage); }
+.health-shell[data-theme=tech] .section-back { background: transparent; }
+.health-shell[data-theme=tech] :is(.care-notice,.care-entry) { background: var(--sage); color: var(--ink); }
+.health-shell[data-theme=tech] :is(.care-panel fieldset>button,.fasting-card form button:first-of-type) { background: #83e7f7; color: #092536; }
+.health-shell[data-theme=tech] .fasting-card form button { color: var(--forest); border-color: var(--line); }
+.health-shell[data-theme=tech] .fasting-card form button:first-of-type { color: #092536; }
+.health-shell[data-theme=tech] .storage-mode-options button { background: var(--canvas); color: var(--muted); }
+.health-shell[data-theme=tech] .storage-mode-options button[aria-pressed=true] { background: var(--sage); color: var(--forest); }
+.health-shell[data-theme=tech] .integration-save { background: #83e7f7; color: #092536; }
+.health-shell[data-theme=tech] .integration-notice { background: var(--sage); }
+.health-shell[data-theme=tech] .integration-card .field-help { color: var(--muted); }
+.health-shell[data-theme=tech] .integration-help .care-panel { background: var(--canvas); }
+.health-shell[data-theme=tech] .meal-editor-actions button { background: var(--sage); color: var(--ink); }
+.health-shell[data-theme=tech] .meal-editor-actions button:last-child { background: #83e7f7; color: #092536; }
+.health-shell[data-theme=tech] .care-tabs:not([hidden]) { background: var(--sage); }
+.health-shell[data-theme=tech] .care-tabs button[aria-pressed=true] { background: var(--paper); color: var(--forest); }
+.health-shell[data-theme=tech] main[data-view=WORKOUT] .bg-gradient-to-r { background: var(--sage); color: var(--ink); border-color: var(--line); }
+.health-shell[data-theme=tech] .macro-grid :is(span,small) { color: var(--muted); }
+.health-shell[data-theme=tech] .meal-context { background: var(--sage); color: var(--forest); }
+
+/* Legacy light surfaces that were still hard-coded, plus Tailwind opacity variants (bg-*-50/50) the lists above cannot match. */
+.health-shell[data-theme=tech] .meal-manage-row { border-top-color: var(--line); }
+.health-shell[data-theme=tech] .meal-manage-row small { color: var(--muted); }
+.health-shell[data-theme=tech] :is(.meal-manage-row button,.meal-undo button) { background: var(--sage); color: var(--forest); }
+.health-shell[data-theme=tech] .task-meals span { background: var(--sage); color: var(--ink); }
+.health-shell[data-theme=tech] .settings-open-real { background: #83e7f7; color: #092536; }
+.health-shell[data-theme=tech] :is(.bg-gray-200,.bg-gray-300,.bg-slate-200,.bg-slate-300) { background-color: var(--sage); color: var(--ink); }
+.health-shell[data-theme=tech] :is(.bg-sky-50,.bg-sky-100) { background-color: #1c3149; }
+.health-shell[data-theme=tech] :is(.border-sky-200,.border-emerald-100,.border-emerald-200) { border-color: var(--line); }
+.health-shell[data-theme=tech] :is(.text-sky-600,.text-sky-700,.text-sky-800,.text-sky-900) { color: #a2d7fa; }
+.health-shell[data-theme=tech] :is(.text-emerald-900,.text-green-900) { color: #9eddb4; }
+.health-shell[data-theme=tech] :is([class*="bg-gray-50/"],[class*="bg-gray-100/"],[class*="bg-blue-50/"],[class*="bg-blue-100/"],[class*="bg-sky-50/"],[class*="bg-indigo-50/"],[class*="bg-purple-50/"]) { background-color: #162739; }
+.health-shell[data-theme=tech] [class*="bg-emerald-50/"] { background-color: #19382e; }
+.health-shell[data-theme=tech] [class*="bg-orange-50/"] { background-color: #3b3020; }
+.health-shell[data-theme=tech] :is([class*="bg-rose-50/"],[class*="bg-red-50/"]) { background-color: #402832; }
+.health-shell[data-theme=tech] main[data-view=FOOD] .border-dashed { background: var(--sage); border-color: var(--line); }
+
+.health-shell[data-theme=tech] :is(.plan-options label,.integration-test) { background: var(--paper); border-color: var(--line); color: var(--ink); }
+.health-shell[data-theme=tech] .plan-options label:has(input:checked) { background: var(--sage); border-color: var(--forest); }
+.health-shell[data-theme=tech] .integration-test { color: var(--forest); }
+
+@media(max-width:350px) {
+  .health-shell[data-theme] .theme-options { gap: 5px; }
+  .health-shell[data-theme] .theme-option { padding: 4px 3px 8px; }
+  .health-shell[data-theme] .theme-option small { font-size: 9px; padding-inline: 1px; }
+  .health-shell[data-theme] .theme-option strong { font-size: 11px; padding-inline: 1px; }
+}

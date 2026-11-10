@@ -6,3 +6,18 @@ test('device backup round trip includes records and excludes credentials',()=>{c
 test('invalid backup and cross-mode restore leave storage unchanged',()=>{const s=memory(),f=createBackup(s,true);assert.throws(()=>parseBackup('{"format":"other"}'));assert.throws(()=>restoreBackup(s,parseBackup(JSON.stringify(f)),false));assert.equal(s.getItem('hg_profile'),null);f.data.hg_workouts=[null];assert.throws(()=>parseBackup(JSON.stringify(f)));});
 test('storage failure during restore rolls back prior data',()=>{const s=memory();s.setItem('hg_foodLogs','[]');const f=parseBackup(JSON.stringify(createBackup(memory(),false)));let failed=false;const original=s.setItem;s.setItem=(key,value)=>{if(key==='hg_profile'&&!failed){failed=true;throw new Error('quota');}original(key,value);};assert.throws(()=>restoreBackup(s,f,false));assert.equal(s.getItem('hg_foodLogs'),'[]');assert.equal(s.getItem('hg_reports'),null);});
 test('restore blocks configured cloud connection to avoid stale queue writes',()=>{const s=memory();s.setItem('hg_gas_api_url','https://example.test/exec');assert.throws(()=>restoreBackup(s,parseBackup(JSON.stringify(createBackup(memory(),false))),false));assert.equal(s.getItem('hg_profile'),null);});
+
+test('quota failure after replacing collections restores every original byte',()=>{
+ const values=new Map<string,string>();const limit=1400;
+ const s={getItem:(k:string)=>values.get(k)??null,removeItem:(k:string)=>values.delete(k),setItem:(k:string,v:string)=>{
+   const used=[...values].reduce((sum,[key,value])=>sum+(key===k?0:value.length),0);
+   if(used+v.length>limit)throw new Error('QuotaExceeded');values.set(k,v);
+ }} as unknown as Storage;
+ const original=JSON.stringify([{foodName:'原本餐點',timestamp:'2026-11-07T08:00:00',healthAdvice:'x'.repeat(800)}]);
+ s.setItem('hg_foodLogs',original);s.setItem('hg_profile','{"name":"原使用者"}');s.setItem('unrelated','keep');
+ const before=[...values].sort();const backup=createBackup(memory(),false);
+ backup.data.hg_reports=[{analyzedAt:'2026-11-07T10:00:00',summary:'y'.repeat(800)}];
+ backup.data.hg_workouts=[{timestamp:'2026-11-07T09:00:00',activity:'z'.repeat(800)}];
+ assert.throws(()=>restoreBackup(s,backup,false),/QuotaExceeded/);
+ assert.deepEqual([...values].sort(),before);
+});

@@ -7,10 +7,10 @@ import { FoodAnalysis, HealthReport, UserProfile, WorkoutLog, SavedAppointment, 
 
 const GAS_URL_KEY = 'hg_gas_api_url';
 export const isDemoMode = () => typeof location !== 'undefined' && new URLSearchParams(location.search).get('demo') === '1';
-export const getGasUrl = () => isDemoMode() || getStorageMode()==='local' ? null : localStorage.getItem(GAS_URL_KEY);
+export const getGasUrl = () => isDemoMode() || getStorageMode()==='local' ? null : localStorage.getItem(GAS_URL_KEY)?.trim()||null;
 const storageKey = (key: string) => isDemoMode() ? 'demo_v2_' + key : key;
-export const setGasUrl = (url: string) => {localStorage.setItem(GAS_URL_KEY,url);setStorageMode('gas');};
-export const clearGasUrl = () => localStorage.removeItem(GAS_URL_KEY);
+export const setGasUrl = (url: string) => {localStorage.setItem(GAS_URL_KEY,url.trim());setStorageMode(url.trim()?'gas':'local');};
+export const clearGasUrl = () => {localStorage.removeItem(GAS_URL_KEY);setStorageMode('local');};
 
 // Define local storage keys
 export const LOCAL_STORAGE_KEYS = {
@@ -269,20 +269,23 @@ export const dbService = {
 
   addHealthReport: async (report: HealthReport) => {
     const reports = getLocal<HealthReport[]>(LOCAL_STORAGE_KEYS.reports, []);
+    const existing=reports.find(r=>r.analyzedAt===report.analyzedAt);
+    if(existing){dbService.queueSync('Reports',existing);return;}
     setLocal(LOCAL_STORAGE_KEYS.reports, [report, ...reports]);
     dbService.queueSync('Reports', report);
   },
 
   addWorkoutLog: async (log: WorkoutLog) => {
     const workouts = getLocal<WorkoutLog[]>(LOCAL_STORAGE_KEYS.workouts, []);
-    if(workouts.some(w=>w.id===log.id)){dbService.queueSync('Workouts',log);return;}
+    const existing=workouts.find(w=>w.id===log.id);
+    if(existing){dbService.queueSync('Workouts',existing);return;}
     setLocal(LOCAL_STORAGE_KEYS.workouts, [log, ...workouts]);
     dbService.queueSync('Workouts', log);
   },
   
   saveAppointment: async (appointment: SavedAppointment) => {
     const appts = getLocal<SavedAppointment[]>(LOCAL_STORAGE_KEYS.appointments, []);
-    setLocal(LOCAL_STORAGE_KEYS.appointments, [appointment, ...appts]);
+    setLocal(LOCAL_STORAGE_KEYS.appointments, [appointment, ...appts.filter(a=>a.id!==appointment.id)]);
     dbService.queueSync('Appointments', appointment);
   },
 

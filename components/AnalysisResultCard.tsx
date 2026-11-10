@@ -55,7 +55,7 @@ const AnalysisResultCard: React.FC<Props> = ({ data, onUpdateLog }) => {
   const safeNutrients = Array.isArray(data.nutrients) ? data.nutrients : [];
 
   return (
-    <div className="w-full bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden mb-6 animate-fade-in-up transition-all hover:shadow-xl">
+    <div className="meal-analysis w-full bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden mb-6 animate-fade-in-up transition-all hover:shadow-xl">
       {data.thumbnail?.startsWith('data:image/jpeg;base64,')&&<img src={data.thumbnail} alt={`${data.foodName||'餐點'}縮圖`} className="food-thumbnail result-thumbnail"/>}
       {/* Header Section */}
       <div className="p-6 pb-2">

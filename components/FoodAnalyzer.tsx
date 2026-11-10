@@ -2,7 +2,7 @@ import ManualFoodEntry from './ManualFoodEntry';
 import {makeFoodThumbnail} from '../services/foodThumbnail';
 import {getGeminiKey} from '../services/geminiService';
 import React, { useState, useRef, useMemo } from 'react';
-import { Camera, Loader2, Utensils, Sparkles, ChefHat, RefreshCw, MapPin, ExternalLink, Navigation, ShoppingBag, Flame, Calendar, Dumbbell, ArrowRight } from 'lucide-react';
+import { Camera, Loader2, Utensils, Sparkles, ChefHat, RefreshCw, MapPin, ExternalLink, Navigation, ShoppingBag, Flame, Calendar, Dumbbell, ArrowRight, ChevronRight } from 'lucide-react';
 import { analyzeFoodImage, fileToGenerativePart, generateFoodSuggestions, findNearbyRestaurants } from '../services/geminiService';
 import { FoodAnalysis, HealthReport, UserProfile, FoodSuggestion, RiskLevel, Recipe, SavedAppointment, WorkoutPlanDay } from '../types';
 import AnalysisResultCard from './AnalysisResultCard';
@@ -18,8 +18,8 @@ interface Props {
   onAnalysisComplete: (result: FoodAnalysis) => Promise<void>;
   onUpdateLog?: (timestamp: string, updatedLog: FoodAnalysis) => void;
   savedRecipes: Recipe[];
-  onSaveRecipe: (recipe: Recipe) => void;
-  onDeleteRecipe: (id: string) => void;
+  onSaveRecipe: (recipe: Recipe) => Promise<void>;
+  onDeleteRecipe: (id: string) => Promise<void>;
   // Dashboard data props are no longer used here but kept for interface compatibility if needed,
   // or we can remove them. For minimal changes, I'll ignore them in render.
   foodLogs: FoodAnalysis[];
@@ -163,17 +163,20 @@ const FoodAnalyzer: React.FC<Props> = ({
   };
 
   return (
-    <div className="space-y-4 md:space-y-6 animate-fade-in pb-20">
+    <div className="food-workspace space-y-4 md:space-y-6 animate-fade-in">
+      <header className="page-heading"><p>好好吃飯，好好生活</p><h2>飲食紀錄</h2></header>
 
       {/* View Toggle */}
-      <div className="flex p-1.5 bg-gray-100 rounded-2xl mb-6 shadow-inner">
+      <div className="food-mode-tabs flex p-1.5 bg-gray-100 rounded-2xl mb-6 shadow-inner" role="group" aria-label="飲食功能">
         <button
+           aria-pressed={viewMode === 'MEAL'}
            onClick={() => setViewMode('MEAL')}
            className={`flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-300 ${viewMode === 'MEAL' ? 'bg-white shadow-sm text-teal-700 ring-1 ring-gray-200/50' : 'text-gray-500 hover:text-gray-700'}`}
         >
           <Utensils className="w-4 h-4"/> 餐點分析
         </button>
         <button
+           aria-pressed={viewMode === 'GROCERY'}
            onClick={() => setViewMode('GROCERY')}
            className={`flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-300 ${viewMode === 'GROCERY' ? 'bg-white shadow-sm text-teal-700 ring-1 ring-gray-200/50' : 'text-gray-500 hover:text-gray-700'}`}
         >
@@ -191,20 +194,20 @@ const FoodAnalyzer: React.FC<Props> = ({
         />
       ) : (
         <>
-          <div ref={analysisPanel} className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100" style={{scrollMarginTop:80}} aria-busy={loading}>
-            <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-teal-50 hover:border-teal-200 rounded-2xl p-8 transition-colors cursor-pointer active:scale-95 duration-200"
-                onClick={() => {if(!loading)fileInputRef.current?.click();}}>
+          <div ref={analysisPanel} className="food-capture-card bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100" style={{scrollMarginTop:16}} aria-busy={loading}>
+            <button type="button" disabled={loading} className="food-upload flex flex-col items-center justify-center border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-teal-50 hover:border-teal-200 rounded-2xl p-8 transition-colors"
+                onClick={() => fileInputRef.current?.click()}>
               {preview ? (
                 <img src={preview} alt="本次辨識的飲食照片" className="max-h-64 object-contain mb-4 shadow rounded-xl" />
               ) : (
-                <div className="w-16 h-16 bg-white shadow-sm text-teal-600 rounded-2xl flex items-center justify-center mb-4 border border-gray-100 transform -rotate-3 transition-transform group-hover:rotate-0">
+                <span className="capture-icon w-16 h-16 bg-white text-teal-600 rounded-2xl flex items-center justify-center mb-4">
                   <Camera className="w-8 h-8" />
-                </div>
+                </span>
               )}
-              <p className="text-gray-600 font-bold mb-1">點擊上傳或拍攝食物照片</p>
-              <p className="text-sm text-gray-400 font-medium">支援 JPEG, PNG 格式</p>
-              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-            </div>
+              <span className="capture-title">拍下這一餐</span>
+              <span className="capture-hint">拍照或選擇照片 · JPEG、PNG</span>
+            </button>
+            <input type="file" ref={fileInputRef} className="hidden" aria-label="選擇飲食照片" accept="image/*" onChange={handleFileChange} />
 
             {loading && (
               <div role="status" className="mt-8 flex flex-col items-center text-teal-600">
@@ -215,7 +218,7 @@ const FoodAnalyzer: React.FC<Props> = ({
             {error && <div className="mt-6 p-4 bg-red-50 text-red-700 rounded-2xl font-medium border border-red-100">{error}</div>}
 
             {!loading && !preview && (
-              <div className="mt-8 pt-8 border-t border-gray-100">
+              <details className="food-suggestions mt-8 pt-8 border-t border-gray-100"><summary><Sparkles size={17}/><span>今天想吃什麼？</span><ChevronRight size={16}/></summary>
                  <div className="text-center mb-5">
                    <p className="text-gray-900 font-bold text-lg mb-1">外食族不知道吃什麼？</p>
                    <p className="text-sm text-gray-500">AI 根據您的位置與健康狀況推薦「綠燈/黃燈」美食</p>
@@ -228,7 +231,7 @@ const FoodAnalyzer: React.FC<Props> = ({
                     {suggestionLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
                     {suggestionLoading ? "AI 正在分析附近美食..." : "獲取外食推薦建議"}
                  </button>
-              </div>
+              </details>
             )}
           </div>
 

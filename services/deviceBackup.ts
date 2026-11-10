@@ -49,5 +49,12 @@ export function writeBackupData(storage:Storage,file:ReturnType<typeof parseBack
  entries.push([demo?'demo_v2_hg_sync_conflicts_v1':'hg_sync_conflicts_v1',JSON.stringify(file.data.hg_sync_conflicts_v1||[])] as any);
  if(!demo)entries.push(['hg_sync_queue_v1','[]'] as any);
  const previous=entries.map(([key])=>[key,storage.getItem(key)] as const);
- try{for(const [key,value] of entries)storage.setItem(key,value);}catch(error){for(const [key,value] of previous){if(value===null)storage.removeItem(key);else storage.setItem(key,value);}throw error;}
+ try{for(const [key,value] of entries)storage.setItem(key,value);}catch(error){
+   // Release all partially imported values first. Restoring a large original collection
+   // before freeing another new collection can hit quota again and abort the rollback.
+   const changed=previous.filter(([key,value])=>storage.getItem(key)!==value);
+   for(const [key] of changed)storage.removeItem(key);
+   for(const [key,value] of changed)if(value!==null)storage.setItem(key,value);
+   throw error;
+ }
 }
