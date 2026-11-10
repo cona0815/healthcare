@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f7459">
+<title>健康日常使用說明</title>
+<meta name="description" content="健康日常圖文操作說明：飲食、飲水、輕斷食、運動、用藥、回診、健康成就、外觀與資料備份，一步一步教你用。">
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:title" content="健康日常使用說明">
+<meta property="og:description" content="圖文一步一步教你記錄飲食、運動、用藥與回診，以及加到手機主畫面。">
+<meta property="og:url" content="https://healthcona.netlify.app/guide/">
+<meta property="og:image" content="https://healthcona.netlify.app/brand/share-health-daily-v1.png">
+<link rel="icon" type="image/svg+xml" href="/brand/health-daily.svg">
+<link rel="apple-touch-icon" href="/brand/apple-touch-icon.png">
+<style>
+:root{
+ --bg:#f6f7f1;--paper:#ffffff;--ink:#23332b;--muted:#5f6f65;--line:#dfe6da;
+ --forest:#2f7459;--forest-ink:#ffffff;--sage:#e8f0e2;--warn-bg:#fdf6e3;--warn-line:#ecd9a6;--warn-ink:#5a4612;
+ --note-bg:#eef5fb;--note-line:#cfe0ef;--note-ink:#21435e;--shadow:0 2px 14px #1e3a2c14;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+ --bg:#0f1714;--paper:#17211d;--ink:#e3ece6;--muted:#a3b3a9;--line:#2a3a33;
+ --forest:#7fd1ad;--forest-ink:#0c2119;--sage:#1d2c26;--warn-bg:#33291a;--warn-line:#6a5630;--warn-ink:#f2dcaa;
+ --note-bg:#172633;--note-line:#2d4458;--note-ink:#cfe4f5;--shadow:0 2px 14px #00000040;
+}}
+:root[data-theme="dark"]{
+ --bg:#0f1714;--paper:#17211d;--ink:#e3ece6;--muted:#a3b3a9;--line:#2a3a33;
+ --forest:#7fd1ad;--forest-ink:#0c2119;--sage:#1d2c26;--warn-bg:#33291a;--warn-line:#6a5630;--warn-ink:#f2dcaa;
+ --note-bg:#172633;--note-line:#2d4458;--note-ink:#cfe4f5;--shadow:0 2px 14px #00000040;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.85 system-ui,-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;-webkit-text-size-adjust:100%}
+a{color:var(--forest)}
+img{max-width:100%;height:auto}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px}
+
+/* 頂部 */
+.hero{padding-top:28px;padding-bottom:18px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:48px;height:48px;border-radius:12px}
+.brand p{margin:0;font-size:13px;color:var(--muted)}
+h1{font-size:30px;line-height:1.3;margin:14px 0 8px;letter-spacing:.5px}
+.lead{font-size:16px;color:var(--muted);margin:0 0 16px}
+.cta{display:flex;flex-wrap:wrap;gap:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:46px;padding:0 18px;border-radius:12px;font-weight:700;font-size:15px;text-decoration:none}
+.btn.primary{background:var(--forest);color:var(--forest-ink)}
+.btn.ghost{border:1.5px solid var(--forest);color:var(--forest);background:transparent}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0 0}
+.facts div{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px}
+.facts strong{display:block;font-size:15px}
+.facts span{font-size:13px;color:var(--muted);line-height:1.6;display:block;margin-top:2px}
+
+/* 目錄 */
+.toc{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.toc .wrap{display:flex;gap:8px;overflow-x:auto;padding-top:10px;padding-bottom:10px;scrollbar-width:none}
+.toc .wrap::-webkit-scrollbar{display:none}
+.toc a{flex:none;font-size:14px;text-decoration:none;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:5px 13px;white-space:nowrap}
+.toc a:hover{border-color:var(--forest);color:var(--forest)}
+
+/* 章節 */
+section.chapter{padding:34px 0 10px}
+.chapter>header{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+.chapter>header .no{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--forest);color:var(--forest-ink);font-weight:800;font-size:16px;line-height:1}
+h2{font-size:24px;line-height:1.35;margin:0}
+.intro{color:var(--muted);margin:4px 0 16px}
+h3{font-size:18px;line-height:1.4;margin:0 0 8px}
+
+.feature{display:grid;grid-template-columns:1fr;gap:16px;background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px;margin:14px 0;box-shadow:var(--shadow)}
+@media (min-width:760px){.feature{grid-template-columns:240px 1fr;gap:24px;padding:22px}.feature.flip{grid-template-columns:1fr 240px}.feature.flip figure{order:2}}
+figure{margin:0}
+.phone{display:block;width:100%;max-width:240px;margin:0 auto;border-radius:26px;border:7px solid #1d2126;background:#1d2126;cursor:zoom-in;padding:0}
+.phone img{display:block;width:100%;border-radius:19px}
+figcaption{font-size:12px;color:var(--muted);text-align:center;margin-top:6px}
+.wide{display:block;width:100%;border-radius:14px;border:1px solid var(--line);cursor:zoom-in;padding:0;background:none}
+.wide img{display:block;width:100%;border-radius:13px}
+
+ol.steps{list-style:none;margin:6px 0 0;padding:0;counter-reset:s}
+ol.steps li{counter-increment:s;position:relative;padding:0 0 10px 38px}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:3px;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--sage);color:var(--forest);font-weight:800;font-size:14px;line-height:1}
+ul.points{margin:6px 0 0;padding-left:20px}
+ul.points li{margin:2px 0}
+b,strong{font-weight:700}
+.key{display:inline-block;padding:0 7px;border-radius:6px;background:var(--sage);color:var(--forest);font-weight:700;font-size:.95em;line-height:1.6}
+.box{border-radius:14px;padding:12px 14px;margin:12px 0 0;font-size:15px;line-height:1.8}
+.box p{margin:0}.box p+p{margin-top:6px}
+.box.warn{background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn-ink)}
+.box.note{background:var(--note-bg);border:1px solid var(--note-line);color:var(--note-ink)}
+.box strong{display:block;margin-bottom:2px}
+
+.navgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:10px 0 4px}
+.navgrid div{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center;font-size:13px;line-height:1.5}
+.navgrid b{display:block;font-size:15px;color:var(--forest)}
+.badges{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.badges div{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px}
+.badges strong{display:block;color:var(--forest)}
+.badges span{font-size:14px;color:var(--muted);line-height:1.7;display:block}
+@media (max-width:560px){.facts,.badges{grid-template-columns:1fr}.navgrid{grid-template-columns:repeat(5,1fr);gap:4px}.navgrid div{font-size:11px;padding:8px 2px}.navgrid b{font-size:13px}h1{font-size:26px}}
+
+details.faq{background:var(--paper);border:1px solid var(--line);border-radius:14px;margin:10px 0;padding:0 16px}
+details.faq summary{cursor:pointer;font-weight:700;padding:13px 0;list-style:none}
+details.faq summary::-webkit-details-marker{display:none}
+details.faq summary::after{content:"＋";float:right;color:var(--forest)}
+details.faq[open] summary::after{content:"－"}
+details.faq p{margin:0 0 14px}
+
+footer.page{margin:40px 0 0;padding:24px 0 40px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.top-link{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--forest);color:var(--forest-ink);text-decoration:none;font-weight:800;box-shadow:var(--shadow);opacity:.9}
+
+dialog.zoom{border:0;padding:0;background:transparent;max-width:96vw;max-height:96vh}
+dialog.zoom::backdrop{background:#000000d0}
+dialog.zoom img{display:block;max-width:96vw;max-height:92vh;border-radius:14px}
+dialog.zoom button{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:0;background:#fff;color:#111;font-size:22px;cursor:pointer}
+@media print{.toc,.top-link,.cta{display:none}.feature{break-inside:avoid;box-shadow:none}}
+</style>
+</head>
+<body>
+<header class="hero wrap">
+ <div class="brand"><img src="/brand/icon-192.png" alt="" width="48" height="48"><div><strong>健康日常</strong><p>個人健康管理 · 圖文使用說明</p></div></div>
+ <h1>一步一步學會用「健康日常」</h1>
+ <p class="lead">記錄飲食、飲水、運動、用藥與回診，讓每天的健康一目了然。這份說明用真實畫面帶你操作，圖可以點開放大。</p>
+ <div class="cta"><a class="btn primary" href="/">打開健康日常</a><a class="btn ghost" href="/?demo=1">先用示範資料試玩</a></div>
+ <div class="facts">
+  <div><strong>不用註冊帳號</strong><span>打開網址就能用，資料存在你自己的手機裡。</span></div>
+  <div><strong>不用 AI 也能用</strong><span>手動記錄、計時、提醒、備份都免金鑰；AI 拍照分析是加分功能。</span></div>
+  <div><strong>可以加到主畫面</strong><span>像一般 App 一樣從手機主畫面打開，全螢幕使用。</span></div>
+ </div>
+</header>
+
+<nav class="toc" aria-label="目錄"><div class="wrap">
+ <a href="#start">開始使用</a><a href="#install">加到主畫面</a><a href="#tour">畫面導覽</a><a href="#overview">總覽</a><a href="#food">記錄飲食</a><a href="#nutrition">營養與輕斷食</a><a href="#workout">運動</a><a href="#helper">健康助手</a><a href="#rewards">健康成就</a><a href="#settings">設定</a><a href="#ai">AI 功能</a><a href="#backup">備份與換手機</a><a href="#faq">常見問題</a>
+</div></nav>
+
+<main class="wrap">
+
+<section class="chapter" id="start">
+ <header><span class="no">1</span><h2>開始使用</h2></header>
+ <p class="intro">第一次打開不需要任何設定，直接就是「本機模式」：所有紀錄存在這支手機的瀏覽器裡。</p>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大第一次打開的畫面"><img src="img/first-run.webp" width="585" height="1266" loading="lazy" alt="第一次打開健康日常的今日總覽，尚無資料"></button><figcaption>第一次打開：今日總覽</figcaption></figure>
+  <div>
+   <h3>兩種開始方式</h3>
+   <ol class="steps">
+    <li><b>正式使用</b>：打開 <a href="/">healthcona.netlify.app</a>，畫面上方會寫「本機模式 · 手動紀錄免金鑰」，就可以開始記錄。</li>
+    <li><b>先試玩</b>：打開 <a href="/?demo=1">示範模式</a>，裡面是虛構的範例資料，隨便按都不會影響你的正式紀錄。上方寫著「示範體驗 · 虛構資料」，點<span class="key">離開示範</span>回到正式版。</li>
+    <li>建議先到<a href="#settings">設定</a>填好<b>個人健康資料</b>（身高、體重、生日），熱量目標才算得出來。</li>
+   </ol>
+   <div class="box note"><strong>資料存在哪裡？</strong><p>預設只存在這支手機、這個瀏覽器裡，不會上傳。換手機或清除瀏覽器資料前，請先到設定<a href="#backup">下載備份</a>。</p></div>
+  </div>
+ </div>
+</section>
+
+<section class="chapter" id="install">
+ <header><span class="no">2</span><h2>加到手機主畫面</h2></header>
+ <p class="intro">加到主畫面後，就像一般 App 一樣一點就開，而且是全螢幕。App 裡的「設定 → 加到手機主畫面」有每一步的示意圖。</p>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大加到主畫面教學"><img src="img/install-guide.webp" width="585" height="1266" loading="lazy" alt="設定頁裡的加到手機主畫面教學卡片"></button><figcaption>設定頁的「加到手機主畫面」教學</figcaption></figure>
+  <div>
+   <h3>從 LINE 點進來的人請先看這裡</h3>
+   <p>LINE 裡的瀏覽器<b>不能</b>加到主畫面。在 LINE 打開時，總覽上方會出現提示，點<span class="key">用 Safari 開啟</span>（iPhone）或<span class="key">用 Chrome 開啟</span>（安卓）就會跳到手機瀏覽器。</p>
+   <h3 style="margin-top:14px">iPhone／iPad（Safari）</h3>
+   <ol class="steps">
+    <li>點網址列右邊的<span class="key">⋯</span>，再點<span class="key">分享</span>。較舊的 iOS 直接點下方的分享鈕（方框加向上箭頭）。</li>
+    <li>找到<span class="key">加入主畫面</span>並點它。</li>
+    <li>「以網頁 App 打開」保持開啟，點右上角<span class="key">加入</span>。</li>
+   </ol>
+   <h3 style="margin-top:6px">安卓（Chrome）</h3>
+   <ol class="steps">
+    <li>如果頁面上有<span class="key">一鍵安裝到主畫面</span>，直接按它。</li>
+    <li>沒有的話，點右上角<span class="key">⋮</span>，選<span class="key">安裝應用程式</span>（也可能叫「加到主畫面」或「安裝並建立捷徑」）。</li>
+    <li>點<span class="key">安裝</span>。</li>
+   </ol>
+   <div class="box warn"><strong>先備份再搬家</strong><p>LINE、Safari、Chrome 和主畫面 App 的資料是分開存的，不會自動帶過去。如果已經記過資料，先在原本的地方下載備份，加到主畫面後再從新的圖示打開、還原。</p></div>
+  </div>
+ </div>
+</section>
+
+<section class="chapter" id="tour">
+ <header><span class="no">3</span><h2>畫面導覽</h2></header>
+ <p class="intro">畫面最下方有五個按鈕，右上角的齒輪是設定。</p>
+ <div class="navgrid" aria-label="底部五個按鈕">
+  <div><b>總覽</b>今天的熱量、餐點、飲水、打卡</div>
+  <div><b>飲食</b>拍照或手動記一餐、管理餐點</div>
+  <div><b>＋ 記錄</b>快速新增各種紀錄</div>
+  <div><b>運動</b>記運動、課表、趨勢、教學</div>
+  <div><b>健康助手</b>月曆、量測、用藥、回診</div>
+ </div>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大快速記錄選單"><img src="img/record-sheet.webp" width="585" height="1266" loading="lazy" alt="點中間加號後跳出的想記錄什麼選單"></button><figcaption>中間的「＋ 記錄」</figcaption></figure>
+  <div>
+   <h3>最快的記錄方式：中間的「＋」</h3>
+   <p>不管在哪一頁，點底部中間的綠色<span class="key">＋</span>，會跳出「想記錄什麼？」：</p>
+   <ul class="points">
+    <li><b>拍照記飲食</b>：拍下這一餐，交給 AI 估算熱量（需要設定 AI）。</li>
+    <li><b>血壓與血糖</b>：記錄今天的量測值。</li>
+    <li><b>運動紀錄</b>、<b>飲水紀錄</b>、<b>症狀與健康助手</b>。</li>
+   </ul>
+   <p>點右上角的<span class="key">✕</span>或旁邊的灰色區域就能關閉。</p>
+  </div>
+ </div>
+</section>
+
+<section class="chapter" id="overview">
+ <header><span class="no">4</span><h2>總覽：今天的健康一頁看完</h2></header>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大今日總覽"><img src="img/overview.webp" width="585" height="1266" loading="lazy" alt="今日總覽，顯示回診提醒、今日剩餘可吃熱量與三大營養素"></button><figcaption>今日總覽（示範資料）</figcaption></figure>
+  <div>
+   <h3>由上往下看</h3>
+   <ul class="points">
+    <li><b>回診提醒</b>：當天有門診才會出現，點了可以看細節。</li>
+    <li><b>今日剩餘可吃</b>：目標熱量減去今天已吃的熱量。點右上角箭頭可以調整目標。</li>
+    <li><b>輕斷食倒數</b>：啟用後會顯示「空腹中」或「進食中」，倒數到時、分、秒。</li>
+    <li><b>三大營養素</b>：今天記到的蛋白質、碳水、脂肪。沒有填的會顯示「尚無資料」，不會亂猜。</li>
+   </ul>
+  </div>
+ </div>
+ <div class="feature flip">
+  <figure><button class="phone" type="button" aria-label="放大飲食紀錄區"><img src="img/overview-meals.webp" width="585" height="1266" loading="lazy" alt="總覽的飲食紀錄，早餐、午餐、晚餐與點心飲料"></button><figcaption>飲食紀錄與飲水</figcaption></figure>
+  <div>
+   <h3>飲食紀錄</h3>
+   <ol class="steps">
+    <li>早餐、午餐、晚餐、點心／飲料各一列，右邊的<span class="key">＋</span>可以直接補記那一餐。</li>
+    <li>點<span class="key">管理今日餐點</span>可以編輯或刪除今天的每一筆。</li>
+    <li>右上角<span class="key">拍照記錄</span>會帶你到飲食頁拍照。</li>
+   </ol>
+   <h3 style="margin-top:12px">飲水</h3>
+   <p>喝一杯就點<span class="key">+250 ml</span>，按錯了點<span class="key">−250 ml</span>。進度條會往飲水目標前進。</p>
+  </div>
+ </div>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大健康打卡"><img src="img/overview-checkin.webp" width="585" height="1266" loading="lazy" alt="健康打卡區，今日用藥勾選"></button><figcaption>健康打卡</figcaption></figure>
+  <div>
+   <h3>健康打卡（今天的藥吃了沒）</h3>
+   <ol class="steps">
+    <li>吃完藥就把那一列<b>打勾</b>，上方會顯示「今日用藥 · 1 / 1 已完成」。</li>
+    <li>要新增或修改藥名、時間，點右上角<span class="key">設定提醒</span>。</li>
+   </ol>
+   <div class="box note"><strong>提醒的方式</strong><p>提醒顯示在 App 裡面，網頁沒有背景推播。建議每天固定時間打開看一下。</p></div>
+  </div>
+ </div>
+</section>
+
+<section class="chapter" id="food">
+ <header><span class="no">5</span><h2>記錄飲食</h2></header>
+ <p class="intro">底部點<span class="key">飲食</span>。有兩種記法：拍照請 AI 估算，或自己手動輸入。</p>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大飲食頁"><img src="img/food.webp" width="585" height="1266" loading="lazy" alt="飲食紀錄頁，拍下這一餐"></button><figcaption>飲食頁</figcaption></figure>
+  <div>
+   <h3>方法一：拍照記錄（需要 AI）</h3>
+   <ol class="steps">
+    <li>點<span class="key">拍下這一餐</span>，拍照或從相簿選照片（JPEG、PNG）。</li>
+    <li>AI 會估算餐點名稱、熱量和營養素，看過沒問題再儲存。</li>
+    <li>結果是估計值，覺得不準可以在「管理今日餐點」修改。</li>
+   </ol>
+   <p>還沒設定 AI 的話，請看<a href="#ai">AI 功能</a>，或改用下面的手動記錄。</p>
+  </div>
+ </div>
+ <div class="feature flip">
+  <figure><button class="phone" type="button" aria-label="放大手動記飲食"><img src="img/food-manual.webp" width="585" height="1266" loading="lazy" alt="手動記飲食表單：餐點名稱、熱量、餐次、時間、照片"></button><figcaption>手動記飲食</figcaption></figure>
+  <div>
+   <h3>方法二：手動記錄（免 AI）</h3>
+   <ol class="steps">
+    <li>點開<span class="key">手動記飲食／保留照片縮圖</span>。</li>
+    <li>填<b>餐點名稱</b>、<b>熱量</b>（自己估計就好），選<b>餐次</b>和<b>時間</b>。</li>
+    <li>想留照片當紀錄，可以選一張餐點照片，只會存成小縮圖。</li>
+    <li>點<span class="key">儲存餐點</span>。</li>
+   </ol>
+   <div class="box note"><strong>不小心存了兩次？</strong><p>如果短時間內存了一樣的餐點，會跳出「這筆餐點可能重複」。真的又吃了一份就選「仍然新增一筆」，否則按「取消新增」。</p></div>
+  </div>
+ </div>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大管理今日餐點"><img src="img/food-manage.webp" width="585" height="1266" loading="lazy" alt="管理今日餐點，每筆有編輯和刪除，下方有餐點回收桶"></button><figcaption>管理今日餐點與回收桶</figcaption></figure>
+  <div>
+   <h3>修改、刪除與復原</h3>
+   <ol class="steps">
+    <li>點開<span class="key">管理今日餐點</span>，每一筆都有<span class="key">編輯</span>和<span class="key">刪除</span>。</li>
+    <li>編輯可以改名稱、餐次、熱量、時間與營養素，改完點<span class="key">儲存修改</span>。</li>
+    <li>刪掉的餐點會進<span class="key">餐點回收桶</span>，點<span class="key">復原餐點</span>就回來了，回收桶不會自動清空。</li>
+   </ol>
+   <p>改了早餐的時間或刪掉早餐，輕斷食的倒數會自動重新計算。</p>
+  </div>
+ </div>
+ <div class="feature flip">
+  <figure><button class="phone" type="button" aria-label="放大購物與食譜"><img src="img/food-shopping.webp" width="585" height="1266" loading="lazy" alt="購物與食譜頁，今日推薦與我的食譜"></button><figcaption>購物與食譜</figcaption></figure>
+  <div>
+   <h3>購物與食譜（需要 AI）</h3>
+   <p>飲食頁上方切到<span class="key">購物與食譜</span>：</p>
+   <ul class="points">
+    <li><b>今日推薦</b>：AI 依你的健康資料與飲食偏好，一次給 10 道適合的料理。</li>
+    <li><b>我的食譜</b>：收藏喜歡的食譜，下次直接看。</li>
+    <li>飲食頁下方的<b>我的飲食指南</b>不用 AI，依你的健康資料整理飲食重點。</li>
+   </ul>
+  </div>
+ </div>
+</section>
+
+<section class="chapter" id="nutrition">
+ <header><span class="no">6</span><h2>營養目標與輕斷食</h2></header>
+ <p class="intro">從<span class="key">健康助手</span>點<span class="key">營養目標與輕斷食</span>。</p>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大營養目標"><img src="img/nutrition.webp" width="585" height="1266" loading="lazy" alt="營養目標頁：TDEE、活動量、減重目標、熱量目標"></button><figcaption>營養目標</figcaption></figure>
+  <div>
+   <h3>設定每天的熱量與飲水目標</h3>
+   <ol class="steps">
+    <li>先到設定填好身高、體重、生日、性別，這裡會算出<b>估計 TDEE</b>（每天大約消耗的熱量）。</li>
+    <li>選<b>日常活動量</b>和<b>減重目標</b>（維持體重、溫和減重 −300 等）。</li>
+    <li><b>熱量目標來源</b>可選「手動設定」自己填，或「連動 TDEE 與赤字目標」自動計算。</li>
+    <li>填<b>飲水目標</b>，點<span class="key">儲存營養目標</span>。</li>
+   </ol>
+   <p>「總覽熱量顯示」可以選看<b>剩餘可吃</b>或<b>已攝取</b>。</p>
+  </div>
+ </div>
+ <div class="feature flip">
+  <figure><button class="phone" type="button" aria-label="放大輕斷食作息"><img src="img/fasting.webp" width="585" height="1266" loading="lazy" alt="輕斷食作息設定"></button><figcaption>輕斷食作息</figcaption></figure>
+  <div>
+   <h3>輕斷食怎麼計時</h3>
+   <ol class="steps">
+    <li>在<b>輕斷食作息</b>設定進食時數與空腹時數（例如進食 8 小時、空腹 16 小時），點<span class="key">儲存並啟用作息提醒</span>。</li>
+    <li>從<b>當天最早的「早餐」紀錄</b>開始計時；還沒記早餐就會先等待，不會用午餐或晚餐代替。</li>
+    <li>總覽會顯示「進食中」或「空腹中」，倒數到時、分、秒。</li>
+   </ol>
+   <div class="box warn"><strong>健康第一</strong><p>輕斷食不適合每個人。懷孕、糖尿病用藥、身體不舒服時，請先詢問醫師。</p></div>
+  </div>
+ </div>
+</section>
+
+<section class="chapter" id="workout">
+ <header><span class="no">7</span><h2>運動</h2></header>
+ <p class="intro">底部點<span class="key">運動</span>，上方有四個分頁：手動記錄、每週課表、歷史趨勢、練習教學。</p>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大一般運動紀錄"><img src="img/workout.webp" width="585" height="1266" loading="lazy" alt="運動手動記錄：運動項目、分鐘、時間"></button><figcaption>一般運動／分鐘</figcaption></figure>
+  <div>
+   <h3>記一般運動</h3>
+   <ol class="steps">
+    <li>選<span class="key">一般運動／分鐘</span>。</li>
+    <li>選<b>運動項目</b>（快走、超慢跑、靠牆深蹲、游泳、瑜珈……沒有的可以選「自行輸入其他運動」）。</li>
+    <li>填<b>運動分鐘</b>；之前做的可以在<b>補記／調整時間</b>改日期時間。</li>
+    <li>點<span class="key">儲存運動紀錄</span>。</li>
+   </ol>
+   <p>下方<span class="key">自訂項目與排序</span>可以把常做的運動排到最前面。</p>
+  </div>
+ </div>
+ <div class="feature flip">
+  <figure><button class="phone" type="button" aria-label="放大重訓逐組紀錄"><img src="img/workout-strength.webp" width="585" height="1266" loading="lazy" alt="重訓逐組紀錄：動作、每組重量、次數、完成勾選、組間休息計時"></button><figcaption>重訓／組數</figcaption></figure>
+  <div>
+   <h3>記重訓（一組一組記）</h3>
+   <ol class="steps">
+    <li>切到<span class="key">重訓／組數</span>，點常用動作（啞鈴深蹲、胸推、划船）或自己輸入動作名稱。</li>
+    <li>每一組填<b>重量（kg）</b>與<b>次數</b>，做完就勾<b>完成</b>。需要更多組點<span class="key">＋ 新增一組</span>。</li>
+    <li>組間休息可以用<b>休息計時</b>：選秒數後按<span class="key">開始</span>。</li>
+    <li>點<span class="key">儲存已完成 N 組</span>，只有打勾的組會存。</li>
+   </ol>
+   <p>下次再做同一個動作，會自動帶入上次的重量和次數。</p>
+  </div>
+ </div>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大每週課表"><img src="img/workout-weekly.webp" width="585" height="1266" loading="lazy" alt="每週課表，一週七天"></button><figcaption>每週課表</figcaption></figure>
+  <div>
+   <h3>排每週課表</h3>
+   <ol class="steps">
+    <li>切到<span class="key">每週課表</span>，點星期幾。</li>
+    <li>點<span class="key">＋ 新增週X動作</span>，安排那天要做的動作。</li>
+    <li>課表只是目標，不會自動算成已完成；真的做完要回「手動記錄」儲存。</li>
+   </ol>
+   <p>有設定 AI 的話，可以用<b>AI 協助安排課表</b>（選用）。</p>
+  </div>
+ </div>
+ <div class="feature flip">
+  <figure><button class="phone" type="button" aria-label="放大歷史趨勢"><img src="img/workout-history.webp" width="585" height="1266" loading="lazy" alt="運動歷史趨勢與全部運動紀錄"></button><figcaption>歷史趨勢</figcaption></figure>
+  <div>
+   <h3>看進步</h3>
+   <ul class="points">
+    <li><b>查看動作趨勢</b>：選一個重訓動作，看最近的單組最大重量和總訓練量。</li>
+    <li><b>運動歷史</b>：所有運動紀錄依日期排列，太多時點「載入更多歷史」。</li>
+   </ul>
+   <p>訓練量＝每組重量 × 次數的總和；數字變大不代表動作品質一定更好。</p>
+  </div>
+ </div>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大練習教學"><img src="img/workout-practice.webp" width="585" height="1266" loading="lazy" alt="練習教學：運動練習與參考影片"></button><figcaption>練習教學</figcaption></figure>
+  <div>
+   <h3>練習教學與姿勢分析</h3>
+   <ul class="points">
+    <li>超慢跑、靠牆深蹲、坐姿踮腳、牆壁天使、雪天使、彈力帶上舉等，都有分步驟圖解。</li>
+    <li>有設定 AI 的話，可以上傳 30 秒內、3 MB 以內的短片，請 AI 看姿勢並給調整建議。</li>
+    <li>看不清楚的項目會標「無法判斷」並建議補拍角度，不會硬給分數。</li>
+   </ul>
+  </div>
+ </div>
+</section>
+
+<section class="chapter" id="helper">
+ <header><span class="no">8</span><h2>健康助手</h2></header>
+ <p class="intro">底部點<span class="key">健康助手</span>。上面是週曆，下面依「飲食與營養、運動與量測、用藥與就醫、快速記錄與待辦」分類。</p>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大健康助手週曆"><img src="img/helper.webp" width="585" height="1266" loading="lazy" alt="健康助手週曆，點日期看當天紀錄"></button><figcaption>週曆與當日安排</figcaption></figure>
+  <div>
+   <h3>週曆</h3>
+   <ol class="steps">
+    <li>點任一天，下方會顯示那天的飲食、運動、用藥、回診和症狀。</li>
+    <li>彩色小點代表那天有哪些紀錄；點<span class="key">展開月曆</span>看整個月。</li>
+    <li>點<span class="key">回今天</span>回到今天。</li>
+    <li>過去忘了記的，用<span class="key">＋ 補記 某日 的紀錄</span>補上。</li>
+   </ol>
+  </div>
+ </div>
+ <div class="feature flip">
+  <figure><button class="phone" type="button" aria-label="放大功能分類"><img src="img/helper-sections.webp" width="585" height="1266" loading="lazy" alt="用藥與就醫分類：用藥管理、藥品庫存、回診與預約、健檢報告、看診摘要"></button><figcaption>用藥與就醫</figcaption></figure>
+  <div>
+   <h3>用藥與就醫有哪些</h3>
+   <ul class="points">
+    <li><b>用藥管理</b>：設定藥名和吃藥時間（總覽的健康打卡就是從這裡來）。</li>
+    <li><b>藥品庫存</b>：記剩幾顆、每天吃幾顆，快吃完會提醒補藥。</li>
+    <li><b>回診與預約</b>：記門診時間、醫師、診號。</li>
+    <li><b>健檢報告</b>：上傳報告請 AI 整理重點（需要 AI）。</li>
+    <li><b>看診摘要</b>：選日期區間，產生可以給醫師看的 PDF。</li>
+    <li><b>症狀日記</b>：記下哪裡不舒服、什麼時候開始。</li>
+   </ul>
+  </div>
+ </div>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大生理量測"><img src="img/vitals.webp" width="585" height="1266" loading="lazy" alt="生理數據紀錄：量血壓與量血糖"></button><figcaption>生理量測</figcaption></figure>
+  <div>
+   <h3>記血壓、血糖、體重</h3>
+   <ol class="steps">
+    <li>在「運動與量測」展開<b>生理量測</b>，點<span class="key">記錄血壓／血糖</span>或<span class="key">記錄體重</span>。</li>
+    <li>血壓填<b>收縮壓（高）</b>、<b>舒張壓（低）</b>，心跳可以不填；血糖切到<span class="key">量血糖</span>填寫。</li>
+    <li>點<span class="key">儲存今日紀錄</span>。右上角<span class="key">歷史紀錄</span>可以看以前的數字。</li>
+   </ol>
+   <p>沒量的日子不會被當成「漏做」；趨勢圖會留空，不會亂補數字。</p>
+  </div>
+ </div>
+ <div class="feature flip">
+  <figure><button class="phone" type="button" aria-label="放大用藥提醒設定"><img src="img/medication.webp" width="585" height="1266" loading="lazy" alt="健康打卡用藥提醒設定：藥品名稱、提醒時間"></button><figcaption>用藥提醒設定</figcaption></figure>
+  <div>
+   <h3>設定吃藥提醒</h3>
+   <ol class="steps">
+    <li>點<span class="key">用藥管理</span>。</li>
+    <li>填<b>藥品名稱</b>，選<b>提醒時間</b>，點<span class="key">新增提醒</span>。</li>
+    <li>不用的提醒點<span class="key">移除</span>。</li>
+   </ol>
+   <p>設好後，總覽的「健康打卡」每天都會出現這些藥，吃完打勾即可。</p>
+  </div>
+ </div>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大藥品庫存"><img src="img/care-tools.webp" width="585" height="1266" loading="lazy" alt="藥品庫存與補藥提醒"></button><figcaption>藥品庫存與補藥提醒</figcaption></figure>
+  <div>
+   <h3>藥品庫存</h3>
+   <ol class="steps">
+    <li>填藥品名稱、<b>剩餘顆數</b>、<b>每日顆數</b>和<b>剩幾天提醒</b>，點<span class="key">新增藥品</span>。</li>
+    <li>每天吃完可以點<span class="key">扣除一天用量</span>；拿到新藥點<span class="key">編輯／補藥</span>更新數量。</li>
+    <li>快吃完時，健康助手會顯示「補藥提醒」。</li>
+   </ol>
+  </div>
+ </div>
+ <div class="feature flip">
+  <figure><button class="phone" type="button" aria-label="放大回診與預約"><img src="img/appointments.webp" width="585" height="1266" loading="lazy" alt="預約管理中心：上傳預約單與我的預約行程"></button><figcaption>回診與預約</figcaption></figure>
+  <div>
+   <h3>記門診</h3>
+   <ul class="points">
+    <li>有設定 AI 的話，拍下<b>預約單或掛號證</b>，AI 會自動整理日期、時間、醫師、診號。</li>
+    <li>每筆預約都可以<span class="key">編輯</span>或<span class="key">刪除</span>，也會排出「提醒、抽血、回診」等步驟。</li>
+    <li>當天有門診，總覽最上面會出現提醒。</li>
+   </ul>
+  </div>
+ </div>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大快速記錄與待辦"><img src="img/tasks.webp" width="585" height="1266" loading="lazy" alt="快速記錄與待辦：常用範本、補記、新增待辦"></button><figcaption>快速記錄與待辦</figcaption></figure>
+  <div>
+   <h3>常用範本與待辦</h3>
+   <ul class="points">
+    <li><b>常用範本</b>：常吃的早餐、常做的運動存成範本，一點就記好。</li>
+    <li><b>新增待辦</b>：自己加每天要做的事，例如量體重、散步。</li>
+    <li><b>調整卡片順序</b>：把最常看的卡片排到上面。</li>
+   </ul>
+  </div>
+ </div>
+</section>
+
+<section class="chapter" id="rewards">
+ <header><span class="no">9</span><h2>健康成就</h2></header>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大健康成就"><img src="img/overview-rewards.webp" width="585" height="1266" loading="lazy" alt="總覽的健康成就：輕斷食、飲食控制、運動30分連續天數"></button><figcaption>總覽下方的健康成就</figcaption></figure>
+  <div>
+   <h3>連續做到就拿徽章</h3>
+   <p>三項各自計算連續天數，達到<b>3、7、14、30、60、100 天</b>會解鎖徽章。全部依實際紀錄判定。</p>
+   <div class="badges">
+    <div><strong>輕斷食</strong><span>從早餐起算，空腹期間沒有飲食紀錄，隔天早餐在空腹結束後才算達標。</span></div>
+    <div><strong>飲食控制</strong><span>早、午、晚三餐都有記錄，全天熱量在自訂目標 ±10% 內。吃太少不算。</span></div>
+    <div><strong>運動 30 分</strong><span>同一天運動分鐘加起來至少 30 分鐘。</span></div>
+   </div>
+   <div class="box note"><strong>不用硬撐</strong><p>成就是鼓勵規律，不鼓勵少吃、延長空腹或加倍運動來補天數。請完整記錄，包含點心和飲料。</p></div>
+  </div>
+ </div>
+</section>
+
+<section class="chapter" id="settings">
+ <header><span class="no">10</span><h2>設定</h2></header>
+ <p class="intro">點右上角的<span class="key">齒輪</span>。這裡有個人資料、外觀、資料儲存方式、AI 與備份。</p>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大設定頁"><img src="img/settings.webp" width="585" height="1266" loading="lazy" alt="設定頁：個人健康資料、首頁名稱、外觀"></button><figcaption>設定頁上方</figcaption></figure>
+  <div>
+   <h3>個人資料與首頁名稱</h3>
+   <ol class="steps">
+    <li>點<span class="key">個人健康資料</span>，填姓名、生日、身高、體重、性別、飲食偏好、過敏與健康狀況，點<span class="key">儲存更新</span>。</li>
+    <li><b>我的首頁名稱</b>可以改成自己喜歡的名字（最多 12 字），點<span class="key">儲存名稱</span>。</li>
+   </ol>
+   <p>健康狀況只用來調整飲食建議的方向，App 不會做任何診斷。</p>
+  </div>
+ </div>
+ <div class="feature flip">
+  <figure><button class="phone" type="button" aria-label="放大外觀選擇"><img src="img/settings-themes.webp" width="585" height="1266" loading="lazy" alt="選一個喜歡的日常：五種外觀"></button><figcaption>選一個喜歡的日常</figcaption></figure>
+  <div>
+   <h3>五種外觀</h3>
+   <p>在<b>選一個喜歡的日常</b>點一下就換，會記住這台裝置的選擇：</p>
+   <ul class="points">
+    <li><b>森林日常</b>：沉穩、清爽（預設）</li>
+    <li><b>多彩日常</b>：明亮、活力</li>
+    <li><b>小島日常</b>：小島風、療癒</li>
+    <li><b>甜心日常</b>：可愛的奶油粉</li>
+    <li><b>星際科技</b>：深藍底、冰藍光，晚上看不刺眼</li>
+   </ul>
+  </div>
+ </div>
+ <figure style="margin:14px 0"><button class="wide" type="button" aria-label="放大五種外觀比較"><img src="img/themes.webp" width="1560" height="537" loading="lazy" alt="同一個總覽畫面在五種外觀下的樣子：森林、多彩、小島、甜心、星際科技"></button><figcaption>由左到右：森林、多彩、小島、甜心、星際科技</figcaption></figure>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大資料儲存方式"><img src="img/settings-storage.webp" width="585" height="1266" loading="lazy" alt="資料儲存方式：存在本機（預設）與 GAS 雲端同步（進階）"></button><figcaption>資料儲存方式</figcaption></figure>
+  <div>
+   <h3>資料儲存方式</h3>
+   <ul class="points">
+    <li><b>存在本機（預設）</b>：資料只存在這支手機。網站開啟時會定時做本機備份（每週一次，可改每天），保留最近 7 份。點<span class="key">立即建立本機備份</span>可以馬上備份一次。</li>
+    <li><b>GAS 雲端同步（進階）</b>：同步到你自己的 Google 試算表，適合想在手機和電腦之間同步的人，見下方說明。</li>
+   </ul>
+   <div class="box warn"><strong>本機備份不等於安全</strong><p>清除瀏覽器資料、刪掉 App 或手機壞掉，本機備份也會一起消失。請定期到<a href="#backup">手機備份與還原</a>下載備份檔，存到雲端硬碟或電腦。</p></div>
+  </div>
+ </div>
+ <div class="feature flip">
+  <figure><button class="phone" type="button" aria-label="放大 GAS 雲端同步設定"><img src="img/settings-gas.webp" width="585" height="1266" loading="lazy" alt="GAS 雲端同步設定：部署網址、測試連線、儲存 GAS 設定"></button><figcaption>進階：GAS 雲端同步</figcaption></figure>
+  <div>
+   <h3>進階：連到自己的 Google 試算表</h3>
+   <ol class="steps">
+    <li>在「資料儲存方式」點<span class="key">GAS 雲端同步</span>，下方會出現 GAS 設定區。</li>
+    <li>依照設定頁的「Apps Script 部署說明」複製程式、在自己的 Google 試算表部署，取得以 <code>/exec</code> 結尾的網址。</li>
+    <li>貼上網址，先按<span class="key">測試連線</span>：只檢查網址能不能用，不會儲存也不會上傳。</li>
+    <li>沒問題再按<span class="key">儲存 GAS 設定</span>。之後新的紀錄會同步上去，同步狀況在設定的「同步中心」查看。</li>
+   </ol>
+   <p>原本的本機資料不會自動全部上傳，需要時請在設定裡另外操作。把網址清空再儲存，就會停用雲端同步，本機紀錄仍保留。</p>
+  </div>
+ </div>
+</section>
+
+<section class="chapter" id="ai">
+ <header><span class="no">11</span><h2>AI 功能（選用）</h2></header>
+ <p class="intro">拍照估熱量、健檢報告整理、預約單辨識、食譜推薦、運動姿勢分析會用到 Google 的 Gemini AI。不設定也能使用其他所有功能。</p>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大 Gemini AI 設定"><img src="img/settings-ai.webp" width="585" height="1266" loading="lazy" alt="Gemini AI 設定：API Key、方案"></button><figcaption>Gemini AI 設定</figcaption></figure>
+  <div>
+   <h3>設定 AI（約 5 分鐘）</h3>
+   <ol class="steps">
+    <li>到 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> 用 Google 帳號登入，建立一把 API Key（免費）。設定頁裡也有「免費 API 申請教學（5 步驟）」。</li>
+    <li>回到健康日常的設定，把金鑰貼進<b>API Key</b>。</li>
+    <li><b>方案</b>選<span class="key">免費方案（預設）</span>；如果你在 Google 開了付費才選「自己付費」。</li>
+    <li><b>模型</b>保持<span class="key">自動（建議）</span>就好。</li>
+   </ol>
+  </div>
+ </div>
+ <div class="feature flip">
+  <figure><button class="phone" type="button" aria-label="放大確認按鈕"><img src="img/settings-ai-check.webp" width="585" height="1266" loading="lazy" alt="模型選單、確認按鈕與儲存 Gemini 設定"></button><figcaption>按「確認」測試金鑰</figcaption></figure>
+  <div>
+   <h3>按「確認」看能不能用</h3>
+   <p>點<span class="key">確認</span>，App 會先儲存，再送一句「請回答 OK」給 AI（不送照片，算 1 次額度），然後告訴你：</p>
+   <ul class="points">
+    <li><b>金鑰可以用</b>，以及這次實際用到哪個模型。</li>
+    <li><b>金鑰打錯了</b>：請重新複製貼上。</li>
+    <li><b>今天額度用完</b>：免費額度每天重置，明天再試或先用手動記錄。</li>
+   </ul>
+   <div class="box note"><strong>額度用完會自動換模型</strong><p>選「自動」時，某個模型今天的額度用完，會自動換下一個繼續做，全部用完才停下來說明。程式查不到剩幾次；想看用量請到 <a href="https://aistudio.google.com/usage" target="_blank" rel="noopener">AI Studio 用量頁</a>。</p></div>
+   <div class="box warn"><strong>金鑰與隱私</strong><p>金鑰只存在你的瀏覽器。使用 AI 時，照片或文字會傳給 Google 分析；免費方案的內容可能被 Google 用來改進服務，敏感資料請斟酌。</p></div>
+  </div>
+ </div>
+</section>
+
+<section class="chapter" id="backup">
+ <header><span class="no">12</span><h2>備份與換手機</h2></header>
+ <div class="feature">
+  <figure><button class="phone" type="button" aria-label="放大手機備份與還原"><img src="img/settings-backup.webp" width="585" height="1266" loading="lazy" alt="手機備份與還原：下載手機備份、選擇備份檔"></button><figcaption>設定裡的「手機備份與還原」</figcaption></figure>
+  <div>
+   <h3>下載備份</h3>
+   <ol class="steps">
+    <li>到設定最下面的<b>手機備份與還原</b>，點<span class="key">下載手機備份</span>。</li>
+    <li>手機會下載一個 .json 檔，請存到 Google 雲端硬碟、iCloud 雲碟或電腦。備份檔有健康資料，不要傳給別人。</li>
+   </ol>
+   <h3 style="margin-top:12px">在新手機（或主畫面 App）還原</h3>
+   <ol class="steps">
+    <li>在新的地方打開健康日常，到同一個區塊點<span class="key">選擇備份檔</span>，選剛才的 .json。</li>
+    <li>確認備份時間後，點<span class="key">備份目前資料並確認還原</span>。程式會先自動備份目前的資料，再還原，完成後自動重新整理。</li>
+   </ol>
+   <p>備份檔不包含 AI 金鑰和 GAS 網址，還原後要重新貼上。</p>
+  </div>
+ </div>
+</section>
+
+<section class="chapter" id="faq">
+ <header><span class="no">13</span><h2>常見問題</h2></header>
+ <details class="faq"><summary>我的資料會被別人看到嗎？</summary><p>預設只存在你自己手機的瀏覽器裡，沒有帳號、也不會上傳。只有在你設定 GAS 雲端同步時，才會同步到「你自己的」Google 試算表；使用 AI 功能時，那一次的照片或文字會傳給 Google 分析。</p></details>
+ <details class="faq"><summary>為什麼從 LINE 點進來，跟主畫面 App 的資料不一樣？</summary><p>LINE、Safari、Chrome、主畫面 App 各有自己的儲存空間，彼此看不到。請固定從同一個地方打開（建議主畫面圖示）。要搬資料，就用「下載手機備份」再「選擇備份檔」還原。</p></details>
+ <details class="faq"><summary>沒有網路可以用嗎？</summary><p>打開過一次之後，沒有網路也能打開並手動記錄。拍照分析等 AI 功能、GAS 雲端同步需要網路。</p></details>
+ <details class="faq"><summary>一定要設定 AI 嗎？</summary><p>不用。飲食、飲水、運動、用藥、回診、量測、計時、成就、備份都可以手動使用，完全不需要金鑰。</p></details>
+ <details class="faq"><summary>AI 說「額度用完」怎麼辦？</summary><p>免費方案每天都有額度，用完會自動換其他模型；全部用完就等明天重置。這段時間可以先手動記錄。到設定按「確認」可以知道現在能不能用。</p></details>
+ <details class="faq"><summary>AI 估的熱量準嗎？</summary><p>是依照片推估的參考值，份量、醬料、油量都會影響。覺得不準可以在「管理今日餐點」直接修改。</p></details>
+ <details class="faq"><summary>手機沒有跳出吃藥提醒？</summary><p>網頁沒有背景推播，提醒只會在打開 App 時顯示。建議加到主畫面，每天固定時間打開看「健康打卡」。</p></details>
+ <details class="faq"><summary>換了外觀，資料會不見嗎？</summary><p>不會。外觀只改顏色和樣式，紀錄完全不受影響。</p></details>
+ <div class="box warn" style="margin-top:18px"><strong>重要提醒</strong><p>健康日常是個人健康紀錄工具，不提供醫療診斷。數值異常、身體不適或要調整用藥，請諮詢醫師或藥師。</p></div>
+</section>
+
+<footer class="page">
+ <p>畫面截圖來自示範模式，內容皆為虛構資料。實際畫面可能因手機與版本略有不同。</p>
+ <p><a href="/">打開健康日常</a> · <a href="/?demo=1">示範模式</a> · 更新於 2026 年 11 月</p>
+</footer>
+</main>
+
+<a class="top-link" href="#" aria-label="回到頂端">↑</a>
+<dialog class="zoom" id="zoom"><img alt=""><button type="button" aria-label="關閉">✕</button></dialog>
+<script>
+(()=>{
+ const dlg=document.getElementById('zoom'),img=dlg.querySelector('img');
+ document.querySelectorAll('button.phone, button.wide').forEach(btn=>btn.addEventListener('click',()=>{
+  const src=btn.querySelector('img');img.src=src.currentSrc||src.src;img.alt=src.alt;
+  if(typeof dlg.showModal==='function')dlg.showModal();else window.open(img.src,'_blank');
+ }));
+ dlg.addEventListener('click',()=>dlg.close());
+})();
+</script>
+</body>
+</html>

@@ -170,6 +170,14 @@
 .health-shell[data-theme=tech] .plan-options label:has(input:checked) { background: var(--sage); border-color: var(--forest); }
 .health-shell[data-theme=tech] .integration-test { color: var(--forest); }
 
+.health-shell[data-theme=tech] :is(.install-line-actions,.line-install-hint) { background: #3b3020; border-color: #77633d; color: #f2d9a8; }
+.health-shell[data-theme=tech] :is(.install-line-actions button,.line-install-hint button) { background: var(--paper); color: #f2d9a8; border-color: #77633d; }
+.health-shell[data-theme=tech] .line-install-hint button[aria-label] { background: transparent; }
+.health-shell[data-theme=tech] .install-warning { background: #3b3020; border-color: #77633d; color: #f2d9a8; }
+.health-shell[data-theme=tech] .install-warning>svg { color: #f2cf89; }
+.health-shell[data-theme=tech] :is(.install-primary,.install-steps h4 span) { background: #83e7f7; color: #092536!important; }
+.health-shell[data-theme=tech] .install-tabs button[aria-selected=true] { background: var(--paper); color: var(--forest); }
+
 @media(max-width:350px) {
   .health-shell[data-theme] .theme-options { gap: 5px; }
   .health-shell[data-theme] .theme-option { padding: 4px 3px 8px; }

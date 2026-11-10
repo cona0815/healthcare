@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 import {initializeDemo} from './services/demoData';
+import {initInstallPrompt} from './services/installGuide';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -12,6 +13,7 @@ if (!rootElement) {
 }
 
 initializeDemo();
+initInstallPrompt();
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>

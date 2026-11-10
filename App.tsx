@@ -3,6 +3,8 @@ import MealManager from './components/MealManager';
 import {foodId,visibleFoods,similarFood} from './services/foodRecords';
 import LocalBackupScheduler from './components/LocalBackupScheduler';
 import DemoSettings from './components/DemoSettings';
+import {LineInstallHint} from './components/InstallGuide';
+import {cleanedUrl} from './services/installGuide';
 import AppIcon, {HomeIcon,FoodIcon,ExerciseIcon,AssistantIcon} from './components/AppIcon';
 import FoodGuidance from './components/FoodGuidance';
 import {resolveCalorieGoal} from './services/nutritionGoals';
@@ -47,6 +49,8 @@ const App: React.FC = () => {
   const [brandTitle,setBrandTitle]=useState(()=>{try{return localStorage.getItem(demo?'hg_title_demo':'hg_title')?.trim().slice(0,12)||'健康日常';}catch{return '健康日常';}});
   const saveTitle=(title:string)=>{const next=title.trim().slice(0,12)||'健康日常';try{localStorage.setItem(demo?'hg_title_demo':'hg_title',next);setBrandTitle(next);document.title=next+' · 個人健康管理';setThemeNotice('名稱已儲存');}catch{setThemeNotice('名稱儲存失敗，請重試');}};
   useEffect(()=>{document.title=brandTitle+' · 個人健康管理';},[brandTitle]);
+  // ?view=settings、?install=1、?openExternalBrowser=1 只用一次；清掉才不會被「加入主畫面」記進圖示網址。
+  useEffect(()=>{try{const next=cleanedUrl(location.href);if(next!==location.pathname+location.search+location.hash)history.replaceState(history.state,'',next);}catch{}},[]);
   const changeTheme=(next:ThemeName)=>{setTheme(next);try{localStorage.setItem(demo?'hg_theme_demo':'hg_theme',next);setThemeNotice('已儲存外觀');}catch{setThemeNotice('已套用；裝置空間不足，重新開啟後可能無法保留。');}};
   const [hasApiKey, setHasApiKey] = useState<boolean>(!!getGeminiKey());
   const [hasConnection, setHasConnection] = useState<boolean>(!!getGasUrl());
@@ -511,6 +515,7 @@ const App: React.FC = () => {
         <main data-view={activeTab} ref={mainScroll} className="flex-1 overflow-y-auto overflow-x-hidden relative pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-8">
            <div className="max-w-4xl mx-auto w-full p-4 md:p-8">
               {(demo||(localOnly&&activeTab==='SYSTEM_SETTINGS'))&&<div className="mode-banner">{demo?'示範體驗 · 虛構資料':'本機模式 · 手動紀錄免金鑰'} <a href={demo?'/':'/?demo=1'}>{demo?'離開示範':'體驗示範'}</a></div>}
+              {activeTab==='DASHBOARD'&&<LineInstallHint onShowGuide={()=>setActiveTab('SYSTEM_SETTINGS')}/>}
               {activeTab==='SYSTEM_SETTINGS'&&<header className="page-heading"><p>依照你的習慣</p><h2>設定</h2><span>個人資料、外觀與資料管理</span></header>}
 
               <div hidden={activeTab!=='SYSTEM_SETTINGS'}><StorageStatus/></div>{['TRENDS','VITALS','HEALTH_MANAGEMENT'].includes(activeTab)&&<button className="section-back" onClick={()=>setActiveTab('TASKS')}>← 返回健康助手</button>}{activeTab==='SYSTEM_SETTINGS'&&<button className="section-back" onClick={()=>setActiveTab('DASHBOARD')}>← 返回總覽</button>}{activeTab==='SYSTEM_SETTINGS'&&<nav className="assistant-category-links" aria-label="個人設定"><button onClick={()=>{setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}}><User aria-hidden="true"/><span>個人健康資料</span><span aria-hidden="true">›</span></button></nav>}{activeTab==='SYSTEM_SETTINGS'&&<ThemePicker title={brandTitle} onTitle={saveTitle} value={theme} onChange={changeTheme} notice={themeNotice}/>} {renderContent()}

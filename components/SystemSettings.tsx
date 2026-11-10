@@ -1,5 +1,6 @@
 import CloudBackupVersions from './CloudBackupVersions';
 import StorageModeSettings from './StorageModeSettings';
+import InstallGuide,{GuideLink} from './InstallGuide';
 import {getStorageMode,getStoragePreference,configuredGasUrl} from '../services/storageMode';
 import DeviceBackup from './DeviceBackup';
 import {SyncCenter} from './CareTools';
@@ -194,7 +195,7 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
         </div>
         
         <div className="p-6 md:p-8 space-y-8">
-          <StorageModeSettings/>{storagePreference!=='gas'&&gasMessage&&<p role="status" className="integration-notice">{gasMessage}</p>}<p className="settings-intro">不設定也能手動記錄。AI 分析與雲端同步各自選用、分開儲存。</p>
+          <GuideLink/><InstallGuide/><StorageModeSettings/>{storagePreference!=='gas'&&gasMessage&&<p role="status" className="integration-notice">{gasMessage}</p>}<p className="settings-intro">不設定也能手動記錄。AI 分析與雲端同步各自選用、分開儲存。</p>
           <section className="integration-card gemini-settings" aria-labelledby="gemini-settings-heading">
             <header><span className="integration-icon"><Key size={23}/></span><div><h3 id="gemini-settings-heading">Gemini AI 設定</h3><p>照片、文件與運動姿勢分析</p></div><span className="editable-badge">可編輯</span></header>
             <form onSubmit={e=>{e.preventDefault();handleSaveGemini();}}>

@@ -1,0 +1,48 @@
+/* 加到手機主畫面：教學卡片與 LINE 提示列 */
+.install-guide{background:var(--paper,#fff);border:1px solid var(--line,#dfe6da);border-radius:var(--radius-card,16px);margin:0 0 14px;color:var(--ink,#23332b)}
+.install-guide>summary{display:flex;align-items:center;gap:10px;padding:14px 16px;min-height:56px;cursor:pointer;list-style:none;color:var(--ink,#23332b)}
+.install-guide>summary::-webkit-details-marker{display:none}
+.install-guide>summary>svg{color:var(--forest,#2f7459);flex:none}
+.install-guide>summary>span{flex:1;min-width:0}
+.install-guide>summary strong{display:block;font-size:15px;font-weight:700}
+.install-guide>summary small{display:block;font-size:11px;color:var(--muted,#6b7a70);margin-top:2px}
+.install-guide>summary em{font-style:normal;font-size:12px;color:var(--forest,#2f7459);white-space:nowrap}
+.install-body{padding:0 16px 16px}
+.install-line-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#fff4e8;border:1px solid #f3c79c;border-radius:12px;padding:12px;margin-bottom:12px;color:#5d3610}
+.install-line-actions p{flex-basis:100%;margin:0;font-size:13px;font-weight:600}
+.install-line-actions button{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;border:1px solid #e3b98d;border-radius:10px;background:#fff;color:#5d3610;font-size:13px}
+.install-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:10px;background:var(--forest,#2f7459);color:#fff!important;font-size:14px;font-weight:700;text-decoration:none}
+.install-one-tap{width:100%;margin-bottom:12px}
+.install-message{font-size:13px;line-height:1.7;padding:10px;border-radius:9px;background:var(--sage,#e8f0e2);margin:0 0 12px}
+.install-warning{display:flex;gap:10px;background:#fdf6e3;border:1px solid #ecd9a6;border-radius:12px;padding:12px;margin-bottom:14px;color:#5a4612}
+.install-warning>svg{flex:none;margin-top:2px;color:#b07d10}
+.install-warning strong{font-size:13px}
+.install-warning p{font-size:12px;line-height:1.75;margin:4px 0 0}
+.install-link{display:inline;padding:0;border:0;background:none;color:inherit;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
+.install-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:12px;background:var(--sage,#e8f0e2);margin-bottom:12px}
+.install-tabs button{min-height:40px;border-radius:9px;font-size:14px;font-weight:600;color:var(--muted,#6b7a70)}
+.install-tabs button[aria-selected=true]{background:var(--paper,#fff);color:var(--forest,#2f7459);box-shadow:0 1px 4px #0000001a}
+.install-steps{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.install-steps li{display:grid;grid-template-columns:118px 1fr;gap:12px;align-items:start;padding:10px;border:1px solid var(--line,#dfe6da);border-radius:12px}
+.install-art{width:118px;height:auto;display:block}
+.install-steps h4{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;margin:2px 0 6px;line-height:1.4}
+.install-steps h4 span{display:grid;place-items:center;flex:none;width:24px;height:24px;border-radius:50%;background:var(--forest,#2f7459);color:#fff;font-size:13px}
+.install-steps p{font-size:13px;line-height:1.8;margin:0;color:var(--ink,#23332b)}
+.install-steps b{color:var(--forest,#2f7459)}
+.install-tip{font-size:11px;line-height:1.7;color:var(--muted,#6b7a70);margin:10px 0 0}
+@media(max-width:360px){.install-steps li{grid-template-columns:1fr}.install-art{width:150px;margin:0 auto}}
+@media(min-width:720px){.install-steps{grid-template-columns:1fr 1fr}}
+
+.line-install-hint{position:relative;display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 12px;padding:8px 40px 8px 12px;border-radius:12px;background:#fff4e8;border:1px solid #f3c79c;color:#5d3610;font-size:12px;line-height:1.5}
+.line-install-hint span{flex:1 1 100%;min-width:0}
+.line-install-hint a,.line-install-hint button{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 12px;border-radius:8px;font-size:12px;font-weight:700}
+.line-install-hint a{background:var(--forest,#2f7459);color:#fff;text-decoration:none}
+.line-install-hint button{color:#5d3610;background:#fff;border:1px solid #e3b98d}
+.line-install-hint button[aria-label]{position:absolute;top:2px;right:2px;width:36px;padding:0;border:0;background:transparent}
+
+.guide-link{display:flex;align-items:center;gap:10px;padding:14px 16px;min-height:56px;margin:0 0 10px;background:var(--paper,#fff);border:1px solid var(--line,#dfe6da);border-radius:var(--radius-card,16px);color:var(--ink,#23332b);text-decoration:none}
+.guide-link>svg{color:var(--forest,#2f7459);flex:none}
+.guide-link>span{flex:1;min-width:0}
+.guide-link strong{display:block;font-size:15px;font-weight:700}
+.guide-link small{display:block;font-size:11px;color:var(--muted,#6b7a70);margin-top:2px}
+.guide-link em{font-style:normal;font-size:12px;color:var(--forest,#2f7459);white-space:nowrap}
