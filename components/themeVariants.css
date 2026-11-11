@@ -184,3 +184,4 @@
   .health-shell[data-theme] .theme-option small { font-size: 9px; padding-inline: 1px; }
   .health-shell[data-theme] .theme-option strong { font-size: 11px; padding-inline: 1px; }
 }
+.health-shell[data-theme=tech] .integration-notice.gas-unprotected { background: #3a1517; border-color: #8c3a3a; color: #ffd9d6; }

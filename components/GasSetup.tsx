@@ -8,7 +8,9 @@ interface Props {
 
 // Export the GAS Code so it can be used in HealthManagement too
 export const GAS_CODE = `/**
- * HealthGuardian Backend v3.2 (Verified snapshots, conflict safety, optional access token, strict delete)
+ * HealthGuardian Backend v4.0 (Verified snapshots, conflict safety, required access token, strict delete)
+ * 第一次使用：在編輯器上方函式選單選 setupAccessToken 按「執行」，把執行記錄裡的密碼貼到網站設定。
+ * 沒有設定存取密碼前，這個 GAS 會拒絕所有讀寫，避免網址外流時資料被看光。
  * - Profile 追加模式
  * - 智慧讀取：跳過空白行，讀取最後一筆有效資料
  * - 支援 LockService 防止衝突
@@ -22,9 +24,8 @@ function doPost(e) {
     } catch(e) {
       return createJSONOutput({status: "error", message: "Invalid JSON format"});
     }
-    if (accessDenied(para)) {
-      return createJSONOutput({status: "error", code: "UNAUTHORIZED", message: "GAS 存取密碼不正確，請到 App 設定的「GAS 雲端同步」填入存取密碼。"});
-    }
+    var denied = accessDenied(para);
+    if (denied) return createJSONOutput(denied);
     
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var action = para.action;
@@ -181,15 +182,15 @@ function createJSONOutput(data) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// --- Security (v3.1) ---
+// --- Security (v4.0) ---
 // 只允許本系統會用到的資料表，避免被拿來建立或刪除任意分頁。
 var ALLOWED_TYPES = {Profile:1, FoodLogs:1, Workouts:1, Appointments:1, Recipes:1, Vitals:1, Reports:1, WorkoutPlan:1};
 // 欄位名稱若以 = + - @ 開頭會被試算表當成公式，直接略過。
 function safeHeaderKeys(keys) {
   return keys.filter(function(k){ return typeof k === 'string' && k.length > 0 && k.length <= 64 && '=+-@'.indexOf(k.charAt(0)) === -1 && k.charCodeAt(0) > 32; });
 }
-// 選用的存取密碼：在編輯器執行一次 setupAccessToken，把執行記錄裡的密碼填到 App 的「存取密碼」。
-// 設定後，沒有密碼的請求一律拒絕；沒設定時維持舊行為（只靠網址保密）。
+// 必填的存取密碼：在編輯器執行一次 setupAccessToken，把執行記錄裡的密碼填到網站的「存取密碼」。
+// 沒設定密碼時一律拒絕；再執行一次會換新密碼，舊密碼立即失效（懷疑外流時使用）。
 function setupAccessToken() {
   var token = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
   PropertiesService.getScriptProperties().setProperty('HG_TOKEN', token);
@@ -198,11 +199,25 @@ function setupAccessToken() {
 }
 function clearAccessToken() {
   PropertiesService.getScriptProperties().deleteProperty('HG_TOKEN');
-  Logger.log('已移除存取密碼，任何知道網址的人都能讀寫資料。');
+  Logger.log('已移除存取密碼：在重新執行 setupAccessToken 之前，所有讀寫都會被拒絕。');
+}
+// 逐字比對完整長度，不因前面字元不同就提早結束。
+function sameToken(given, expected) {
+  if (given.length !== expected.length) return false;
+  var diff = 0;
+  for (var i = 0; i < expected.length; i++) diff |= given.charCodeAt(i) ^ expected.charCodeAt(i);
+  return diff === 0;
 }
 function accessDenied(para) {
   var expected = PropertiesService.getScriptProperties().getProperty('HG_TOKEN');
-  return !!expected && String((para && para.token) || '') !== expected;
+  if (!expected || expected.length < 32) {
+    return {status: "error", code: "TOKEN_NOT_SET", message: "這個 GAS 還沒設定存取密碼：請在 Apps Script 編輯器執行 setupAccessToken，再把執行記錄裡的密碼貼到網站設定。"};
+  }
+  var given = String((para && para.token) || '');
+  if (!sameToken(given, expected)) {
+    return {status: "error", code: "UNAUTHORIZED", message: "GAS 存取密碼不正確，請到網站設定的「GAS 雲端同步」重新貼上存取密碼。"};
+  }
+  return null;
 }
 
 function getOrCreateSheet(ss, name) {

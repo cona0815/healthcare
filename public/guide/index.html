@@ -543,8 +543,8 @@ dialog.zoom button{position:fixed;top:12px;right:12px;width:44px;height:44px;bor
    <p>大多數人不需要這一步。只有想讓手機和電腦隨時共用同一份資料、而且願意自己部署 Google Apps Script 的人才用。</p>
    <ol class="steps">
     <li>捲到設定頁最下方，展開<span class="key">進階：Google 試算表雲端同步（GAS）</span>，點<span class="key">啟用 GAS 同步</span>，會出現 GAS 設定區。</li>
-    <li>依照設定頁的「Apps Script 部署說明」複製程式、在自己的 Google 試算表部署，取得以 <code>/exec</code> 結尾的網址。再照說明執行 <code>setupAccessToken</code> 取得存取密碼，避免別人拿到網址就能讀寫你的資料。</li>
-    <li>貼上網址和存取密碼，先按<span class="key">測試連線</span>：只檢查網址能不能用，不會儲存也不會上傳。</li>
+    <li>依照設定頁的「Apps Script 部署說明」複製程式、在自己的 Google 試算表部署，取得以 <code>/exec</code> 結尾的網址。再照說明執行 <code>setupAccessToken</code> 取得存取密碼（必做）。沒有密碼的 GAS 會拒絕所有讀寫，所以就算網址外流，別人也讀不到你的資料。</li>
+    <li>貼上網址和存取密碼，先按<span class="key">測試連線</span>：只檢查網址能不能用，並用一組錯的密碼試一次，確認你的 GAS 真的會擋人；不會儲存也不會上傳。</li>
     <li>沒問題再按<span class="key">儲存 GAS 設定</span>。之後新的紀錄會同步上去，同步狀況在設定的「同步中心」查看。</li>
    </ol>
    <p>原本的本機資料不會自動全部上傳，需要時請在設定裡另外操作。把網址清空再儲存，就會停用雲端同步，本機紀錄仍保留。</p>
@@ -606,7 +606,7 @@ dialog.zoom button{position:fixed;top:12px;right:12px;width:44px;height:44px;bor
 <section class="chapter" id="faq">
  <header><span class="no">13</span><h2>常見問題</h2></header>
  <details class="faq"><summary>一定要設定 GAS 或 Google 試算表嗎？</summary><p>不用。所有記錄、提醒、備份功能都只靠手機本機就能用，GAS 是給想跨裝置同步的人的進階選項。換手機時用「下載手機備份」再到新手機「選擇備份檔」還原就好。</p></details>
- <details class="faq"><summary>我的資料會被別人看到嗎？</summary><p>預設只存在你自己手機的瀏覽器裡，沒有帳號、也不會上傳。只有在你設定 GAS 雲端同步時，才會同步到「你自己的」Google 試算表；使用 AI 功能時，那一次的照片或文字會傳給 Google 分析。</p></details>
+ <details class="faq"><summary>我的資料會被別人看到嗎？</summary><p>預設只存在你自己手機的瀏覽器裡，沒有帳號、也不會上傳。只有在你設定 GAS 雲端同步時，才會同步到「你自己的」Google 試算表，而且一定要有存取密碼才能讀寫；使用 AI 功能時，那一次的照片或文字會傳給 Google 分析。</p></details>
  <details class="faq"><summary>為什麼從 LINE 點進來，跟主畫面 App 的資料不一樣？</summary><p>LINE、Safari、Chrome、主畫面 App 各有自己的儲存空間，彼此看不到。請固定從同一個地方打開（建議主畫面圖示）。要搬資料，就用「下載手機備份」再「選擇備份檔」還原。</p></details>
  <details class="faq"><summary>沒有網路可以用嗎？</summary><p>打開過一次之後，沒有網路也能打開並手動記錄。拍照分析等 AI 功能、GAS 雲端同步需要網路。</p></details>
  <details class="faq"><summary>一定要設定 AI 嗎？</summary><p>不用。飲食、飲水、運動、用藥、回診、量測、計時、成就、備份都可以手動使用，完全不需要金鑰。</p></details>

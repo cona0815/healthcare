@@ -159,3 +159,5 @@
 .storage-mode-now{display:flex;align-items:center;gap:8px;font-size:14px;line-height:1.6;margin:0 0 12px;color:var(--ink,#23332b)}
 .storage-mode-now svg{flex:none;color:var(--forest,#2f7459)}
 .storage-mode-switch>p{font-size:13px;line-height:1.7;margin:10px 0 0}
+.integration-notice.gas-unprotected{margin:0;background:#fdeceb;border:1px solid #efb9b4;color:#7a2620}
+.integration-notice.gas-unprotected strong{display:block;margin-bottom:2px}

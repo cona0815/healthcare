@@ -92,7 +92,7 @@ const callGasApi = async (data: any, destination?: string, tokenOverride?: strin
 
     const json = await response.json();
     if (!json || typeof json !== 'object' || json.status === 'error') {
-      throw new Error(data.action?.endsWith('_v3')&&/Unknown action/i.test(json?.message||'')?'請先部署設定內的 GAS v3 程式；本機資料與待同步紀錄均保留。':json?.message || '雲端服務未能完成操作。');
+      throw Object.assign(new Error(data.action?.endsWith('_v3')&&/Unknown action/i.test(json?.message||'')?'請先部署設定內的 GAS v3 程式；本機資料與待同步紀錄均保留。':json?.message || '雲端服務未能完成操作。'),{code:typeof json?.code==='string'?json.code:undefined});
     }
     return json;
   } catch (error: any) {
@@ -102,6 +102,19 @@ const callGasApi = async (data: any, destination?: string, tokenOverride?: strin
     }
     throw error;
   }
+};
+
+// 用一組故意錯的密碼試一次：真的有保護的 GAS 一定會回 UNAUTHORIZED。
+// 舊版 GAS 會忽略密碼照樣回資料，這種情況不讓使用者儲存，避免以為有保護。
+const assertGasProtected = async (url: string) => {
+  const probe = 'probe-' + (globalThis.crypto?.randomUUID?.() || String(Date.now()));
+  try {
+    await callGasApi({action:'list_backups_v3'}, url, probe);
+  } catch (error: any) {
+    if (error?.code === 'UNAUTHORIZED') return;
+    throw error;
+  }
+  throw new Error('這個 GAS 沒有啟用存取密碼保護（可能是舊版程式），知道網址的人就能讀寫資料。請貼上設定頁最新的 GAS 程式，用「管理部署作業 → 編輯 → 新版本」部署，並執行 setupAccessToken。');
 };
 
 // Array integrity utility
@@ -117,8 +130,11 @@ export const dbService = {
   // Test connection to Google Sheet Link
   testConnection: async (url: string, token?: string|null) => {
     if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url.trim())) throw new Error('請填入完整的 GAS 網頁應用程式網址（/exec 結尾）。');
-    const data=await callGasApi({action:'read_all'},url.trim(),token===undefined?undefined:(token?.trim()||null));
+    const secret=token===undefined?getGasToken():(token?.trim()||null);
+    if(!secret) throw new Error('請先填入存取密碼：在 Apps Script 執行 setupAccessToken，把執行記錄裡的密碼貼到「存取密碼」。');
+    const data=await callGasApi({action:'read_all'},url.trim(),secret);
     if(!Array.isArray(data.foodLogs)||!Array.isArray(data.workouts)||!('profile' in data)) throw new Error('GAS 回傳的資料格式不符，請確認部署的是本系統的 GAS 程式及最新版本。');
+    await assertGasProtected(url.trim());
     return true;
   },
 

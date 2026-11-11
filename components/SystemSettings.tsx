@@ -251,10 +251,11 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
             <summary><Cloud size={22}/><span><strong>進階：Google 試算表雲端同步（GAS）</strong><small>多數人不需要。只有想讓手機和電腦共用同一份資料，且會自己部署 Google Apps Script 的人才用。</small></span></summary>
             <div className="advanced-sync-body">
             <p className="field-help">不開啟也完全不影響任何功能；資料一樣存在本機，並可用上方「手機備份與還原」下載備份檔。</p>
+            {getGasUrl()&&!getGasToken()&&<p role="alert" className="integration-notice gas-unprotected"><strong>這個 GAS 連線沒有存取密碼保護。</strong>知道網址的人就能讀寫你的健康資料。請照下方說明貼上最新 GAS 程式、用新版本部署、執行 setupAccessToken，再把密碼填入「存取密碼」後儲存。</p>}
             <StorageModeSwitch/>{gasMessage&&storagePreference!=='gas'&&<p role="status" className="integration-notice">{gasMessage}</p>}
           {storagePreference==='gas'&&<section className="integration-card gas-settings" aria-labelledby="gas-settings-heading">
             <header><span className="integration-icon"><Cloud size={23}/></span><div><h3 id="gas-settings-heading">GAS 雲端同步</h3><p>連接自己的 Google Sheets</p></div></header>
-            <form onSubmit={e=>{e.preventDefault();void handleSaveGas();}}><label htmlFor="gas-deployment-url">GAS 部署網址</label><input id="gas-deployment-url" type="url" disabled={gasSaving} value={gasUrl} onChange={e=>setGasUrlState(e.target.value)} placeholder="https://script.google.com/macros/s/…/exec"/><p className="field-help">未設定網址時只存本機。手機與電腦需設定同一個網址；儲存前會檢查連線。留空並儲存即停用同步，本機紀錄仍保留。</p><label htmlFor="gas-access-token">存取密碼<span>強烈建議設定；在 Apps Script 執行 setupAccessToken 取得。沒設定時，知道網址的人就能讀寫資料。</span></label><div className="key-input-wrap"><input id="gas-access-token" type={showGasToken?'text':'password'} autoComplete="off" spellCheck={false} disabled={gasSaving} value={gasToken} onChange={e=>setGasTokenState(e.target.value.trim())} placeholder="貼上 GAS 存取密碼（選填）"/><button type="button" aria-label={showGasToken?'隱藏存取密碼':'顯示存取密碼'} aria-pressed={showGasToken} onClick={()=>setShowGasToken(!showGasToken)}>{showGasToken?<EyeOff size={20}/>:<Eye size={20}/>}</button></div><div className="integration-actions"><button type="button" className="integration-test" disabled={gasSaving||gasTesting} onClick={()=>void handleTestGas()}><Check size={18}/>{gasTesting?'測試中…':'測試連線'}</button><button type="submit" disabled={gasSaving||gasTesting} className="integration-save"><Save size={18}/>{gasSaving?'檢查連線中…':'儲存 GAS 設定'}</button></div>{gasMessage&&<p role="status" className="integration-notice">{gasMessage}</p>}</form>
+            <form onSubmit={e=>{e.preventDefault();void handleSaveGas();}}><label htmlFor="gas-deployment-url">GAS 部署網址</label><input id="gas-deployment-url" type="url" disabled={gasSaving} value={gasUrl} onChange={e=>setGasUrlState(e.target.value)} placeholder="https://script.google.com/macros/s/…/exec"/><p className="field-help">未設定網址時只存本機。手機與電腦需設定同一個網址；儲存前會檢查連線。留空並儲存即停用同步，本機紀錄仍保留。</p><label htmlFor="gas-access-token">存取密碼（必填）<span>在 Apps Script 執行 setupAccessToken 取得。儲存前會用錯誤密碼試一次，確認你的 GAS 真的會擋掉沒有密碼的人。</span></label><div className="key-input-wrap"><input id="gas-access-token" type={showGasToken?'text':'password'} autoComplete="off" spellCheck={false} disabled={gasSaving} value={gasToken} onChange={e=>setGasTokenState(e.target.value.trim())} required={!!gasUrl.trim()} placeholder="貼上 GAS 存取密碼"/><button type="button" aria-label={showGasToken?'隱藏存取密碼':'顯示存取密碼'} aria-pressed={showGasToken} onClick={()=>setShowGasToken(!showGasToken)}>{showGasToken?<EyeOff size={20}/>:<Eye size={20}/>}</button></div><div className="integration-actions"><button type="button" className="integration-test" disabled={gasSaving||gasTesting} onClick={()=>void handleTestGas()}><Check size={18}/>{gasTesting?'測試中…':'測試連線'}</button><button type="submit" disabled={gasSaving||gasTesting} className="integration-save"><Save size={18}/>{gasSaving?'檢查連線中…':'儲存 GAS 設定'}</button></div>{gasMessage&&<p role="status" className="integration-notice">{gasMessage}</p>}</form>
             <p className="field-help">網站更新不會自動更新 Google 帳戶裡的 GAS。若自行更換 GAS 程式，需在 Apps Script「管理部署作業」選擇新版本再部署。</p>
           </section>}
           {storagePreference==='gas'&&<div className="bg-orange-50/50 p-6 rounded-2xl border border-orange-100 mt-8">
@@ -266,13 +267,12 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
                   <ol className="list-decimal pl-5 space-y-1">
                       <li>登入您的 Google 帳號，並建立一個新的空白 Google 試算表。</li>
                       <li>點選上方選單的 <strong>擴充功能 &gt; Apps Script</strong>。</li>
-                      <li>將下方的「修復版 GAS 程式碼」複製，並貼上取代原有的 <code>Code.gs</code> 內容。</li>
-                      <li>點選右上角 <strong>部署 &gt; 新增部署作業</strong>。</li>
-                      <li>選擇類型為 <strong>網頁應用程式 (Web App)</strong>。</li>
-                      <li>存取權限設定為 <strong>「所有人 (Anyone)」</strong>，然後點選部署。</li>
-                      <li>授權後，複製生成的 <strong>網頁應用程式網址 (URL)</strong>。</li>
-                      <li>將該 URL 貼回本頁面上方的「GAS 部署網址」欄位。</li>
-                      <li><strong>（強烈建議）設定存取密碼：</strong>在 Apps Script 編輯器上方的函式選單選 <code>setupAccessToken</code> 並按「執行」，到下方「執行記錄」複製產生的密碼，貼到上方「存取密碼」欄位，再按儲存。設定後，就算網址外流，沒有密碼的人也無法讀寫你的資料。</li>
+                      <li>按下方「複製 GAS 程式碼」，貼上取代原有的 <code>Code.gs</code> 內容並儲存。</li>
+                      <li><strong>設定存取密碼（必做）：</strong>在編輯器上方的函式選單選 <code>setupAccessToken</code> 按「執行」，第一次會要求授權。到下方「執行記錄」複製產生的密碼。沒做這一步，GAS 會拒絕所有讀寫。</li>
+                      <li>點選右上角 <strong>部署 &gt; 新增部署作業</strong>，類型選 <strong>網頁應用程式</strong>。</li>
+                      <li>「執行身分」選 <strong>我</strong>，「誰可以存取」選 <strong>所有人</strong>，然後部署。網址公開沒關係，沒有存取密碼的人什麼都讀不到。</li>
+                      <li>複製產生的 <strong>網頁應用程式網址</strong>（/exec 結尾），連同存取密碼貼到上方欄位，按「測試連線」再按「儲存 GAS 設定」。</li>
+                      <li>其他裝置也填同一個網址和密碼。存取密碼和 API 金鑰一樣不要傳給別人；懷疑外流時再執行一次 <code>setupAccessToken</code> 換新密碼，舊的立刻失效。</li>
                   </ol>
                   <p className="font-bold mt-2">※ 之後更新 GAS 程式時，請用「部署 &gt; 管理部署作業 &gt; 編輯 &gt; 版本：新版本」，網址才不會改變；不要按「新增部署作業」。</p>
               </div>

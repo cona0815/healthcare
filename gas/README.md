@@ -18,6 +18,13 @@
 node --import tsx --input-type=module -e "import {GAS_CODE} from './components/GasSetup.tsx'; import fs from 'node:fs'; fs.writeFileSync('gas/Code.gs', GAS_CODE, 'utf8');"
 ```
 
+## v4.0（2026-11-11）：存取密碼必填
+
+- 沒有執行 `setupAccessToken` 之前，所有讀寫都回 `TOKEN_NOT_SET`，網址外流也讀不到任何資料。
+- 密碼用完整長度逐字比對；再執行一次 `setupAccessToken` 會換新密碼，舊密碼立即失效；`clearAccessToken` 會讓所有請求被拒絕。
+- 網站儲存 GAS 設定時必須填密碼，並會用一組錯誤密碼試一次，確認 GAS 確實會擋人才允許儲存。舊版（v3.0）或沒設密碼的 GAS 會被要求更新。
+- 更新方式：貼上新的 Code.gs → 執行 `setupAccessToken` → 「部署 → 管理部署作業 → 編輯 → 版本：新版本」→ 把密碼貼到每台裝置的「存取密碼」。
+
 ## v3.2（2026-11-11）
 
 刪除資料改用完全相同的 id 比對，空白 id 不會誤刪任何列。舊版照常可用；想更新時貼上新的 Code.gs，再用「管理部署作業 → 編輯 → 新版本」部署。

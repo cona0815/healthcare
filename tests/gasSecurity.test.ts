@@ -2,25 +2,38 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {gasHarness} from './gasHarness';
 
-test('GAS without an access token keeps the old open behaviour so existing deployments do not break',()=>{
- const h=gasHarness();
- const out=h.send({action:'read_all'});
- assert.ok(Array.isArray(out.foodLogs));
+test('GAS without an access token refuses every request so a leaked URL exposes nothing',()=>{
+ const h=gasHarness({withToken:false});
+ h.send({action:'save',type:'Workouts',data:{id:'w1',type:'快走'}});
+ assert.equal(h.sheets.has('Workouts'),false);
+ for(const action of ['read_all','list_backups_v3','read_backup_v3','delete','save_meal_v3']){
+  const out=h.send({action,type:'Workouts',id:'w1'});
+  assert.equal(out.status,'error');assert.equal(out.code,'TOKEN_NOT_SET');assert.equal(out.foodLogs,undefined);assert.equal(out.backups,undefined);
+ }
 });
 
-test('GAS with an access token rejects missing or wrong tokens and accepts the right one',()=>{
+test('GAS with an access token rejects missing, wrong or near-miss tokens and accepts the right one',()=>{
  const h=gasHarness();
- const token=h.context.setupAccessToken();
+ const token=h.token!;
  assert.ok(typeof token==='string'&&token.length>=32);
- for(const bad of [undefined,'','wrong']){
-  const out=h.send({action:'read_all',token:bad});
+ for(const bad of [undefined,'','wrong',token.slice(0,-1),token+'x',token.toUpperCase()===token?token.toLowerCase():token.toUpperCase()]){
+  const out=h.sendRaw({action:'read_all',token:bad});
   assert.equal(out.status,'error');assert.equal(out.code,'UNAUTHORIZED');assert.equal(out.foodLogs,undefined);
  }
- assert.equal(h.send({action:'save',type:'Workouts',data:{id:'w1',type:'快走'}}).code,'UNAUTHORIZED');
+ assert.equal(h.sendRaw({action:'save',type:'Workouts',data:{id:'w1',type:'快走'}}).code,'UNAUTHORIZED');
  assert.equal(h.sheets.has('Workouts'),false);
- assert.ok(Array.isArray(h.send({action:'read_all',token}).foodLogs));
+ assert.ok(Array.isArray(h.sendRaw({action:'read_all',token}).foodLogs));
+});
+
+test('running setupAccessToken again rotates the password and clearing it locks everything',()=>{
+ const h=gasHarness();
+ const old=h.token!;
+ const fresh=h.context.setupAccessToken();
+ assert.notEqual(fresh,old);
+ assert.equal(h.sendRaw({action:'read_all',token:old}).code,'UNAUTHORIZED');
+ assert.ok(Array.isArray(h.sendRaw({action:'read_all',token:fresh}).foodLogs));
  h.context.clearAccessToken();
- assert.ok(Array.isArray(h.send({action:'read_all'}).foodLogs));
+ assert.equal(h.sendRaw({action:'read_all',token:fresh}).code,'TOKEN_NOT_SET');
 });
 
 test('GAS only writes or deletes the eight known data sheets',()=>{
