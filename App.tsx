@@ -46,6 +46,7 @@ const App: React.FC = () => {
   const localOnly=!getGasUrl();
   const [theme,setTheme]=useState<ThemeName>(()=>readTheme(demo));
   const [themeNotice,setThemeNotice]=useState('');
+  const [loadError,setLoadError]=useState('');
   const [brandTitle,setBrandTitle]=useState(()=>{try{return localStorage.getItem(demo?'hg_title_demo':'hg_title')?.trim().slice(0,12)||'健康日常';}catch{return '健康日常';}});
   const saveTitle=(title:string)=>{const next=title.trim().slice(0,12)||'健康日常';try{localStorage.setItem(demo?'hg_title_demo':'hg_title',next);setBrandTitle(next);document.title=next+' · 個人健康管理';setThemeNotice('名稱已儲存');}catch{setThemeNotice('名稱儲存失敗，請重試');}};
   useEffect(()=>{document.title=brandTitle+' · 個人健康管理';},[brandTitle]);
@@ -136,7 +137,7 @@ const App: React.FC = () => {
   },[]);
 
   const loadUserData = async (forceFromCloud = false) => {
-    setDataLoading(true);
+    setDataLoading(true);setLoadError("");
     try {
       const data = await dbService.loadAllData(forceFromCloud);
       setFoodLogs([...data.foodLogs].sort((a,b)=>Date.parse(b.timestamp)-Date.parse(a.timestamp)));
@@ -163,7 +164,7 @@ const App: React.FC = () => {
       if (data.vitals) setVitalsRecords([...data.vitals].sort((a,b)=>`${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`))); // Load vitals
     } catch (e) {
       console.error("Failed to load data", e);
-      if (!forceFromCloud) alert("讀取資料失敗，請確認您的 Google Sheet 權限設定");
+      if (!forceFromCloud) setLoadError(getGasUrl()?"讀取資料失敗：請確認網路與 GAS 設定後重新整理。":"讀取本機資料失敗：請重新整理；若持續發生，可到設定用備份檔還原。");
       throw e;
     } finally {
       setDataLoading(false);
@@ -518,7 +519,7 @@ const App: React.FC = () => {
               {activeTab==='DASHBOARD'&&<LineInstallHint onShowGuide={()=>setActiveTab('SYSTEM_SETTINGS')}/>}
               {activeTab==='SYSTEM_SETTINGS'&&<header className="page-heading"><p>依照你的習慣</p><h2>設定</h2><span>個人資料、外觀與資料管理</span></header>}
 
-              <div hidden={activeTab!=='SYSTEM_SETTINGS'}><StorageStatus/></div>{['TRENDS','VITALS','HEALTH_MANAGEMENT'].includes(activeTab)&&<button className="section-back" onClick={()=>setActiveTab('TASKS')}>← 返回健康助手</button>}{activeTab==='SYSTEM_SETTINGS'&&<button className="section-back" onClick={()=>setActiveTab('DASHBOARD')}>← 返回總覽</button>}{activeTab==='SYSTEM_SETTINGS'&&<nav className="assistant-category-links" aria-label="個人設定"><button onClick={()=>{setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}}><User aria-hidden="true"/><span>個人健康資料</span><span aria-hidden="true">›</span></button></nav>}{activeTab==='SYSTEM_SETTINGS'&&<ThemePicker title={brandTitle} onTitle={saveTitle} value={theme} onChange={changeTheme} notice={themeNotice}/>} {renderContent()}
+              {loadError&&<p role="alert" className="care-notice">{loadError}</p>}<div hidden={activeTab!=='SYSTEM_SETTINGS'}><StorageStatus/></div>{['TRENDS','VITALS','HEALTH_MANAGEMENT'].includes(activeTab)&&<button className="section-back" onClick={()=>setActiveTab('TASKS')}>← 返回健康助手</button>}{activeTab==='SYSTEM_SETTINGS'&&<button className="section-back" onClick={()=>setActiveTab('DASHBOARD')}>← 返回總覽</button>}{activeTab==='SYSTEM_SETTINGS'&&<nav className="assistant-category-links" aria-label="個人設定"><button onClick={()=>{setActiveHealthSubTab('PROFILE');setActiveTab('HEALTH_MANAGEMENT');}}><User aria-hidden="true"/><span>個人健康資料</span><span aria-hidden="true">›</span></button></nav>}{activeTab==='SYSTEM_SETTINGS'&&<ThemePicker title={brandTitle} onTitle={saveTitle} value={theme} onChange={changeTheme} notice={themeNotice}/>} {renderContent()}
            </div>
         </main>
       </div>

@@ -42,3 +42,15 @@ test('GAS ignores field names that a spreadsheet would treat as formulas',()=>{
  h.send({action:'save',type:'Profile',data:{name:'王小明','=HYPERLINK("x")':'y'}});
  assert.deepEqual(Array.from(h.sheets.get('Profile').rows[0] as string[]).filter((k:string)=>/^=/.test(k)),[]);
 });
+
+test('GAS delete needs an exact, non-empty id',()=>{
+ const h=gasHarness();
+ h.send({action:'save',type:'Workouts',data:{id:'w1',type:'快走'}});
+ h.send({action:'save',type:'Workouts',data:{id:'w2',type:'慢跑'}});
+ const before=h.sheets.get('Workouts').rows.length;
+ for(const id of ['',undefined,null,0]) h.send({action:'delete',type:'Workouts',id});
+ assert.equal(h.sheets.get('Workouts').rows.length,before);
+ h.send({action:'delete',type:'Workouts',id:'w1'});
+ const ids=h.sheets.get('Workouts').rows.slice(1).map((r:any[])=>String(r[h.sheets.get('Workouts').rows[0].indexOf('id')]).replace(/^'/,''));
+ assert.deepEqual(Array.from(ids),['w2']);
+});

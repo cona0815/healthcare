@@ -146,3 +146,16 @@
 @keyframes natural-run{0%,100%{background-position-x:0%}25%{background-position-x:33.333333%}50%{background-position-x:66.666667%}75%{background-position-x:100%}}
 .health-shell .pixel-person[data-motion=off] .natural-art{animation:none}
 @media(prefers-reduced-motion:reduce){.health-shell .pixel-person .natural-art{animation:none!important}}
+/* 設定頁最下方：GAS 雲端同步收進「進階」，預設收合 */
+.advanced-sync{border:1px dashed var(--line,#dfe6da);border-radius:var(--radius-card,16px);background:var(--canvas,#f7f8f4);color:var(--ink,#23332b)}
+.advanced-sync>summary{display:flex;align-items:flex-start;gap:10px;padding:14px 16px;min-height:56px;cursor:pointer;list-style:none;color:var(--muted,#6b7a70)}
+.advanced-sync>summary::-webkit-details-marker{display:none}
+.advanced-sync>summary>svg{flex:none;margin-top:2px}
+.advanced-sync>summary strong{display:block;font-size:15px;font-weight:700;color:var(--ink,#23332b)}
+.advanced-sync>summary small{display:block;font-size:12px;line-height:1.6;margin-top:2px}
+.advanced-sync>summary::after{content:'展開';margin-left:auto;flex:none;font-size:12px;color:var(--forest,#2f7459);white-space:nowrap}
+.advanced-sync[open]>summary::after{content:'收合'}
+.advanced-sync-body{display:grid;gap:16px;padding:0 16px 16px}
+.storage-mode-now{display:flex;align-items:center;gap:8px;font-size:14px;line-height:1.6;margin:0 0 12px;color:var(--ink,#23332b)}
+.storage-mode-now svg{flex:none;color:var(--forest,#2f7459)}
+.storage-mode-switch>p{font-size:13px;line-height:1.7;margin:10px 0 0}

@@ -10,6 +10,7 @@ interface Props {
 
 const AnalysisResultCard: React.FC<Props> = ({ data, onUpdateLog }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [editError, setEditError] = useState('');
   const [showDetails, setShowDetails] = useState(true);
 
   const getRiskColor = (level: RiskLevel) => {
@@ -32,7 +33,7 @@ const AnalysisResultCard: React.FC<Props> = ({ data, onUpdateLog }) => {
 
   const handleMealTypeChange = async (newType: MealType) => {
     if (onUpdateLog) {
-      try{await onUpdateLog(data.id||data.timestamp, { ...data, mealType: newType });}catch(error){window.alert((error as Error).message);return;}
+      try{await onUpdateLog(data.id||data.timestamp, { ...data, mealType: newType });}catch(error){setEditError((error as Error).message||'更改失敗，請重試。');return;}setEditError('');
     }
     setIsEditing(false);
   };
@@ -62,6 +63,7 @@ const AnalysisResultCard: React.FC<Props> = ({ data, onUpdateLog }) => {
         <div className="flex justify-between items-start mb-4">
            <div>
               <div className="flex items-center gap-2 mb-1">
+                 {editError && <span role="alert" className="text-xs text-red-600">{editError}</span>}
                  {isEditing && onUpdateLog ? (
                     <select 
                       value={data.mealType} 

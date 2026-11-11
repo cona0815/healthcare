@@ -40,7 +40,7 @@ const AppointmentScheduler: React.FC<Props> = ({ appointments = [], onSaveAppoin
       setFormData(details);
     } catch (err) {
       console.error(err);
-      alert("無法讀取預約單，請確認照片清晰。");
+      setMessage("無法讀取預約單，請確認照片清晰。");
     } finally {
       setLoading(false);
     }

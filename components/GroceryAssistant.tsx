@@ -184,14 +184,16 @@ const GroceryAssistant: React.FC<Props> = ({ userProfile, healthReport, savedRec
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null);
+  const [genError, setGenError] = useState('');
 
   const handleGenRecipes = async () => {
     setLoading(true);
+    setGenError('');
     try {
       const data = await generateHealthyRecipes(userProfile, healthReport || undefined);
       setRecipes(data);
     } catch(e: any) { 
-        alert(e.message || "生成食譜失敗，請稍後再試"); 
+        setGenError(e?.message || "生成食譜失敗，請稍後再試。");
     } finally { 
         setLoading(false); 
     }
@@ -221,6 +223,7 @@ const GroceryAssistant: React.FC<Props> = ({ userProfile, healthReport, savedRec
 
        {activeTab === 'RECOMMEND' && (
          <div className="space-y-4">
+            {genError && <p role="alert" className="p-3 rounded-xl bg-red-50 text-red-700 text-sm">{genError}</p>}
             {recipes.length === 0 ? (
                <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 text-center">
                   <ChefHat className="w-16 h-16 text-emerald-200 mx-auto mb-4" />

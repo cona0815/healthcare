@@ -96,3 +96,6 @@ dist/
 .netlify/
 tmp/
 /*.png
+
+# 伺服器打包輸出（不可放進 dist，否則會被公開下載）
+server-dist/

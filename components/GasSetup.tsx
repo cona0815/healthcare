@@ -8,7 +8,7 @@ interface Props {
 
 // Export the GAS Code so it can be used in HealthManagement too
 export const GAS_CODE = `/**
- * HealthGuardian Backend v3.1 (Verified snapshots, conflict safety, optional access token)
+ * HealthGuardian Backend v3.2 (Verified snapshots, conflict safety, optional access token, strict delete)
  * - Profile 追加模式
  * - 智慧讀取：跳過空白行，讀取最後一筆有效資料
  * - 支援 LockService 防止衝突
@@ -275,10 +275,11 @@ function deleteById(sheet, id) {
   if (data.length < 2) return;
   var headers = data[0];
   var idIdx = headers.indexOf('id');
-  
+  var target = String(id == null ? '' : id).replace(/^'/,'');
+  if (!target) return;
   if (idIdx > -1) {
     for (var i = data.length - 1; i >= 1; i--) {
-      if (data[i][idIdx] == id) {
+      if (String(data[i][idIdx]).replace(/^'/,'') === target) {
         sheet.deleteRow(i + 1);
         return; 
       }
@@ -353,7 +354,6 @@ const GasSetup: React.FC<Props> = ({ onConnect }) => {
     navigator.clipboard.writeText(GAS_CODE);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    alert("程式碼已複製！請確保清空 GAS 編輯器後再貼上。");
   };
 
   const handleConnect = async () => {

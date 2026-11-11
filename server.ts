@@ -1,3 +1,4 @@
+import { sanitizeGenerateConfig, validContents, publicErrorMessage } from "./proxyGuard";
 import express from "express";
 import path from "path";
 import cors from "cors";
@@ -10,7 +11,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.disable("x-powered-by");
-const FULL_CSP = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
+// esbuild 打包的正式版（npm run build 產生）一律視為正式環境，避免忘了設 NODE_ENV 就跑開發模式。
+declare const HG_BUNDLED: boolean | undefined;
+const IS_PRODUCTION = process.env.NODE_ENV === "production" || (typeof HG_BUNDLED !== "undefined" && HG_BUNDLED === true);
+const FULL_CSP = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
 
 // 只允許本站（含 Netlify 預覽網址）與本機開發跨來源呼叫；同源請求不受影響。
 const ALLOWED_ORIGIN = /^(https:\/\/([a-z0-9-]+--)?healthcona\.netlify\.app|http:\/\/(localhost|127\.0\.0\.1)(:\d+)?)$/;
@@ -23,7 +27,7 @@ app.use((req, res, next) => {
   if (!req.path.startsWith("/api/")) {
     res.setHeader("X-Frame-Options", "DENY");
     // 正式版用和 netlify.toml 相同的完整 CSP；開發模式 Vite 需要內嵌程式，只套不影響開發的部分。
-    res.setHeader("Content-Security-Policy", process.env.NODE_ENV === "production" ? FULL_CSP : "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'");
+    res.setHeader("Content-Security-Policy", IS_PRODUCTION ? FULL_CSP : "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'");
   }
   next();
 });
@@ -62,17 +66,21 @@ const describeGeminiError = (error: any) => {
   if (!(code >= 400 && code <= 599)) {
     code = status === "RESOURCE_EXHAUSTED" ? 429 : status === "NOT_FOUND" ? 404 : status === "PERMISSION_DENIED" ? 403 : status === "UNAUTHENTICATED" ? 401 : status === "INVALID_ARGUMENT" ? 400 : 500;
   }
-  return { code, status, message };
+  return { code, status, message: publicErrorMessage(message, code) };
 };
 
 const getGeminiClient = (key: string) => new GoogleGenAI({ apiKey: key });
+const badRequest = (res: express.Response, message: string) => res.status(400).json({ error: message, code: 400, status: "INVALID_ARGUMENT" });
 
 // Generic endpoint for generateContent
 app.post("/api/gemini/generateContent", async (req, res) => {
   const key = resolveGeminiKey(req);
   if (!key) return missingKey(res);
-  const { model, contents, config } = req.body || {};
+  const { model, contents } = req.body || {};
   if (typeof model !== "string" || !VALID_MODEL.test(model)) return invalidModel(res);
+  if (!validContents(contents)) return badRequest(res, "contents 格式錯誤");
+  let config: Record<string, unknown> | undefined;
+  try { config = sanitizeGenerateConfig(req.body?.config); } catch (e: any) { return badRequest(res, e.message); }
   try {
     const ai = getGeminiClient(key);
 
@@ -123,8 +131,11 @@ app.get("/api/gemini/models", async (req, res) => {
 app.post("/api/gemini/generateContentStream", async (req, res) => {
   const key = resolveGeminiKey(req);
   if (!key) return missingKey(res);
-  const { model, contents, config } = req.body || {};
+  const { model, contents } = req.body || {};
   if (typeof model !== "string" || !VALID_MODEL.test(model)) return invalidModel(res);
+  if (!validContents(contents)) return badRequest(res, "contents 格式錯誤");
+  let config: Record<string, unknown> | undefined;
+  try { config = sanitizeGenerateConfig(req.body?.config); } catch (e: any) { return badRequest(res, e.message); }
   try {
     const ai = getGeminiClient(key);
     res.setHeader('Content-Type', 'text/event-stream');
@@ -169,7 +180,7 @@ export default app;
 if (process.env.NETLIFY !== 'true' && process.env.LAMBDA_TASK_ROOT === undefined) {
   async function startServer() {
     // Vite middleware for development
-    if (process.env.NODE_ENV !== "production") {
+    if (!IS_PRODUCTION) {
       const { createServer: createViteServer } = await import("vite");
       const vite = await createViteServer({
         server: { middlewareMode: true, hmr: { port: Number(PORT) + 1 } },
@@ -185,7 +196,7 @@ if (process.env.NETLIFY !== 'true' && process.env.LAMBDA_TASK_ROOT === undefined
     }
 
     // 開發模式預設只聽本機，避免同網段的人連到開發伺服器；要給手機測試可設 HOST=0.0.0.0。
-    const host = process.env.HOST || (process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1");
+    const host = process.env.HOST || (IS_PRODUCTION ? "0.0.0.0" : "127.0.0.1");
     app.listen(Number(PORT), host, () => {
       console.log(`Server running on http://${host}:${PORT}`);
     });

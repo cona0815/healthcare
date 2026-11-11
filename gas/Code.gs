@@ -1,5 +1,5 @@
 /**
- * HealthGuardian Backend v3.1 (Verified snapshots, conflict safety, optional access token)
+ * HealthGuardian Backend v3.2 (Verified snapshots, conflict safety, optional access token, strict delete)
  * - Profile 追加模式
  * - 智慧讀取：跳過空白行，讀取最後一筆有效資料
  * - 支援 LockService 防止衝突
@@ -266,10 +266,11 @@ function deleteById(sheet, id) {
   if (data.length < 2) return;
   var headers = data[0];
   var idIdx = headers.indexOf('id');
-  
+  var target = String(id == null ? '' : id).replace(/^'/,'');
+  if (!target) return;
   if (idIdx > -1) {
     for (var i = data.length - 1; i >= 1; i--) {
-      if (data[i][idIdx] == id) {
+      if (String(data[i][idIdx]).replace(/^'/,'') === target) {
         sheet.deleteRow(i + 1);
         return; 
       }

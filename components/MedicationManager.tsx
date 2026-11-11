@@ -10,19 +10,21 @@ interface Props {
 const MedicationManager: React.FC<Props> = ({ healthReport }) => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Medication | null>(null);
+  const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setLoading(true);
+    setError('');
     setResult(null);
     try {
       const base64 = await fileToGenerativePart(file);
       const data = await analyzeMedication(base64, file.type, healthReport || undefined);
       setResult(data);
     } catch (e) {
-      alert("分析失敗");
+      setError((e as Error)?.message || "分析失敗，請換一張清楚的照片再試。");
     } finally {
       setLoading(false);
     }
@@ -50,6 +52,7 @@ const MedicationManager: React.FC<Props> = ({ healthReport }) => {
           <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
         </div>
         {loading && <div className="mt-4 text-center text-red-500 font-bold flex flex-col items-center"><Loader2 className="w-6 h-6 animate-spin mb-2"/>正在分析藥物成分與交互作用...</div>}
+        {error && <p role="alert" className="mt-4 p-3 rounded-xl bg-red-50 text-red-700 text-sm">{error}</p>}
       </div>
 
       {result && (

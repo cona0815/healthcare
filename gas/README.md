@@ -18,6 +18,10 @@
 node --import tsx --input-type=module -e "import {GAS_CODE} from './components/GasSetup.tsx'; import fs from 'node:fs'; fs.writeFileSync('gas/Code.gs', GAS_CODE, 'utf8');"
 ```
 
+## v3.2（2026-11-11）
+
+刪除資料改用完全相同的 id 比對，空白 id 不會誤刪任何列。舊版照常可用；想更新時貼上新的 Code.gs，再用「管理部署作業 → 編輯 → 新版本」部署。
+
 ## v3.1 資安更新（2026-11-11）
 
 - 只允許 8 種資料表（Profile、FoodLogs、Workouts、Appointments、Recipes、Vitals、Reports、WorkoutPlan）寫入或刪除。

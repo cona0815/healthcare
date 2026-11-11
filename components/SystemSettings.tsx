@@ -1,5 +1,5 @@
 import CloudBackupVersions from './CloudBackupVersions';
-import StorageModeSettings from './StorageModeSettings';
+import StorageModeSettings,{StorageModeSwitch} from './StorageModeSettings';
 import InstallGuide,{GuideLink} from './InstallGuide';
 import {getStorageMode,getStoragePreference,configuredGasUrl} from '../services/storageMode';
 import DeviceBackup from './DeviceBackup';
@@ -34,6 +34,7 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
   const resolveChoice=(choice:string,custom:string)=>choice===CUSTOM_CHOICE?custom.trim():choice;
   const [settingsMessage,setSettingsMessage]=useState('');
   const [gasMessage,setGasMessage]=useState('');
+  const [cloudMessage,setCloudMessage]=useState('');
   const gasSavingRef=useRef(false);
   const [gasSaving,setGasSaving]=useState(false);
   const [storageMode,refreshMode]=useState(getStorageMode());
@@ -96,16 +97,17 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
 
   const handleDoBackup = async () => {
     if (!getGasUrl()) {
-      alert("請先完成下方的「Google Apps Script URL (雲端資料同步)」設定！");
+      setCloudMessage("請先在上方填好 GAS 部署網址並儲存。");
       return;
     }
+    setCloudMessage("");
     setSyncing(true);
     try {
       await dbService.backupAllToCloud();
       loadCountsAndBackupTime();
-      alert("🎉 備份完成！完整備份已寫入並通過校驗。這次新增歷史版本，未覆蓋雲端同步紀錄；可在「雲端備份版本」下載。");
+      setCloudMessage("備份完成：完整備份已寫入並通過校驗。這次新增歷史版本，未覆蓋雲端同步紀錄；可在「雲端備份版本」下載。");
     } catch (e: any) {
-      alert("備份發生錯誤: " + (e.message || e));
+      setCloudMessage("備份沒有完成：" + (e?.message || "請檢查網路與 GAS 設定後重試。"));
     } finally {
       setSyncing(false);
     }
@@ -113,19 +115,20 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
 
   const handleDoRestore = async () => {
     if (!getGasUrl()) {
-      alert("請先完成下方的「Google Apps Script URL」設定！");
+      setCloudMessage("請先在上方填好 GAS 部署網址並儲存。");
       return;
     }
     if (!confirm("⚠️ 注意：此操作將會下載 Google Sheet 上的資料，並【完全覆蓋】您目前手機本機的內容！\n\n確定要繼續下載嗎？")) {
       return;
     }
+    setCloudMessage("");
     setRestoring(true);
     try {
       await onRefreshAllData(); // Force fetch and reload entire local caches
       loadCountsAndBackupTime();
-      alert("🎉 回復/同步成功！已成功將雲端資料庫之最新內容載入本機。");
+      setCloudMessage("已把雲端最新內容載入本機。");
     } catch (e: any) {
-      alert("同步載入發生錯誤: " + (e.message || e));
+      setCloudMessage("下載沒有完成：" + (e?.message || "請檢查網路與 GAS 設定後重試。"));
     } finally {
       setRestoring(false);
     }
@@ -198,7 +201,7 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
         </div>
         
         <div className="p-6 md:p-8 space-y-8">
-          <GuideLink/><InstallGuide/><StorageModeSettings/>{storagePreference!=='gas'&&gasMessage&&<p role="status" className="integration-notice">{gasMessage}</p>}<p className="settings-intro">不設定也能手動記錄。AI 分析與雲端同步各自選用、分開儲存。</p>
+          <GuideLink/><InstallGuide/><StorageModeSettings/><p className="settings-intro">不設定任何東西也能手動記錄。AI 分析才需要自己的 Gemini 金鑰；跨裝置同步是進階功能，大多數人用不到。</p>
           <section className="integration-card gemini-settings" aria-labelledby="gemini-settings-heading">
             <header><span className="integration-icon"><Key size={23}/></span><div><h3 id="gemini-settings-heading">Gemini AI 設定</h3><p>照片、文件與運動姿勢分析</p></div><span className="editable-badge">可編輯</span></header>
             <form onSubmit={e=>{e.preventDefault();handleSaveGemini();}}>
@@ -223,13 +226,7 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
             </form>
             <details className="integration-help"><summary>免費額度、申請教學與隱私說明</summary><ApiGuide/></details>
           </section>
-          {storagePreference==='gas'&&<section className="integration-card gas-settings" aria-labelledby="gas-settings-heading">
-            <header><span className="integration-icon"><Cloud size={23}/></span><div><h3 id="gas-settings-heading">GAS 雲端同步</h3><p>連接自己的 Google Sheets</p></div></header>
-            <form onSubmit={e=>{e.preventDefault();void handleSaveGas();}}><label htmlFor="gas-deployment-url">GAS 部署網址</label><input id="gas-deployment-url" type="url" disabled={gasSaving} value={gasUrl} onChange={e=>setGasUrlState(e.target.value)} placeholder="https://script.google.com/macros/s/…/exec"/><p className="field-help">未設定網址時只存本機。手機與電腦需設定同一個網址；儲存前會檢查連線。留空並儲存即停用同步，本機紀錄仍保留。</p><label htmlFor="gas-access-token">存取密碼<span>強烈建議設定；在 Apps Script 執行 setupAccessToken 取得。沒設定時，知道網址的人就能讀寫資料。</span></label><div className="key-input-wrap"><input id="gas-access-token" type={showGasToken?'text':'password'} autoComplete="off" spellCheck={false} disabled={gasSaving} value={gasToken} onChange={e=>setGasTokenState(e.target.value.trim())} placeholder="貼上 GAS 存取密碼（選填）"/><button type="button" aria-label={showGasToken?'隱藏存取密碼':'顯示存取密碼'} aria-pressed={showGasToken} onClick={()=>setShowGasToken(!showGasToken)}>{showGasToken?<EyeOff size={20}/>:<Eye size={20}/>}</button></div><div className="integration-actions"><button type="button" className="integration-test" disabled={gasSaving||gasTesting} onClick={()=>void handleTestGas()}><Check size={18}/>{gasTesting?'測試中…':'測試連線'}</button><button type="submit" disabled={gasSaving||gasTesting} className="integration-save"><Save size={18}/>{gasSaving?'檢查連線中…':'儲存 GAS 設定'}</button></div>{gasMessage&&<p role="status" className="integration-notice">{gasMessage}</p>}</form>
-            <p className="field-help">網站更新不會自動更新 Google 帳戶裡的 GAS。若自行更換 GAS 程式，需在 Apps Script「管理部署作業」選擇新版本再部署。</p>
-          </section>}
           <hr className="border-gray-100" />
-
           <div className="space-y-6">
               <h3 className="font-bold text-gray-800 flex items-center gap-2 text-lg">
                   <CalendarDays className="w-5 h-5 text-gray-500" /> 偏好設定
@@ -249,7 +246,53 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
           </div>
 
           <hr className="border-gray-100" />
+          <DeviceBackup/>
+          <details className="advanced-sync" open={storagePreference==='gas'}>
+            <summary><Cloud size={22}/><span><strong>進階：Google 試算表雲端同步（GAS）</strong><small>多數人不需要。只有想讓手機和電腦共用同一份資料，且會自己部署 Google Apps Script 的人才用。</small></span></summary>
+            <div className="advanced-sync-body">
+            <p className="field-help">不開啟也完全不影響任何功能；資料一樣存在本機，並可用上方「手機備份與還原」下載備份檔。</p>
+            <StorageModeSwitch/>{gasMessage&&storagePreference!=='gas'&&<p role="status" className="integration-notice">{gasMessage}</p>}
+          {storagePreference==='gas'&&<section className="integration-card gas-settings" aria-labelledby="gas-settings-heading">
+            <header><span className="integration-icon"><Cloud size={23}/></span><div><h3 id="gas-settings-heading">GAS 雲端同步</h3><p>連接自己的 Google Sheets</p></div></header>
+            <form onSubmit={e=>{e.preventDefault();void handleSaveGas();}}><label htmlFor="gas-deployment-url">GAS 部署網址</label><input id="gas-deployment-url" type="url" disabled={gasSaving} value={gasUrl} onChange={e=>setGasUrlState(e.target.value)} placeholder="https://script.google.com/macros/s/…/exec"/><p className="field-help">未設定網址時只存本機。手機與電腦需設定同一個網址；儲存前會檢查連線。留空並儲存即停用同步，本機紀錄仍保留。</p><label htmlFor="gas-access-token">存取密碼<span>強烈建議設定；在 Apps Script 執行 setupAccessToken 取得。沒設定時，知道網址的人就能讀寫資料。</span></label><div className="key-input-wrap"><input id="gas-access-token" type={showGasToken?'text':'password'} autoComplete="off" spellCheck={false} disabled={gasSaving} value={gasToken} onChange={e=>setGasTokenState(e.target.value.trim())} placeholder="貼上 GAS 存取密碼（選填）"/><button type="button" aria-label={showGasToken?'隱藏存取密碼':'顯示存取密碼'} aria-pressed={showGasToken} onClick={()=>setShowGasToken(!showGasToken)}>{showGasToken?<EyeOff size={20}/>:<Eye size={20}/>}</button></div><div className="integration-actions"><button type="button" className="integration-test" disabled={gasSaving||gasTesting} onClick={()=>void handleTestGas()}><Check size={18}/>{gasTesting?'測試中…':'測試連線'}</button><button type="submit" disabled={gasSaving||gasTesting} className="integration-save"><Save size={18}/>{gasSaving?'檢查連線中…':'儲存 GAS 設定'}</button></div>{gasMessage&&<p role="status" className="integration-notice">{gasMessage}</p>}</form>
+            <p className="field-help">網站更新不會自動更新 Google 帳戶裡的 GAS。若自行更換 GAS 程式，需在 Apps Script「管理部署作業」選擇新版本再部署。</p>
+          </section>}
+          {storagePreference==='gas'&&<div className="bg-orange-50/50 p-6 rounded-2xl border border-orange-100 mt-8">
+              <h4 className="font-bold text-orange-800 text-lg mb-3 flex items-center gap-2">
+                  <Code className="w-5 h-5" /> Apps Script 部署說明（僅雲端同步需要）
+              </h4>
+              <div className="text-sm text-orange-800 mb-4 space-y-3 leading-relaxed">
+                  <p>如需跨裝置同步，可使用自己的 Google Sheets；本機紀錄不需要設定。啟用雲端前，請部署 Apps Script 服務：</p>
+                  <ol className="list-decimal pl-5 space-y-1">
+                      <li>登入您的 Google 帳號，並建立一個新的空白 Google 試算表。</li>
+                      <li>點選上方選單的 <strong>擴充功能 &gt; Apps Script</strong>。</li>
+                      <li>將下方的「修復版 GAS 程式碼」複製，並貼上取代原有的 <code>Code.gs</code> 內容。</li>
+                      <li>點選右上角 <strong>部署 &gt; 新增部署作業</strong>。</li>
+                      <li>選擇類型為 <strong>網頁應用程式 (Web App)</strong>。</li>
+                      <li>存取權限設定為 <strong>「所有人 (Anyone)」</strong>，然後點選部署。</li>
+                      <li>授權後，複製生成的 <strong>網頁應用程式網址 (URL)</strong>。</li>
+                      <li>將該 URL 貼回本頁面上方的「GAS 部署網址」欄位。</li>
+                      <li><strong>（強烈建議）設定存取密碼：</strong>在 Apps Script 編輯器上方的函式選單選 <code>setupAccessToken</code> 並按「執行」，到下方「執行記錄」複製產生的密碼，貼到上方「存取密碼」欄位，再按儲存。設定後，就算網址外流，沒有密碼的人也無法讀寫你的資料。</li>
+                  </ol>
+                  <p className="font-bold mt-2">※ 之後更新 GAS 程式時，請用「部署 &gt; 管理部署作業 &gt; 編輯 &gt; 版本：新版本」，網址才不會改變；不要按「新增部署作業」。</p>
+              </div>
 
+              <button
+                  onClick={copyGasCode}
+                  className="w-full bg-white border-2 border-orange-200 hover:border-orange-300 hover:bg-orange-50 text-orange-700 font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors mb-4"
+              >
+                  {copied ? <Check className="w-5 h-5 text-green-500" /> : <Code className="w-5 h-5" />}
+                  {copied ? "已複製到剪貼簿" : "複製 GAS 程式碼"}
+              </button>
+
+              {copied && (
+                  <div className="bg-gray-900 rounded-xl p-4 overflow-x-auto">
+                      <pre className="text-[10px] text-green-400 font-mono">
+                          {GAS_CODE}
+                      </pre>
+                  </div>
+              )}
+          </div>}
           {storageMode==='gas'&&<>
           <div className="space-y-6">
               <h3 className="font-bold text-gray-800 flex items-center gap-2 text-lg">
@@ -313,50 +356,13 @@ const SystemSettings: React.FC<Props> = ({ userProfile, onUpdateProfile, onRefre
                       </div>
                   </button>
               </div>
+              {cloudMessage&&<p role="status" className="integration-notice">{cloudMessage}</p>}
           </div>
 
           </>}
-          <hr className="border-gray-100" />
-
-          {storageMode==='gas'&&<div className="bg-orange-50/50 p-6 rounded-2xl border border-orange-100 mt-8">
-              <h4 className="font-bold text-orange-800 text-lg mb-3 flex items-center gap-2">
-                  <Code className="w-5 h-5" /> Apps Script 部署說明（僅雲端同步需要）
-              </h4>
-              <div className="text-sm text-orange-800 mb-4 space-y-3 leading-relaxed">
-                  <p>如需跨裝置同步，可使用自己的 Google Sheets；本機紀錄不需要設定。啟用雲端前，請部署 Apps Script 服務：</p>
-                  <ol className="list-decimal pl-5 space-y-1">
-                      <li>登入您的 Google 帳號，並建立一個新的空白 Google 試算表。</li>
-                      <li>點選上方選單的 <strong>擴充功能 &gt; Apps Script</strong>。</li>
-                      <li>將下方的「修復版 GAS 程式碼」複製，並貼上取代原有的 <code>Code.gs</code> 內容。</li>
-                      <li>點選右上角 <strong>部署 &gt; 新增部署作業</strong>。</li>
-                      <li>選擇類型為 <strong>網頁應用程式 (Web App)</strong>。</li>
-                      <li>存取權限設定為 <strong>「所有人 (Anyone)」</strong>，然後點選部署。</li>
-                      <li>授權後，複製生成的 <strong>網頁應用程式網址 (URL)</strong>。</li>
-                      <li>將該 URL 貼回本頁面上方的「GAS 部署網址」欄位。</li>
-                      <li><strong>（強烈建議）設定存取密碼：</strong>在 Apps Script 編輯器上方的函式選單選 <code>setupAccessToken</code> 並按「執行」，到下方「執行記錄」複製產生的密碼，貼到上方「存取密碼」欄位，再按儲存。設定後，就算網址外流，沒有密碼的人也無法讀寫你的資料。</li>
-                  </ol>
-                  <p className="font-bold mt-2">※ 之後更新 GAS 程式時，請用「部署 &gt; 管理部署作業 &gt; 編輯 &gt; 版本：新版本」，網址才不會改變；不要按「新增部署作業」。</p>
-              </div>
-              
-              <button
-                  onClick={copyGasCode}
-                  className="w-full bg-white border-2 border-orange-200 hover:border-orange-300 hover:bg-orange-50 text-orange-700 font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors mb-4"
-              >
-                  {copied ? <Check className="w-5 h-5 text-green-500" /> : <Code className="w-5 h-5" />}
-                  {copied ? "已複製到剪貼簿" : "複製 GAS 程式碼"}
-              </button>
-              
-              {copied && (
-                  <div className="bg-gray-900 rounded-xl p-4 overflow-x-auto">
-                      <pre className="text-[10px] text-green-400 font-mono">
-                          {GAS_CODE}
-                      </pre>
-                  </div>
-              )}
-          </div>}
-
           {storageMode==='gas'&&<><CloudBackupVersions/><SyncCenter/></>}
-          <DeviceBackup/>
+            </div>
+          </details>
 
         </div>
       </div>

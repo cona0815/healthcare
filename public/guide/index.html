@@ -526,24 +526,25 @@ dialog.zoom button{position:fixed;top:12px;right:12px;width:44px;height:44px;bor
  </div>
  <figure style="margin:14px 0"><button class="wide" type="button" aria-label="放大五種外觀比較"><img src="img/themes.webp" width="1560" height="537" loading="lazy" alt="同一個總覽畫面在五種外觀下的樣子：森林、多彩、小島、甜心、星際科技"></button><figcaption>由左到右：森林、多彩、小島、甜心、星際科技</figcaption></figure>
  <div class="feature">
-  <figure><button class="phone" type="button" aria-label="放大資料儲存方式"><img src="img/settings-storage.webp" width="585" height="1266" loading="lazy" alt="資料儲存方式：存在本機（預設）與 GAS 雲端同步（進階）"></button><figcaption>資料儲存方式</figcaption></figure>
+  <figure><button class="phone" type="button" aria-label="放大資料保存"><img src="img/settings-storage.webp" width="585" height="1266" loading="lazy" alt="資料保存：資料存在這台裝置，下方是自動備份頻率與立即備份按鈕"></button><figcaption>資料保存</figcaption></figure>
   <div>
-   <h3>資料儲存方式</h3>
+   <h3>資料保存</h3>
    <ul class="points">
-    <li><b>存在本機（預設）</b>：資料只存在這支手機。網站開啟時會定時做本機備份（每週一次，可改每天），保留最近 7 份。點<span class="key">立即建立本機備份</span>可以馬上備份一次。</li>
-    <li><b>GAS 雲端同步（進階）</b>：同步到你自己的 Google 試算表，適合想在手機和電腦之間同步的人，見下方說明。</li>
+    <li><b>資料存在這支手機</b>：不用帳號、不用設定，也不會上傳。網站開啟時會定時做本機備份（每週一次，可改每天），保留最近 7 份。點<span class="key">立即建立本機備份</span>可以馬上備份一次。</li>
+    <li><b>不需要 GAS</b>：所有功能只靠本機就能用。換手機時，用<a href="#backup">手機備份與還原</a>把備份檔搬過去即可。</li>
    </ul>
    <div class="box warn"><strong>本機備份不等於安全</strong><p>清除瀏覽器資料、刪掉 App 或手機壞掉，本機備份也會一起消失。請定期到<a href="#backup">手機備份與還原</a>下載備份檔，存到雲端硬碟或電腦。</p></div>
   </div>
  </div>
  <div class="feature flip">
-  <figure><button class="phone" type="button" aria-label="放大 GAS 雲端同步設定"><img src="img/settings-gas.webp" width="585" height="1266" loading="lazy" alt="GAS 雲端同步設定：部署網址、測試連線、儲存 GAS 設定"></button><figcaption>進階：GAS 雲端同步</figcaption></figure>
+  <figure><button class="phone" type="button" aria-label="放大進階 GAS 設定"><img src="img/settings-advanced.webp" width="585" height="1266" loading="lazy" alt="設定頁最下方的進階區：展開後可選只存本機或啟用 GAS 同步"></button><figcaption>設定頁最下方的「進階」</figcaption></figure>
   <div>
-   <h3>進階：連到自己的 Google 試算表</h3>
+   <h3>進階（選用）：連到自己的 Google 試算表</h3>
+   <p>大多數人不需要這一步。只有想讓手機和電腦隨時共用同一份資料、而且願意自己部署 Google Apps Script 的人才用。</p>
    <ol class="steps">
-    <li>在「資料儲存方式」點<span class="key">GAS 雲端同步</span>，下方會出現 GAS 設定區。</li>
-    <li>依照設定頁的「Apps Script 部署說明」複製程式、在自己的 Google 試算表部署，取得以 <code>/exec</code> 結尾的網址。</li>
-    <li>貼上網址，先按<span class="key">測試連線</span>：只檢查網址能不能用，不會儲存也不會上傳。</li>
+    <li>捲到設定頁最下方，展開<span class="key">進階：Google 試算表雲端同步（GAS）</span>，點<span class="key">啟用 GAS 同步</span>，會出現 GAS 設定區。</li>
+    <li>依照設定頁的「Apps Script 部署說明」複製程式、在自己的 Google 試算表部署，取得以 <code>/exec</code> 結尾的網址。再照說明執行 <code>setupAccessToken</code> 取得存取密碼，避免別人拿到網址就能讀寫你的資料。</li>
+    <li>貼上網址和存取密碼，先按<span class="key">測試連線</span>：只檢查網址能不能用，不會儲存也不會上傳。</li>
     <li>沒問題再按<span class="key">儲存 GAS 設定</span>。之後新的紀錄會同步上去，同步狀況在設定的「同步中心」查看。</li>
    </ol>
    <p>原本的本機資料不會自動全部上傳，需要時請在設定裡另外操作。把網址清空再儲存，就會停用雲端同步，本機紀錄仍保留。</p>
@@ -604,6 +605,7 @@ dialog.zoom button{position:fixed;top:12px;right:12px;width:44px;height:44px;bor
 
 <section class="chapter" id="faq">
  <header><span class="no">13</span><h2>常見問題</h2></header>
+ <details class="faq"><summary>一定要設定 GAS 或 Google 試算表嗎？</summary><p>不用。所有記錄、提醒、備份功能都只靠手機本機就能用，GAS 是給想跨裝置同步的人的進階選項。換手機時用「下載手機備份」再到新手機「選擇備份檔」還原就好。</p></details>
  <details class="faq"><summary>我的資料會被別人看到嗎？</summary><p>預設只存在你自己手機的瀏覽器裡，沒有帳號、也不會上傳。只有在你設定 GAS 雲端同步時，才會同步到「你自己的」Google 試算表；使用 AI 功能時，那一次的照片或文字會傳給 Google 分析。</p></details>
  <details class="faq"><summary>為什麼從 LINE 點進來，跟主畫面 App 的資料不一樣？</summary><p>LINE、Safari、Chrome、主畫面 App 各有自己的儲存空間，彼此看不到。請固定從同一個地方打開（建議主畫面圖示）。要搬資料，就用「下載手機備份」再「選擇備份檔」還原。</p></details>
  <details class="faq"><summary>沒有網路可以用嗎？</summary><p>打開過一次之後，沒有網路也能打開並手動記錄。拍照分析等 AI 功能、GAS 雲端同步需要網路。</p></details>

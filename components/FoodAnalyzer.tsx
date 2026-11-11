@@ -39,6 +39,7 @@ const FoodAnalyzer: React.FC<Props> = ({
   const [thumbnail,setThumbnail]=useState<string>();
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tipNotice, setTipNotice] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentResult, setCurrentResult] = useState<FoodAnalysis | null>(null);
   const [suggestions, setSuggestions] = useState<FoodSuggestion[]>([]);
@@ -97,7 +98,7 @@ const FoodAnalyzer: React.FC<Props> = ({
   const getUserLocation = (): Promise<{lat: number, lng: number}> => {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
-        alert("您的瀏覽器不支援定位功能");
+        setTipNotice("這個瀏覽器不支援定位，只會提供一般建議。");
         reject("Geolocation not supported");
       } else {
         navigator.geolocation.getCurrentPosition(
@@ -111,7 +112,7 @@ const FoodAnalyzer: React.FC<Props> = ({
           },
           (error) => {
             console.error("Error getting location:", error);
-            alert("無法獲取您的位置，將僅提供一般建議。");
+            setTipNotice("無法取得位置，只會提供一般建議。");
             reject(error);
           }
         );
@@ -121,6 +122,7 @@ const FoodAnalyzer: React.FC<Props> = ({
 
   const handleGetSuggestions = async () => {
     setSuggestionLoading(true);
+    setTipNotice('');
     setSuggestions([]);
     try { await getUserLocation(); } catch (e) {}
     try {
@@ -128,7 +130,7 @@ const FoodAnalyzer: React.FC<Props> = ({
       setSuggestions(results);
     } catch (err) {
       console.error(err);
-      alert("暫時無法獲取建議");
+      setTipNotice((err as Error)?.message || "暫時無法取得建議，請稍後再試。");
     } finally {
       setSuggestionLoading(false);
     }
@@ -151,12 +153,12 @@ const FoodAnalyzer: React.FC<Props> = ({
     try {
         const places = await findNearbyRestaurants(foodName, loc.lat, loc.lng);
         if (!places || places.length === 0) {
-            alert("找不到附近的相關店家");
+            setTipNotice("附近找不到相關店家。");
         }
         setSuggestions(prev => prev.map((s, i) => i === index ? { ...s, restaurants: places } : s));
     } catch (e) {
         console.error(e);
-        alert("搜尋附近店家失敗");
+        setTipNotice("搜尋附近店家失敗，請稍後再試。");
     } finally {
         setMapLoadingId(null);
     }
@@ -236,6 +238,7 @@ const FoodAnalyzer: React.FC<Props> = ({
           </div>
 
           {!loading && (<ManualFoodEntry key={`${selectedDate||'today'}-${selectedMeal||'all'}`} date={selectedDate} meal={selectedMeal} initialThumbnail={thumbnail} onSave={onAnalysisComplete}/>)}
+          {tipNotice && <p role="status" className="mt-3 p-3 rounded-xl bg-amber-50 text-amber-800 text-sm border border-amber-100">{tipNotice}</p>}
           {suggestions.length > 0 && !preview && (
             <div className="space-y-4 animate-fade-in-up">
                <div className="flex items-center justify-between px-2">
